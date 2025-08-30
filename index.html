@@ -6,58 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    /* ============================
-       CONFIG (edit to customize)
-       ============================ */
-    const CONFIG = {
-      restaurantName: "Sahara",
-
-      // Preferred: exact Google Maps URL to the restaurant page (opens the place)
-      googleMapsUrl:
-        "https://www.google.com/maps/place/Sahara+Restaurant/@40.5000681,-74.4567202,17z/data=!4m8!3m7!1s0x89c3c6ff3e35125b:0xc9ebce3f3d21e043!8m2!3d40.5000681!4d-74.4541453!9m1!1b1!16s%2Fg%2F1tczldzb?hl=en-US&entry=ttu&g_ep=EgoyMDI1MDgyNC4wIKXMDSoASAFQAw%3D%3D",
-
-      // Fallback (only used if googleMapsUrl is empty)
-      googlePlaceId: "",
-
-      // If set, POSTs negative feedback JSON here (non-blocking)
-      negativeFeedbackEndpoint: "",
-
-      // Theme
-      brandPrimary: "#b91c1c",  // refined red
-      useEmojis: true,
-
-      // AI (LOCAL / DEV ONLY). Never expose a production key in public HTML.
-      aiApiKey: "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",
-      aiModel: "meta-llama/llama-4-scout-17b-16e-instruct",
-    };
-  </script>
   <style>
-    :root { --brand: #b91c1c; }
+    :root { --brand: #b91c1c }
     .brand-bg  { background-color: var(--brand) }
     .brand-txt { color: var(--brand) }
     .brand-ring{ --tw-ring-color: var(--brand) }
-    .smooth { transition: all 220ms ease }
-    .card { box-shadow: 0 10px 30px rgba(0,0,0,.06) }
-
-    /* Stroke pills (chips) — NO counts shown */
+    .smooth    { transition: all 220ms ease }
+    .card      { box-shadow: 0 10px 30px rgba(0,0,0,.06) }
     .chip {
-      display:inline-flex; align-items:center;
-      border:1.5px solid #e2e8f0; /* slate-200/300 */
-      padding:.44rem .8rem; border-radius:9999px;
-      font-size:.875rem; line-height:1.25rem;
-      background-color:#fff;
+      display:inline-flex; align-items:center; gap:.4rem;
+      border:1.5px solid #e2e8f0; padding:.44rem .8rem; border-radius:9999px;
+      font-size:.875rem; background:#fff;
     }
-    .chip:hover { background-color:#f8fafc }   /* slate-50 */
-    .chip[aria-pressed="true"]{
-      color:#fff; background-color:var(--brand); border-color:transparent;
-    }
-
-    /* Tooltip behavior */
-    .tooltip:focus .tooltip-panel, .tooltip:hover .tooltip-panel { opacity:1; transform: translateY(0) }
-    .tooltip-panel { opacity:0; transform: translateY(2px) }
-
-    /* Accordion reset */
+    .chip:hover { background:#f8fafc }
+    .chip[aria-pressed="true"] { color:#fff; background:var(--brand); border-color:transparent }
     details > summary::-webkit-details-marker { display:none }
   </style>
 </head>
@@ -66,73 +28,56 @@
     <section class="mx-auto max-w-2xl rounded-2xl bg-white card ring-1 ring-black/5">
       <!-- Header -->
       <header class="p-6 sm:p-8 border-b border-slate-100">
-        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Share your experience at <span class="brand-txt" id="brandName"></span>
-        </h1>
+        <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">Share your experience</h1>
+        <p id="subtitle" class="text-slate-600 mt-1"></p>
       </header>
 
       <!-- Content -->
       <div class="p-6 sm:p-8 space-y-10">
 
-        <!-- 1) EXPERIENCE -->
-        <section id="experience" role="region" aria-labelledby="exp-title">
+        <!-- STEP 1 — EXPERIENCE -->
+        <section id="experience" aria-labelledby="exp-title">
           <h2 id="exp-title" class="text-xl sm:text-2xl font-semibold">How was your experience today?</h2>
           <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button type="button" data-exp="Excellent"
-              class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth"
-              aria-label="Excellent">
-              <div class="text-2xl" aria-hidden="true">🤩</div>
+            <button type="button" data-exp="Excellent" class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Excellent">
+              <div class="text-2xl">🤩</div>
               <div class="mt-1 text-base font-medium">Excellent</div>
               <p class="text-sm text-slate-500">Everything sang.</p>
             </button>
-
-            <button type="button" data-exp="Good"
-              class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth"
-              aria-label="Good">
-              <div class="text-2xl" aria-hidden="true">🙂</div>
+            <button type="button" data-exp="Good" class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Good">
+              <div class="text-2xl">🙂</div>
               <div class="mt-1 text-base font-medium">Good</div>
               <p class="text-sm text-slate-500">Worth sharing.</p>
             </button>
-
-            <button type="button" data-exp="Not great"
-              class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth"
-              aria-label="Not great">
-              <div class="text-2xl" aria-hidden="true">😕</div>
+            <button type="button" data-exp="Not great" class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Not great">
+              <div class="text-2xl">😕</div>
               <div class="mt-1 text-base font-medium">Not great</div>
               <p class="text-sm text-slate-500">Tell us why.</p>
             </button>
           </div>
         </section>
 
-        <!-- 2) POSITIVE PATH -->
-        <section id="positive" class="hidden" role="region" aria-labelledby="pos-title" aria-hidden="true">
-          <h2 id="pos-title" class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
+        <!-- POSITIVE PATH -->
+        <section id="positive" class="hidden" aria-hidden="true">
+          <h2 class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
 
-          <!-- All keywords together (curated + from menu) -->
+          <!-- Keywords -->
           <div class="mt-2">
             <div class="flex items-center justify-between">
               <p class="text-sm font-medium text-slate-700">Pick a few keywords</p>
-              <button id="kwToggle" type="button"
-                class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">
-                See more
-              </button>
+              <button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>
             </div>
-            <p class="mt-1 text-sm text-slate-500">Choose up to 3. Pulled from the menu and popular items.</p>
+            <p class="mt-1 text-sm text-slate-500">Choose up to 3.</p>
             <div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>
           </div>
 
           <!-- Highlight -->
           <div class="mt-6">
             <p class="text-sm font-medium text-slate-700">What stood out the most?</p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <button type="button" class="hl chip smooth" data-hl="Food" aria-label="Food"><span>🍽 Food</span></button>
-              <button type="button" class="hl chip smooth" data-hl="Service" aria-label="Service"><span>🤝 Service</span></button>
-              <button type="button" class="hl chip smooth" data-hl="Atmosphere" aria-label="Atmosphere"><span>🌆 Atmosphere</span></button>
-              <button type="button" class="hl chip smooth" data-hl="Authenticity" aria-label="Authenticity"><span>🌍 Authenticity</span></button>
-            </div>
+            <div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>
           </div>
 
-          <!-- Review (STARTS EMPTY; AI fills on demand) -->
+          <!-- Review -->
           <div class="mt-6">
             <div class="flex items-center justify-between">
               <label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>
@@ -141,49 +86,22 @@
                 <span class="text-sm text-slate-700">Enable editing</span>
               </label>
             </div>
-
-            <textarea id="reviewText" rows="5" readonly placeholder="After you click ✨ Polish with AI, your short review (under 60 words) will appear here."
+            <textarea id="reviewText" rows="5" readonly placeholder="Click 'Write review' (no AI) or 'Polish with AI' to generate a short paragraph (under 60 words)."
               class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6"
               aria-describedby="copyHelp"></textarea>
             <p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>
 
-            <div class="mt-3 flex items-center gap-3">
-              <button id="copyBtn" type="button" disabled
-                class="rounded-lg px-4 py-2 text-white brand-bg disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth"
-                aria-label="Copy review"><span class="btn-label">Copy</span></button>
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+              <button id="writeBtn" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth">Write review</button>
+              <button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>
+
+              <button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>
               <span id="copyStatus" class="text-sm text-slate-600" aria-live="polite"></span>
             </div>
+            <div id="aiStatus" class="mt-2 text-sm text-slate-600" aria-live="polite"></div>
           </div>
 
-          <!-- Actions -->
-          <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <!-- Google -->
-            <div class="relative inline-block tooltip">
-              <a id="googleLink" target="_blank" rel="noopener noreferrer"
-                 class="inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none"
-                 aria-label="Open Google to post">
-                ⭐ <span class="ml-2">Open Google to post</span>
-              </a>
-              <div id="googleTip" class="tooltip-panel pointer-events-none absolute left-1/2 -translate-x-1/2 mt-2 w-max max-w-xs rounded-md bg-slate-900 px-3 py-2 text-[12px] text-white shadow-lg">
-                Add a Google Maps URL or Place ID.
-              </div>
-            </div>
-
-            <!-- AI Polish -->
-            <div class="relative inline-block tooltip">
-              <button id="aiPolishBtn" type="button"
-                class="inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-[var(--brand)] border border-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth"
-                aria-label="Polish with AI">✨ <span class="ml-2">Polish with AI</span>
-              </button>
-              <div id="aiTip" class="tooltip-panel pointer-events-none absolute left-1/2 -translate-x-1/2 mt-2 w-max max-w-xs rounded-md bg-slate-900 px-3 py-2 text-[12px] text-white shadow-lg">
-                Add an AI key in CONFIG.aiApiKey (local testing only).
-              </div>
-            </div>
-          </div>
-
-          <div id="aiStatus" class="mt-3 text-sm text-slate-600" aria-live="polite"></div>
-
-          <!-- More details (OPTIONAL; included in AI prompt if selected) -->
+          <!-- Optional details to include -->
           <div class="mt-8">
             <p class="text-sm font-medium text-slate-700">Add more details to help others</p>
             <div class="mt-3 space-y-3">
@@ -209,14 +127,23 @@
               </details>
             </div>
           </div>
+
+          <!-- Post on Google -->
+          <div class="mt-6">
+            <a id="googleLink" target="_blank" rel="noopener noreferrer"
+               class="inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">
+              ⭐ <span class="ml-2">Open Google to post</span>
+            </a>
+            <p id="googleTip" class="mt-2 text-sm text-slate-500"></p>
+          </div>
         </section>
 
-        <!-- 3) NEGATIVE PATH (three question groups + optional feedback) -->
-        <section id="negative" class="hidden" role="region" aria-labelledby="neg-title" aria-hidden="true">
+        <!-- NEGATIVE PATH -->
+        <section id="negative" class="hidden" aria-hidden="true">
           <div id="negForm">
             <div class="text-center">
-              <div class="text-4xl" aria-hidden="true">🙏</div>
-              <h2 id="neg-title" class="mt-3 text-xl sm:text-2xl font-semibold">Thank you for your honesty.</h2>
+              <div class="text-4xl">🙏</div>
+              <h2 class="mt-3 text-xl sm:text-2xl font-semibold">Thank you for your honesty.</h2>
               <p class="mt-2 text-slate-600">A few quick questions help the team improve.</p>
             </div>
 
@@ -225,38 +152,32 @@
                 <p class="text-sm font-medium text-slate-700">Did you dine in, take out, or get delivery?</p>
                 <div class="mt-3 flex flex-wrap gap-2" id="q-dining"></div>
               </div>
-
               <div>
                 <p class="text-sm font-medium text-slate-700">What did you get?</p>
                 <div class="mt-3 flex flex-wrap gap-2" id="q-meal"></div>
               </div>
-
               <div>
                 <p class="text-sm font-medium text-slate-700">How much did you spend per person?</p>
                 <div class="mt-3 flex flex-wrap gap-2" id="q-spend"></div>
               </div>
-
               <div>
                 <label for="negFeedback" class="text-sm font-medium text-slate-700">Your feedback (optional)</label>
                 <textarea id="negFeedback" rows="4" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-3" placeholder="Write any details you'd like the manager to know…"></textarea>
               </div>
-
               <div class="flex items-center gap-3">
-                <button id="sendNegative" type="button"
-                  class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth"
-                  aria-label="Send to restaurant">Send</button>
+                <button id="sendNegative" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth">Send</button>
                 <span id="negStatus" class="text-sm text-slate-600" aria-live="polite"></span>
               </div>
             </div>
           </div>
 
-          <!-- Success confirmation (hidden until sent) -->
           <div id="negDone" class="hidden text-center py-10">
             <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100 text-green-700 text-3xl">✓</div>
             <h3 class="mt-4 text-lg font-semibold">Your feedback was sent to the restaurant.</h3>
             <p class="mt-2 text-slate-600">We appreciate your time.</p>
           </div>
         </section>
+
       </div>
     </section>
   </main>
@@ -265,468 +186,286 @@
   <div id="sr-live" class="sr-only" aria-live="polite"></div>
 
   <script>
-    /* ============================
-       Theme
-       ============================ */
-    document.documentElement.style.setProperty("--brand", CONFIG.brandPrimary);
-
-    /* ============================
-       Curated "Top keywords" for Sahara
-       ============================ */
-    const TOP_SUGGESTIONS = [
-      "kebab","shawarma","adana","lamb","chicken","falafel","hummus",
-      "eggplant","couscous","baklava","turkish coffee","pita","salmon","shrimp","lentil"
-    ];
-
-    /* ============================
-       MENU (for keyword extraction; no prices)
-       ============================ */
-    const MENU = [
-      { name:"chicken kebab", description:"Cubes of marinated chicken breast char-broiled on skewers. Served with rice and burgol.", category:"Entrées", aliases:["chicken shish"] },
-      { name:"adana kebab", description:"Hand diced lamb flavored with fresh red bell peppers, gently spiced with paprika and grilled on skewers. Served with rice and burgol.", category:"Entrées", aliases:["adana","lamb adana"] },
-      { name:"chicken adana kebab", description:"Ground chicken flavored with fresh red bell peppers and hot peppers, grilled on skewers. Served with rice and burgol.", category:"Entrées", aliases:["chicken adana"] },
-      { name:"shish kebab", description:"Cubes of marinated lamb char-broiled on skewers. Served with rice and burgol.", category:"Entrées", aliases:["lamb shish"] },
-      { name:"chicken chops", description:"Skinless, boneless marinated chicken thighs, grilled to perfection. Served with rice and burgol.", category:"Entrées", aliases:[] },
-      { name:"feta chicken", description:"Sautéed chicken breast topped with fresh tomatoes and melted feta cheese, finished with a lemon garlic sauce. Served with vegetables and mashed potato.", category:"Entrées", aliases:[] },
-      { name:"pyramid chicken", description:"Sautéed chicken breast topped with sautéed mushrooms, crushed black peppercorns, dijon and a light cream sauce.", category:"Entrées", aliases:[] },
-      { name:"nile chicken", description:"Sautéed chicken breast topped with sliced roasted eggplant, roasted red pepper, fresh mozzarella and finished with a pink sauce.", category:"Entrées", aliases:[] },
-      { name:"lamb chops", description:"Select lamb chops specially marinated and char-broiled. Served with rice and burgol.", category:"Entrées", aliases:[] },
-      { name:"braised beef short ribs", description:"Slow-braised beef short ribs with fresh herbs and a demi-glace sauce. Served over couscous.", category:"Entrées", aliases:["short ribs"] },
-      { name:"couscous beef and vegetable stew", description:"Braised beef with vegetables in a light tomato sauce. Served over couscous and topped with toasted almonds.", category:"Entrées", aliases:["beef stew"] },
-      { name:"lamb shank", description:"Slow-braised lamb shank on the bone topped with celery, potato, carrot, and onion in a tomato sauce. Served with couscous.", category:"Entrées", aliases:[] },
-      { name:"sahara mixed grill", description:"Adana Kebab, Chicken Kebab, Chicken Adana Kebab, Chicken Chops and Shish Kebab. Served with rice and burgol.", category:"Entrées", aliases:["mixed grill"] },
-      { name:"salmon", description:"Salmon prepared with leeks and fresh tomato, finished with a lemon-garlic sauce.", category:"Seafood Entrées", aliases:[] },
-      { name:"shrimp kebab", description:"Grilled, marinated Jumbo Shrimp served with rice and bihari.", category:"Seafood Entrées", aliases:["shrimp"] },
-      { name:"sahara shrimp", description:"Shrimp cooked in our spicy tomato sauce. Served with vegetables and mashed potato.", category:"Seafood Entrées", aliases:[] },
-      { name:"shrimp sauté", description:"Sautéed shrimp with capers and fresh tomato, finished with a light lemon garlic sauce.", category:"Seafood Entrées", aliases:["shrimp saute"] },
-      { name:"couscous vegetable stew", description:"Vegetables in a light tomato sauce, served over couscous and topped with toasted almonds.", category:"Vegetarian Entrées", aliases:["vegetable stew"] },
-      { name:"roasted eggplant", description:"Eggplant stuffed with rice and fresh vegetables, topped with melted feta cheese.", category:"Vegetarian Entrées", aliases:["imam bayildi"] },
-      { name:"falafel (entrée)", description:"Fried chickpeas mixed with vegetables. Served with rice and burgol.", category:"Vegetarian Entrées", aliases:["falafel entree","felafel"] },
-      { name:"hummus", description:"", category:"Appetizers", aliases:[] },
-      { name:"baba ghanoush", description:"", category:"Appetizers", aliases:["baba ganoush"] },
-      { name:"labhne", description:"", category:"Appetizers", aliases:["labneh"] },
-      { name:"spiced ezme", description:"", category:"Appetizers", aliases:["ezme"] },
-      { name:"calamari", description:"Fried calamari with house tomato sauce.", category:"Appetizers", aliases:[] },
-      { name:"tomato feta flatbread", description:"Sliced Jersey tomato with melted feta, oregano, & extra virgin olive oil.", category:"Flatbreads", aliases:[] },
-      { name:"fresh mozzarella flatbread", description:"Fresh mozzarella, tomato, basil, & extra virgin olive oil; finished with parmesan.", category:"Flatbreads", aliases:[] },
-      { name:"shepherd’s salad", description:"Tomatoes, cucumbers, peppers, onion, parsley, lemon, olive oil.", category:"Salads", aliases:["shepherds salad"] },
-      { name:"tahini shepherd’s salad", description:"Classic shepherd’s salad with tahini dressing.", category:"Salads", aliases:["tahini shepherds"] },
-      { name:"tabouleh salad", description:"Parsley, tomatoes, scallions, and brown wheat with lemon & olive oil.", category:"Salads", aliases:["tabbouleh"] },
-      { name:"fattoush salad", description:"Romaine, cucumber, tomatoes, onions, toasted pita, sumac, lemon, olive oil.", category:"Salads", aliases:[] },
-      { name:"spicy red lentil soup", description:"", category:"Soups", aliases:["red lentil"] },
-      { name:"Adana Kebab (sandwich)", description:"11am–5pm; No Dinners.", category:"Sandwiches", aliases:["adana sandwich"] },
-      { name:"Felafel (sandwich)", description:"11am–5pm; No Dinners.", category:"Sandwiches", aliases:["falafel sandwich","falafel"] },
-      { name:"baklava", description:"", category:"Desserts", aliases:[] },
-      { name:"turkish coffee", description:"", category:"Coffee & Tea", aliases:[] },
-      { name:"iced tea & lemonade", description:"Rosewater options available.", category:"Beverages", aliases:["iced tea","lemonade"] }
-    ];
-
-    /* ============================
-       State
-       ============================ */
-    const state = {
-      experience: null,            // Excellent | Good | Not great
-      highlight: null,             // Food | Service | Atmosphere | Authenticity
-      selectedTags: new Set(),     // up to 3
-      kwList: [],                  // combined keywords (strings)
-      kwShowAll: false,
-
-      // Positive "more details"
-      posDetails: { veg:null, diet:[], parking:null, kids:[], access:[] },
-
-      // Negative answers
-      neg: { dining:null, meal:null, spend:null, feedback:"" }
+    /***************
+     * Utilities
+     ***************/
+    const qs  = (s, r=document)=>r.querySelector(s);
+    const qsa = (s, r=document)=>[...r.querySelectorAll(s)];
+    const setBrand = hex => document.documentElement.style.setProperty("--brand", hex || "#b91c1c");
+    const copyText = async (t)=>{
+      if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
+      const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
     };
 
-    /* A little randomness so each AI call can vary on demand */
-    const STYLE_VARIANTS = ["graceful","crisp","inviting","refined","warm","vivid","elegant"];
+    function slugFromPath() {
+      const path = location.pathname.replace(/^\/+/, "");
+      return path.startsWith("r/") ? path.split("/")[1] : "";
+    }
 
-    /* ============================
-       Helpers
-       ============================ */
-    const qs = (s, r=document)=>r.querySelector(s);
-    const qsa = (s, r=document)=>[...r.querySelectorAll(s)];
-    const normalizeWord = w => w.toLowerCase().replace(/[()’'`]/g,"").replace(/[^a-zA-Z\u00C0-\u017F]+/g,"").trim();
-
-    function buildGoogleUrl() {
-      if (CONFIG.googleMapsUrl) return CONFIG.googleMapsUrl;
-      if (CONFIG.googlePlaceId) return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(CONFIG.googlePlaceId)}`;
+    function googleUrl(google) {
+      if (google?.mapsUrl) return google.mapsUrl;
+      if (google?.placeId) return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(google.placeId)}`;
       return "";
     }
 
-    function enableGoogleLink() {
-      const a = qs("#googleLink");
-      const tip = qs("#googleTip");
-      const url = buildGoogleUrl();
-      if (url) { a.setAttribute("href", url); tip.style.display = "none"; }
-      else { a.removeAttribute("href"); tip.style.display = "block"; }
+    /***********************
+     * Deterministic writer
+     ***********************/
+    function writeShortReview({name, experience, highlight, keywords, details}) {
+      // keep it under ~60 words (40–58 target)
+      const tone = experience === "Excellent"
+        ? ["Dinner at","An evening at","My visit to"][Math.floor(Math.random()*3)]
+        : ["I stopped by","I visited","I had a meal at"][Math.floor(Math.random()*3)];
+      const k = (keywords||[]).slice(0,3);
+      const dishLine = k.length
+        ? ` The ${k.join(", ")} ${k.length===1?"was":"were"} well prepared and full of flavor.`
+        : "";
+      const hlMap = {
+        "Food":" The kitchen’s attention to detail showed. 🍽",
+        "Service":" Service was attentive and well-timed. 🤝",
+        "Atmosphere":" The room felt calm and welcoming. 🌆",
+        "Authenticity":" Flavors felt thoughtful and true to the cuisine. 🌍"
+      };
+      const extra = details ? ` ${details}.` : "";
+      const closer = experience === "Excellent"
+        ? " Highly recommended."
+        : " I’d happily return.";
+
+      return `${tone} ${name} was ${experience.toLowerCase()}.` + dishLine + (hlMap[highlight]||"") + extra + closer;
     }
 
-    function makeChip(text, pressed=false) {
-      const b = document.createElement("button");
-      b.type = "button"; b.className = "chip smooth"; b.setAttribute("aria-pressed", pressed ? "true" : "false");
+    function detailsSummary(d) {
+      const parts=[];
+      if (d.veg) parts.push(`Vegetarian options: ${d.veg}`);
+      if (d.diet?.length) parts.push(`Dietary: ${d.diet.join(", ")}`);
+      if (d.parking) parts.push(`Parking: ${d.parking}`);
+      if (d.kids?.length) parts.push(`Kid-friendliness: ${d.kids.join(", ")}`);
+      if (d.access?.length) parts.push(`Accessibility: ${d.access.join(", ")}`);
+      return parts.join(" | ");
+    }
+
+    /***************
+     * State
+     ***************/
+    const state = {
+      tenant: null,
+      experience: null,
+      highlight: null,
+      selectedTags: new Set(),
+      showAllKw: false,
+      posDetails: { veg:null, diet:[], parking:null, kids:[], access:[] },
+      neg: { dining:null, meal:null, spend:null, feedback:"" }
+    };
+
+    /*****************
+     * Build UI bits
+     *****************/
+    function makeChip(text, pressed=false, onClick=()=>{}) {
+      const b=document.createElement("button");
+      b.type="button"; b.className="chip smooth"; b.setAttribute("aria-pressed", pressed?"true":"false");
       b.textContent = text;
+      b.addEventListener("click", onClick);
       return b;
     }
 
-    function extractKeywords() {
-      const STOP = new Set(["the","and","or","with","in","our","of","a","an","to","on","for","fresh","served","sauce","light","finished","topped","mixed","house","hot","cold","single","double","baked","filet","salad","soup","sandwich","entrée","entree","entrees","vegetable","vegetables","over","side","rolled","diced","grilled","pan","fried","sauteed","sautéed","lemon","garlic","olive","oil","extra","virgin","tomato","tomatoes","pepper","peppers","capers","reduction","cheese","dill","basil","oregano","mint","jasmine","ginger","leek","leeks","rice","couscous","bulgur","burgol"]);
-      const PREFER = new Set(["lamb","chicken","beef","shrimp","salmon","tilapia","eggplant","falafel","kebab","adana","shish","couscous","hummus","baklava","pita","feta","mozzarella","pesto","tabouleh","fattoush","greek","lentil","calamari","espresso","turkish","coffee","shawarma"]);
-      const BIGRAMS = new Set(["lamb chops","short ribs","chicken adana","adana kebab","shish kebab","red lentil","turkish coffee","fresh mozzarella","chocolate lava"]);
-
-      const counts = new Map();
-      const bump=(t,w=1)=>counts.set(t,(counts.get(t)||0)+w);
-
-      MENU.forEach(item=>{
-        const blob = `${item.name} ${item.description||""} ${(item.aliases||[]).join(" ")}`;
-        const words = blob.split(/\s+/).map(normalizeWord).filter(Boolean);
-        words.forEach(w => { if (!STOP.has(w) && w.length>=3) bump(w, PREFER.has(w)?2:1); });
-        for(let i=0;i<words.length-1;i++){
-          const bi = `${words[i]} ${words[i+1]}`;
-          if (BIGRAMS.has(bi)) bump(bi,3);
-        }
-      });
-
-      // Ensure curated top suggestions are present
-      TOP_SUGGESTIONS.forEach(s => { if (!counts.has(s)) counts.set(s, 12); });
-
-      const arr = [...counts.entries()]
-        .map(([text,count])=>({text,count}))
-        .sort((a,b)=>b.count-a.count || a.text.localeCompare(b.text));
-
-      const uniq = [];
-      const seen = new Set();
-      for (const t of arr) {
-        if (seen.has(t.text)) continue;
-        if (t.text.length < 3) continue;
-        seen.add(t.text);
-        uniq.push(t.text);
-        if (uniq.length >= 64) break;
-      }
-      state.kwList = uniq;
-    }
-
     function renderKeywords() {
-      const wrap = qs("#kwWrap"); wrap.innerHTML="";
-      const max = state.kwShowAll ? state.kwList.length : Math.min(16, state.kwList.length);
-      state.kwList.slice(0, max).forEach(k=>{
+      const wrap=qs("#kwWrap"); wrap.innerHTML="";
+      const list = state.tenant?.keywords || [];
+      const max = state.showAllKw ? list.length : Math.min(16, list.length);
+      list.slice(0,max).forEach(k=>{
         const pressed = state.selectedTags.has(k);
-        const btn = makeChip(k, pressed);
-        btn.addEventListener("click", ()=>{
+        wrap.appendChild(makeChip(k, pressed, ()=>{
           const on = state.selectedTags.has(k);
           if (!on && state.selectedTags.size>=3) return;
           on ? state.selectedTags.delete(k) : state.selectedTags.add(k);
           renderKeywords();
-        });
-        wrap.appendChild(btn);
+        }));
       });
-
-      const toggle = qs("#kwToggle");
-      if (state.kwList.length <= 16) toggle.classList.add("hidden");
-      else { toggle.classList.remove("hidden"); toggle.textContent = state.kwShowAll ? "See fewer" : "See more"; }
+      const t=qs("#kwToggle");
+      if (list.length<=16) t.classList.add("hidden"); else { t.classList.remove("hidden"); t.textContent = state.showAllKw? "See fewer" : "See more"; }
     }
 
-    function setExperience(xp) {
-      state.experience = xp;
-
-      /* RESET (keep as-is): clear review; disable Copy; reset edit toggle; clear statuses */
-      qs("#reviewText").value = "";
-      qs("#copyBtn").setAttribute("disabled","true");
-      qs("#copyStatus").textContent = "";
-      qs("#aiStatus").textContent = "";
-      qs("#editToggle").checked = false;
-      qs("#reviewText").setAttribute("readonly","");
-
-      if (xp === "Not great") {
-        qs("#experience").classList.add("hidden");
-        const neg = qs("#negative"); neg.classList.remove("hidden"); neg.setAttribute("aria-hidden","false");
-      } else {
-        qs("#experience").classList.add("hidden");
-        const pos = qs("#positive"); pos.classList.remove("hidden"); pos.setAttribute("aria-hidden","false");
-        enableGoogleLink();
-      }
+    function renderHighlights() {
+      const opts = state.tenant?.highlightOptions || ["Food","Service","Atmosphere","Authenticity"];
+      const wrap=qs("#hlWrap"); wrap.innerHTML="";
+      opts.forEach(h=>{
+        const pressed = state.highlight===h;
+        wrap.appendChild(makeChip(h, pressed, ()=>{
+          state.highlight = (state.highlight===h) ? null : h;
+          renderHighlights();
+        }));
+      });
     }
 
-    // ------- Positive “more details” builders -------
     function chipGroup(el, options, multi=false, getter, setter) {
-      const wrap = qs(el); wrap.innerHTML="";
-      const selected = new Set(Array.isArray(getter()) ? getter() : [getter()].filter(Boolean));
+      const wrap=qs(el); wrap.innerHTML="";
+      const sel=new Set(Array.isArray(getter())?getter():[getter()].filter(Boolean));
       options.forEach(opt=>{
-        const b = document.createElement("button");
-        b.type="button"; b.className="chip smooth"; b.setAttribute("aria-pressed", selected.has(opt) ? "true":"false");
-        b.textContent = opt;
-        b.addEventListener("click", ()=>{
-          const isOn = selected.has(opt);
-          if (multi){
-            isOn ? selected.delete(opt) : selected.add(opt);
-            setter([...selected]);
-          }else{
-            selected.clear(); selected.add(opt);
-            setter(opt);
-          }
+        wrap.appendChild(makeChip(opt, sel.has(opt), ()=>{
+          const isOn = sel.has(opt);
+          if (multi) { isOn ? sel.delete(opt) : sel.add(opt); setter([...sel]); }
+          else { sel.clear(); sel.add(opt); setter(opt); }
           chipGroup(el, options, multi, getter, setter);
-        });
-        wrap.appendChild(b);
+        }));
       });
     }
 
     function buildPositiveDetailsUI() {
-      chipGroup("#pos-veg", ["Yes","No","Not sure"], false,
-        ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
-      chipGroup("#pos-diet", ["Gluten-free options","Vegan options","Halal options","Nut-aware","Dairy-free","Other"], true,
-        ()=>state.posDetails.diet, v=>state.posDetails.diet=v);
-      chipGroup("#pos-parking", ["Street","Lot","Valet","None / not sure"], false,
-        ()=>state.posDetails.parking, v=>state.posDetails.parking=v);
-      chipGroup("#pos-kids", ["Good for kids","High chairs","Kids menu","Not kid-focused"], true,
-        ()=>state.posDetails.kids, v=>state.posDetails.kids=v);
-      chipGroup("#pos-access", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], true,
-        ()=>state.posDetails.access, v=>state.posDetails.access=v);
-    }
-
-    // ------- Negative simple groups -------
-    function chipGroupNeg(el, options, key) {
-      const wrap = qs(el); wrap.innerHTML="";
-      const current = state.neg[key];
-      const selected = new Set([current].filter(Boolean));
-      options.forEach(opt=>{
-        const b = document.createElement("button");
-        b.type="button"; b.className="chip smooth"; b.setAttribute("aria-pressed", selected.has(opt) ? "true":"false");
-        b.textContent = opt;
-        b.addEventListener("click", ()=>{
-          selected.clear(); selected.add(opt);
-          state.neg[key] = opt;
-          chipGroupNeg(el, options, key);
-        });
-        wrap.appendChild(b);
-      });
+      chipGroup("#pos-veg", ["Yes","No","Not sure"], false, ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
+      chipGroup("#pos-diet", ["Gluten-free options","Vegan options","Halal options","Nut-aware","Dairy-free","Other"], true, ()=>state.posDetails.diet, v=>state.posDetails.diet=v);
+      chipGroup("#pos-parking", ["Street","Lot","Valet","None / not sure"], false, ()=>state.posDetails.parking, v=>state.posDetails.parking=v);
+      chipGroup("#pos-kids", ["Good for kids","High chairs","Kids menu","Not kid-focused"], true, ()=>state.posDetails.kids, v=>state.posDetails.kids=v);
+      chipGroup("#pos-access", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], true, ()=>state.posDetails.access, v=>state.posDetails.access=v);
     }
 
     function buildNegativeUI() {
-      chipGroupNeg("#q-dining", ["Dine in","Take out","Delivery"], "dining");
-      chipGroupNeg("#q-meal",   ["Breakfast","Brunch","Lunch","Dinner","Other"], "meal");
-      chipGroupNeg("#q-spend",  ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"], "spend");
-      qs("#negFeedback").addEventListener("input", (e)=> state.neg.feedback = e.target.value);
+      const nq = state.tenant?.negativeQuestions || {};
+      chipGroup("#q-dining", nq.diningModes || ["Dine in","Take out","Delivery"], false, ()=>state.neg.dining, v=>state.neg.dining=v);
+      chipGroup("#q-meal",   nq.meals || ["Breakfast","Brunch","Lunch","Dinner","Other"], false, ()=>state.neg.meal, v=>state.neg.meal=v);
+      chipGroup("#q-spend",  nq.spendRanges || ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"], false, ()=>state.neg.spend, v=>state.neg.spend=v);
+      qs("#negFeedback").addEventListener("input", e=> state.neg.feedback = e.target.value);
     }
 
-    // ---- AI helpers ----
-    function cleanAI(text) {
-      if (!text) return "";
-      let t = text.trim();
-      const m = t.match(/<review>([\s\S]*?)<\/review>/i); if (m) t = m[1].trim();
-      t = t.replace(/^["“']?\s*here\s*['’`]?s[^:]*:\s*/i,"").trim();
-      t = t.replace(/^```[a-z]*\n?([\s\S]*?)\n?```$/i,"$1").trim();
-      if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("“") && t.endsWith("”")) || (t.startsWith("'") && t.endsWith("'"))) t = t.slice(1, -1).trim();
-      return t;
-    }
+    /**********************
+     * Flow interactions
+     **********************/
+    function setExperience(xp){
+      state.experience = xp;
+      qs("#reviewText").value = "";
+      qs("#copyBtn").setAttribute("disabled","true");
+      qs("#copyStatus").textContent = "";
+      qs("#aiStatus").textContent = "";
+      qs("#editToggle").checked=false; qs("#reviewText").setAttribute("readonly","");
 
-    function detailsSummaryText() {
-      const parts = [];
-      if (state.posDetails.veg) parts.push(`Vegetarian options: ${state.posDetails.veg}`);
-      if (state.posDetails.diet?.length) parts.push(`Dietary: ${state.posDetails.diet.join(", ")}`);
-      if (state.posDetails.parking) parts.push(`Parking: ${state.posDetails.parking}`);
-      if (state.posDetails.kids?.length) parts.push(`Kid-friendliness: ${state.posDetails.kids.join(", ")}`);
-      if (state.posDetails.access?.length) parts.push(`Accessibility: ${state.posDetails.access.join(", ")}`);
-      return parts.join(" | ");
-    }
-
-    function buildAIRequest(draft) {
-      // Random style + nonce ensure each click produces a fresh take
-      const style = STYLE_VARIANTS[Math.floor(Math.random() * STYLE_VARIANTS.length)];
-      const nonceArr = new Uint32Array(1);
-      (self.crypto || window.crypto).getRandomValues(nonceArr);
-      const nonce = nonceArr[0];
-
-      const sys =
-        "You write polished restaurant reviews. RULES:" +
-        " 1) Output EXACTLY ONE paragraph with the final review text only." +
-        " 2) No preface, labels, headings, or explanations." +
-        " 3) Do NOT start with 'Here is' or similar." +
-        " 4) FEWER THAN 60 WORDS. Aim for 40–58 words." +
-        " 5) Warm fine-dining tone; avoid extreme claims." +
-        " 6) Use at most 1–2 emojis from: 🍽 🤝 🌆 🌍 ✨ ❤️ 👍." +
-        " 7) No markdown, no quotes.";
-      const extra = detailsSummaryText();
-      const prompt =
-        `Return ONLY the single final paragraph (no preface, no quotes).\n` +
-        `Restaurant: ${CONFIG.restaurantName}\n` +
-        `Experience: ${state.experience}\n` +
-        `Highlight: ${state.highlight || "none"}\n` +
-        `Selected keywords: ${[...state.selectedTags].join(", ") || "none"}\n` +
-        (extra ? `Extra details to weave in (short): ${extra}\n` : "") +
-        `Rephrase on each request; vary diction slightly. Style: ${style}. nonce:${nonce}\n` +
-        `Draft (may be empty):\n${draft || ""}`;
-      return { sys, prompt };
-    }
-
-    async function aiPolish() {
-      const status = qs("#aiStatus");
-      const textArea = qs("#reviewText");
-      if (!CONFIG.aiApiKey) {
-        status.textContent = "AI is disabled on this page. Add CONFIG.aiApiKey for local testing or use a server proxy.";
-        return;
+      if (xp==="Not great"){
+        qs("#experience").classList.add("hidden");
+        qs("#negative").classList.remove("hidden"); qs("#negative").setAttribute("aria-hidden","false");
+      } else {
+        qs("#experience").classList.add("hidden");
+        qs("#positive").classList.remove("hidden"); qs("#positive").setAttribute("aria-hidden","false");
       }
-      if (!state.experience || (state.experience !== "Excellent" && state.experience !== "Good")) {
-        status.textContent = "Please choose Excellent or Good first.";
-        return;
-      }
+    }
 
-      // Clear so user sees it's refreshing
-      textArea.value = "";
-      status.textContent = "Polishing…";
+    function attachCopyBehavior(){
+      const btn=qs("#copyBtn"); const label=btn.querySelector(".btn-label"); const original=label.textContent;
+      btn.addEventListener("click", async ()=>{
+        const txt=qs("#reviewText").value.trim(); if (!txt) return;
+        await copyText(txt);
+        label.textContent="Copied"; qs("#sr-live").textContent="Copied to clipboard";
+        setTimeout(()=>label.textContent=original, 2000);
+      });
+    }
 
-      try {
-        const { sys, prompt } = buildAIRequest("");
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${CONFIG.aiApiKey}`,
-          },
-          body: JSON.stringify({
-            model: CONFIG.aiModel,
-            messages: [
-              { role: "system", content: sys },
-              { role: "user", content: prompt },
-            ],
-            // More variety so each click is different
-            temperature: 0.9,
-            top_p: 0.9,
-            presence_penalty: 0.35,
-            frequency_penalty: 0.25,
-            max_tokens: 120
-          }),
+    async function polishWithAI(){
+      const status=qs("#aiStatus");
+      if (!state.experience || state.experience==="Not great"){ status.textContent="Choose Excellent or Good first."; return; }
+
+      status.textContent="Polishing…";
+      try{
+        const details = detailsSummary(state.posDetails);
+        const body = {
+          restaurant: state.tenant.name,
+          experience: state.experience,
+          highlight: state.highlight || "none",
+          keywords: [...state.selectedTags],
+          extra: details
+        };
+
+        // Netlify Function (you can create it later). We still try; if it fails we show a message.
+        const r = await fetch("/.netlify/functions/review-ai", {
+          method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
         });
 
-        if (!res.ok) throw new Error("AI request failed");
-        const data = await res.json();
-        const raw = data?.choices?.[0]?.message?.content ?? "";
-        const cleaned = cleanAI(raw);
-
-        textArea.value = cleaned;
-        if (cleaned) {
+        if (!r.ok) throw new Error("no endpoint");
+        const j = await r.json();
+        const txt = (j?.text || "").trim();
+        if (txt){
+          qs("#reviewText").value = txt;
           qs("#copyBtn").removeAttribute("disabled");
-          status.textContent = "AI suggestion applied (short review).";
+          status.textContent = "AI suggestion applied.";
         } else {
           status.textContent = "AI returned no text. Try again.";
         }
-      } catch (e) {
-        status.textContent = "Couldn’t reach the AI service. Please try again.";
+      }catch(_){
+        status.textContent = "AI endpoint isn’t set up yet. Use “Write review” for now, or add a Netlify Function at /.netlify/functions/review-ai.";
       }
     }
 
-    // ---- Copy button: label toggles to "Copied" for 2s then back ----
-    function copyText(text) {
-      if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
-      const ta = document.createElement("textarea");
-      ta.value = text; ta.setAttribute("readonly",""); ta.style.position="absolute"; ta.style.left="-9999px";
-      document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch(e) {}
-      document.body.removeChild(ta); return Promise.resolve();
-    }
-
-    function attachCopyBehavior() {
-      const btn = qs("#copyBtn");
-      const label = btn.querySelector(".btn-label");
-      const original = label.textContent;
-      btn.addEventListener("click", async ()=>{
-        const txt = qs("#reviewText").value;
-        if (!txt.trim()) return;
-        await copyText(txt);
-        label.textContent = "Copied";
-        qs("#sr-live").textContent = "Copied to clipboard";
-        setTimeout(()=>{ label.textContent = original; }, 2000);
+    function writeDeterministic(){
+      if (!state.experience || state.experience==="Not great"){ qs("#aiStatus").textContent="Choose Excellent or Good first."; return; }
+      const txt = writeShortReview({
+        name: state.tenant.name,
+        experience: state.experience,
+        highlight: state.highlight,
+        keywords: [...state.selectedTags],
+        details: detailsSummary(state.posDetails)
       });
+      qs("#reviewText").value = txt;
+      qs("#copyBtn").removeAttribute("disabled");
+      qs("#aiStatus").textContent = "Draft created.";
     }
 
-    function sendNegativeFeedback() {
+    async function sendNegative(){
+      const btn=qs("#sendNegative"); const status=qs("#negStatus");
+      btn.disabled=true; status.textContent="Sending…";
+
       const payload = {
-        restaurantName: CONFIG.restaurantName,
+        tenantId: state.tenant.slug,
+        restaurantName: state.tenant.name,
         timestampISO: new Date().toISOString(),
-        selection: { experience: "Not great" },
-        answers: {
-          dining: state.neg.dining,
-          meal: state.neg.meal,
-          spend: state.neg.spend,
-          feedback: state.neg.feedback
-        },
+        selection:{ experience:"Not great" },
+        answers: state.neg,
         userAgent: navigator.userAgent
       };
-      if (!CONFIG.negativeFeedbackEndpoint) return Promise.resolve();
-      return fetch(CONFIG.negativeFeedbackEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        keepalive: true
-      }).catch(()=>{});
+
+      try {
+        await fetch("/.netlify/functions/feedback", {
+          method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
+        });
+      } catch (_) { /* ignore errors – UI should still show success */ }
+
+      status.textContent="";
+      const form=qs("#negForm"); const done=qs("#negDone");
+      form.classList.add("opacity-0","translate-y-2");
+      setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
     }
 
-    /* ============================
-       Init & events
-       ============================ */
-    function init() {
-      qs("#brandName").textContent = CONFIG.restaurantName;
+    /****************
+     * Initialization
+     ****************/
+    async function init(){
+      // Read tenant slug (fallback to 'sahara' so you can test quickly)
+      const slug = slugFromPath() || "sahara";
+      // Fetch JSON
+      const res = await fetch(`/data/tenants/${encodeURIComponent(slug)}.json`).catch(()=>null);
+      if (!res || !res.ok){
+        qs("#title").textContent = "Restaurant not found";
+        qs("#subtitle").textContent = "Check the link and try again.";
+        return;
+      }
+      const cfg = await res.json(); state.tenant = cfg;
 
-      // Experience selection
-      qsa("[data-exp]").forEach(b=>{
-        b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")));
-      });
-
-      // Build keyword chips (combined list w/ See more)
-      extractKeywords();
-      renderKeywords();
-      qs("#kwToggle").addEventListener("click", ()=>{
-        state.kwShowAll = !state.kwShowAll; renderKeywords();
-      });
-
-      // Highlight chips (single-select toggle)
-      qsa(".hl").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const isOn = btn.getAttribute("aria-pressed")==="true";
-          qsa(".hl").forEach(x=>x.setAttribute("aria-pressed","false"));
-          btn.setAttribute("aria-pressed", isOn ? "false" : "true");
-          state.highlight = isOn ? null : btn.getAttribute("data-hl");
-        });
-      });
-
-      // Positive extra details
-      buildPositiveDetailsUI();
-
-      // Edit toggle
-      qs("#editToggle").addEventListener("change", e=>{
-        const ta = qs("#reviewText");
-        if (e.target.checked) { ta.removeAttribute("readonly"); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
-        else { ta.setAttribute("readonly",""); }
-      });
-
-      // Copy behavior
-      attachCopyBehavior();
+      // Brand + titles
+      setBrand(cfg.brand?.primary); 
+      qs("#title").textContent = `Share your experience at ${cfg.name}`;
+      qs("#subtitle").textContent = "A quick, two-minute flow.";
 
       // Google link
-      enableGoogleLink();
+      const gURL = googleUrl(cfg.google);
+      const gl = qs("#googleLink"); const tip=qs("#googleTip");
+      if (gURL) { gl.href = gURL; tip.textContent = ""; } else { gl.removeAttribute("href"); tip.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
 
-      // AI polish
-      qs("#aiPolishBtn").addEventListener("click", aiPolish);
+      // Build positive/negative controls
+      renderKeywords(); renderHighlights(); buildPositiveDetailsUI(); buildNegativeUI();
 
-      // Negative UI + send
-      buildNegativeUI();
-      qs("#sendNegative").addEventListener("click", async ()=>{
-        const btn = qs("#sendNegative"); 
-        const status = qs("#negStatus");
-        const form = qs("#negForm");
-        const done = qs("#negDone");
-
-        btn.disabled = true; status.textContent = "Sending…";
-        await sendNegativeFeedback();
-        status.textContent = "";
-
-        // Hide the form smoothly, show confirmation with check sign
-        form.classList.add("opacity-0","translate-y-2");
-        setTimeout(()=>{
-          form.classList.add("hidden");
-          done.classList.remove("hidden");
-          done.classList.add("opacity-0");
-          setTimeout(()=>{ done.classList.remove("opacity-0"); }, 10);
-        }, 220);
-      });
+      // Wire buttons
+      qsa("[data-exp]").forEach(b=> b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp"))));
+      qs("#kwToggle").addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); });
+      qs("#editToggle").addEventListener("change", e=>{ const ta=qs("#reviewText"); e.target.checked?ta.removeAttribute("readonly"):ta.setAttribute("readonly",""); });
+      attachCopyBehavior();
+      qs("#writeBtn").addEventListener("click", writeDeterministic);
+      qs("#aiBtn").addEventListener("click", polishWithAI);
+      qs("#sendNegative").addEventListener("click", sendNegative);
     }
 
     document.addEventListener("DOMContentLoaded", init);
