@@ -28,8 +28,10 @@
     <section class="mx-auto max-w-2xl rounded-2xl bg-white card ring-1 ring-black/5">
       <!-- Header -->
       <header class="p-6 sm:p-8 border-b border-slate-100">
-        <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">Share your experience</h1>
-        <p id="subtitle" class="text-slate-600 mt-1"></p>
+        <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">
+          Share your experience at <span id="restName" class="brand-txt">your restaurant</span>
+        </h1>
+        <!-- subtitle intentionally removed per request -->
       </header>
 
       <!-- Content -->
@@ -59,10 +61,20 @@
 
         <!-- POSITIVE PATH -->
         <section id="positive" class="hidden" aria-hidden="true">
+          <!-- TOP: primary Google button first -->
+          <div class="mb-6">
+            <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
+               class="inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">
+              ⭐ <span class="ml-2">Open Google to post</span>
+            </a>
+            <p id="googleTipTop" class="mt-2 text-sm text-slate-500"></p>
+          </div>
+
           <h2 class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
+          <p class="mt-1 text-sm text-slate-600">Or write a short paragraph to paste into Google. The AI helper is optional.</p>
 
           <!-- Keywords -->
-          <div class="mt-2">
+          <div class="mt-4">
             <div class="flex items-center justify-between">
               <p class="text-sm font-medium text-slate-700">Pick a few keywords</p>
               <button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>
@@ -126,15 +138,6 @@
                 <div class="mt-3 flex flex-wrap gap-2" id="pos-access"></div>
               </details>
             </div>
-          </div>
-
-          <!-- Post on Google -->
-          <div class="mt-6">
-            <a id="googleLink" target="_blank" rel="noopener noreferrer"
-               class="inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">
-              ⭐ <span class="ml-2">Open Google to post</span>
-            </a>
-            <p id="googleTip" class="mt-2 text-sm text-slate-500"></p>
           </div>
         </section>
 
@@ -371,7 +374,7 @@
           extra: details
         };
 
-        // Netlify Function (you can create it later). We still try; if it fails we show a message.
+        // Netlify Function (add later). Friendly fallback if missing.
         const r = await fetch("/.netlify/functions/review-ai", {
           method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
         });
@@ -435,25 +438,32 @@
      ****************/
     async function init(){
       // Read tenant slug (fallback to 'sahara' so you can test quickly)
-      const slug = slugFromPath() || "sahara";
-      // Fetch JSON
-      const res = await fetch(`/data/tenants/${encodeURIComponent(slug)}.json`).catch(()=>null);
+      const path = location.pathname.replace(/^\/+/, "");
+      const fromRoute = path.startsWith("r/") ? path.split("/")[1] : "";
+      const fromQuery = new URLSearchParams(location.search).get("id") || "";
+      const slug = (fromRoute || fromQuery || "sahara");
+
+      // Fetch JSON (relative for file:// preview support)
+      const jsonUrl = (location.protocol === "file:")
+        ? `data/tenants/${encodeURIComponent(slug)}.json`
+        : `/data/tenants/${encodeURIComponent(slug)}.json`;
+
+      const res = await fetch(jsonUrl).catch(()=>null);
       if (!res || !res.ok){
-        qs("#title").textContent = "Restaurant not found";
-        qs("#subtitle").textContent = "Check the link and try again.";
+        qs("#title").innerHTML = `Restaurant <span class="brand-txt">not found</span>`;
         return;
       }
       const cfg = await res.json(); state.tenant = cfg;
 
       // Brand + titles
-      setBrand(cfg.brand?.primary); 
-      qs("#title").textContent = `Share your experience at ${cfg.name}`;
-      qs("#subtitle").textContent = "A quick, two-minute flow.";
+      setBrand(cfg.brand?.primary);
+      qs("#restName").textContent = cfg.name;
 
-      // Google link
+      // Google link (TOP)
       const gURL = googleUrl(cfg.google);
-      const gl = qs("#googleLink"); const tip=qs("#googleTip");
-      if (gURL) { gl.href = gURL; tip.textContent = ""; } else { gl.removeAttribute("href"); tip.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
+      const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop");
+      if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
+      else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
 
       // Build positive/negative controls
       renderKeywords(); renderHighlights(); buildPositiveDetailsUI(); buildNegativeUI();
