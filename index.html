@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Share Your Experience</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Tailwind CDN -->
+  <!-- Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --brand: #b91c1c }
@@ -12,11 +12,11 @@
     .brand-txt { color: var(--brand) }
     .brand-ring{ --tw-ring-color: var(--brand) }
     .smooth    { transition: all 220ms ease }
-    .card      { box-shadow: 0 10px 30px rgba(0,0,0,.06) }
+    .card      { box-shadow: 0 12px 40px rgba(0,0,0,.08) }
     .chip {
-      display:inline-flex; align-items:center; gap:.4rem;
-      border:1.5px solid #e2e8f0; padding:.44rem .8rem; border-radius:9999px;
-      font-size:.875rem; background:#fff;
+      display:inline-flex; align-items:center; gap:.45rem;
+      border:1.5px solid #e2e8f0; padding:.44rem .85rem; border-radius:9999px;
+      font-size:.9rem; background:#fff; line-height:1;
     }
     .chip:hover { background:#f8fafc }
     .chip[aria-pressed="true"] { color:#fff; background:var(--brand); border-color:transparent }
@@ -25,16 +25,15 @@
 </head>
 <body class="min-h-screen bg-gradient-to-br from-stone-50 to-stone-200 text-slate-800 antialiased">
   <main class="mx-auto max-w-3xl px-4 py-10">
-    <section class="mx-auto max-w-2xl rounded-2xl bg-white card ring-1 ring-black/5">
+    <section class="mx-auto max-w-2xl rounded-2xl bg-white card ring-1 ring-black/5 overflow-hidden">
       <!-- Header -->
       <header class="p-6 sm:p-8 border-b border-slate-100">
-        <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Share your experience at <span id="restName" class="brand-txt">your restaurant</span>
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">
+          Share your experience at <span id="restName" class="brand-txt">Your Restaurant</span>
         </h1>
-        <!-- subtitle intentionally removed per request -->
       </header>
 
-      <!-- Content -->
+      <!-- Body -->
       <div class="p-6 sm:p-8 space-y-10">
 
         <!-- STEP 1 — EXPERIENCE -->
@@ -61,82 +60,91 @@
 
         <!-- POSITIVE PATH -->
         <section id="positive" class="hidden" aria-hidden="true">
-          <!-- TOP: primary Google button first -->
-          <div class="mb-6">
-            <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
-               class="inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">
-              ⭐ <span class="ml-2">Open Google to post</span>
-            </a>
+          <!-- Sticky bar: Google first, then small AI help -->
+          <div class="sticky top-0 z-10 -mx-6 sm:-mx-8 px-6 sm:px-8 py-3 bg-white/85 backdrop-blur border-b border-slate-100">
+            <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+              <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex w-full sm:flex-1 items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">
+                ⭐ <span class="ml-2">Open Google to post</span>
+              </a>
+              <button id="revealAi" type="button"
+                      class="inline-flex sm:w-auto items-center justify-center rounded-lg px-4 py-3 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">
+                ✨ Help me with AI
+              </button>
+            </div>
             <p id="googleTipTop" class="mt-2 text-sm text-slate-500"></p>
           </div>
 
-          <h2 class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
-          <p class="mt-1 text-sm text-slate-600">Or write a short paragraph to paste into Google. The AI helper is optional.</p>
+          <!-- CRAFT (hidden until AI help is clicked) -->
+          <div id="craftWrap" class="hidden mt-6">
+            <h2 class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
+            <p class="mt-1 text-sm text-slate-600">Write a short paragraph you can paste into Google. AI is optional.</p>
 
-          <!-- Keywords -->
-          <div class="mt-4">
-            <div class="flex items-center justify-between">
-              <p class="text-sm font-medium text-slate-700">Pick a few keywords</p>
-              <button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>
+            <!-- Keywords -->
+            <div class="mt-4">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-slate-700">Pick a few keywords</p>
+                <button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>
+              </div>
+              <p class="mt-1 text-sm text-slate-500">Choose up to 3.</p>
+              <div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>
             </div>
-            <p class="mt-1 text-sm text-slate-500">Choose up to 3.</p>
-            <div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>
 
-          <!-- Highlight -->
-          <div class="mt-6">
-            <p class="text-sm font-medium text-slate-700">What stood out the most?</p>
-            <div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>
-
-          <!-- Review -->
-          <div class="mt-6">
-            <div class="flex items-center justify-between">
-              <label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>
-              <label class="inline-flex items-center gap-2 cursor-pointer">
-                <input id="editToggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[var(--brand)] focus:ring-[var(--brand)]" />
-                <span class="text-sm text-slate-700">Enable editing</span>
-              </label>
+            <!-- Highlight -->
+            <div class="mt-6">
+              <p class="text-sm font-medium text-slate-700">What stood out the most?</p>
+              <div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>
             </div>
-            <textarea id="reviewText" rows="5" readonly placeholder="Click 'Write review' (no AI) or 'Polish with AI' to generate a short paragraph (under 60 words)."
-              class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6"
-              aria-describedby="copyHelp"></textarea>
-            <p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>
 
-            <div class="mt-3 flex flex-wrap items-center gap-3">
-              <button id="writeBtn" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth">Write review</button>
-              <button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>
+            <!-- Review -->
+            <div class="mt-6">
+              <div class="flex items-center justify-between">
+                <label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input id="editToggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[var(--brand)] focus:ring-[var(--brand)]" />
+                  <span class="text-sm text-slate-700">Enable editing</span>
+                </label>
+              </div>
+              <textarea id="reviewText" rows="5" readonly placeholder="Click 'Write review' (no AI) or 'Polish with AI' to generate a short paragraph (under 60 words)."
+                class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6"
+                aria-describedby="copyHelp"></textarea>
+              <p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>
 
-              <button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>
-              <span id="copyStatus" class="text-sm text-slate-600" aria-live="polite"></span>
+              <div class="mt-3 flex flex-wrap items-center gap-3">
+                <button id="writeBtn" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth">Write review</button>
+                <button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>
+
+                <button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>
+                <span id="copyStatus" class="text-sm text-slate-600" aria-live="polite"></span>
+              </div>
+              <div id="aiStatus" class="mt-2 text-sm text-slate-600" aria-live="polite"></div>
             </div>
-            <div id="aiStatus" class="mt-2 text-sm text-slate-600" aria-live="polite"></div>
-          </div>
 
-          <!-- Optional details to include -->
-          <div class="mt-8">
-            <p class="text-sm font-medium text-slate-700">Add more details to help others</p>
-            <div class="mt-3 space-y-3">
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Vegetarian options</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-veg"></div>
-              </details>
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Dietary restrictions</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-diet"></div>
-              </details>
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Parking</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-parking"></div>
-              </details>
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Kid-friendliness</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-kids"></div>
-              </details>
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Wheelchair accessibility</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-access"></div>
-              </details>
+            <!-- Optional details -->
+            <div class="mt-8">
+              <p class="text-sm font-medium text-slate-700">Add more details to help others</p>
+              <div class="mt-3 space-y-3">
+                <details class="rounded-lg border border-slate-200 px-4 py-3">
+                  <summary class="cursor-pointer select-none font-medium">Vegetarian options</summary>
+                  <div class="mt-3 flex flex-wrap gap-2" id="pos-veg"></div>
+                </details>
+                <details class="rounded-lg border border-slate-200 px-4 py-3">
+                  <summary class="cursor-pointer select-none font-medium">Dietary restrictions</summary>
+                  <div class="mt-3 flex flex-wrap gap-2" id="pos-diet"></div>
+                </details>
+                <details class="rounded-lg border border-slate-200 px-4 py-3">
+                  <summary class="cursor-pointer select-none font-medium">Parking</summary>
+                  <div class="mt-3 flex flex-wrap gap-2" id="pos-parking"></div>
+                </details>
+                <details class="rounded-lg border border-slate-200 px-4 py-3">
+                  <summary class="cursor-pointer select-none font-medium">Kid-friendliness</summary>
+                  <div class="mt-3 flex flex-wrap gap-2" id="pos-kids"></div>
+                </details>
+                <details class="rounded-lg border border-slate-200 px-4 py-3">
+                  <summary class="cursor-pointer select-none font-medium">Wheelchair accessibility</summary>
+                  <div class="mt-3 flex flex-wrap gap-2" id="pos-access"></div>
+                </details>
+              </div>
             </div>
           </div>
         </section>
@@ -215,14 +223,12 @@
      * Deterministic writer
      ***********************/
     function writeShortReview({name, experience, highlight, keywords, details}) {
-      // keep it under ~60 words (40–58 target)
+      // target under 60 words
       const tone = experience === "Excellent"
         ? ["Dinner at","An evening at","My visit to"][Math.floor(Math.random()*3)]
         : ["I stopped by","I visited","I had a meal at"][Math.floor(Math.random()*3)];
       const k = (keywords||[]).slice(0,3);
-      const dishLine = k.length
-        ? ` The ${k.join(", ")} ${k.length===1?"was":"were"} well prepared and full of flavor.`
-        : "";
+      const dish = k.length ? ` The ${k.join(", ")} ${k.length===1?"was":"were"} well prepared and full of flavor.` : "";
       const hlMap = {
         "Food":" The kitchen’s attention to detail showed. 🍽",
         "Service":" Service was attentive and well-timed. 🤝",
@@ -230,11 +236,8 @@
         "Authenticity":" Flavors felt thoughtful and true to the cuisine. 🌍"
       };
       const extra = details ? ` ${details}.` : "";
-      const closer = experience === "Excellent"
-        ? " Highly recommended."
-        : " I’d happily return.";
-
-      return `${tone} ${name} was ${experience.toLowerCase()}.` + dishLine + (hlMap[highlight]||"") + extra + closer;
+      const closer = experience === "Excellent" ? " Highly recommended." : " I’d happily return.";
+      return `${tone} ${name} was ${experience.toLowerCase()}.` + dish + (hlMap[highlight]||"") + extra + closer;
     }
 
     function detailsSummary(d) {
@@ -346,6 +349,8 @@
       } else {
         qs("#experience").classList.add("hidden");
         qs("#positive").classList.remove("hidden"); qs("#positive").setAttribute("aria-hidden","false");
+        // Google-first: craft stays hidden until asked
+        qs("#craftWrap").classList.add("hidden");
       }
     }
 
@@ -374,7 +379,6 @@
           extra: details
         };
 
-        // Netlify Function (add later). Friendly fallback if missing.
         const r = await fetch("/.netlify/functions/review-ai", {
           method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
         });
@@ -437,39 +441,40 @@
      * Initialization
      ****************/
     async function init(){
-      // Read tenant slug (fallback to 'sahara' so you can test quickly)
+      // Read tenant slug (fallback to 'sahara' for easy testing)
       const path = location.pathname.replace(/^\/+/, "");
       const fromRoute = path.startsWith("r/") ? path.split("/")[1] : "";
       const fromQuery = new URLSearchParams(location.search).get("id") || "";
       const slug = (fromRoute || fromQuery || "sahara");
 
-      // Fetch JSON (relative for file:// preview support)
+      // Fetch JSON (relative when opened as file://)
       const jsonUrl = (location.protocol === "file:")
         ? `data/tenants/${encodeURIComponent(slug)}.json`
         : `/data/tenants/${encodeURIComponent(slug)}.json`;
 
       const res = await fetch(jsonUrl).catch(()=>null);
       if (!res || !res.ok){
-        qs("#title").innerHTML = `Restaurant <span class="brand-txt">not found</span>`;
+        qs("#restName").textContent = "Restaurant not found";
         return;
       }
       const cfg = await res.json(); state.tenant = cfg;
 
-      // Brand + titles
+      // Brand + title
       setBrand(cfg.brand?.primary);
       qs("#restName").textContent = cfg.name;
 
-      // Google link (TOP)
+      // Google link in sticky bar
       const gURL = googleUrl(cfg.google);
       const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop");
       if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
       else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
 
-      // Build positive/negative controls
+      // Build UI pieces
       renderKeywords(); renderHighlights(); buildPositiveDetailsUI(); buildNegativeUI();
 
       // Wire buttons
       qsa("[data-exp]").forEach(b=> b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp"))));
+      qs("#revealAi").addEventListener("click", ()=> qs("#craftWrap").classList.toggle("hidden"));
       qs("#kwToggle").addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); });
       qs("#editToggle").addEventListener("change", e=>{ const ta=qs("#reviewText"); e.target.checked?ta.removeAttribute("readonly"):ta.setAttribute("readonly",""); });
       attachCopyBehavior();
