@@ -31,7 +31,7 @@
         <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">
           Share your experience at <span id="restName" class="brand-txt">Sahara</span>
         </h1>
-        <p class="mt-1 text-[11px] text-slate-400 select-none">build v1-simple</p>
+        <p class="mt-1 text-[11px] text-slate-400 select-none">build v1-compat</p>
       </header>
 
       <!-- Body -->
@@ -145,94 +145,66 @@
     </section>
   </main>
 
-  <!-- aria-live region -->
   <div id="sr-live" class="sr-only" aria-live="polite"></div>
 
   <script>
-    /***************
-     * Config (simple & stable)
-     ***************/
-    const DATA_URL = "/data/tenants/sahara.json"; // always Sahara for now
-    const TEST_GROQ_KEY = ""; // optional: temporary gsk_... for browser-only testing
+    /* ========= SIMPLE CONFIG ========= */
+    var DATA_URL = "/data/tenants/sahara.json"; // fixed for now
+    var TEST_GROQ_KEY = ""; // leave empty (uses Netlify Function); for quick browser test you can paste gsk_... here TEMPORARILY
 
-    /***************
-     * Utilities
-     ***************/
-    const qs  = (s, r=document)=>r.querySelector(s);
-    const qsa = (s, r=document)=>[...r.querySelectorAll(s)];
-    const setBrand = hex => document.documentElement.style.setProperty("--brand", hex || "#b91c1c");
-    const copyText = async (t)=>{
-      if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
-      const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px";
+    /* ========= UTILITIES (compat) ========= */
+    function qs(s, r){ return (r||document).querySelector(s); }
+    function qsa(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+    function setBrand(hex){ document.documentElement.style.setProperty("--brand", hex || "#b91c1c"); }
+    function copyText(t){
+      if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
+      var ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px";
       document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-    };
-    const googleUrl = g => g?.mapsUrl ? g.mapsUrl : (g?.placeId ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(g.placeId)}` : "");
-
-    /***********************
-     * AI (browser test only)
-     ***********************/
-    async function callGroqDirect(payload){
-      if (!TEST_GROQ_KEY) throw new Error("TEST_GROQ_KEY is empty");
-      const { restaurant, experience, highlight, keywords, extra } = payload;
-      const system =
-        "You write polished restaurant reviews. Return ONLY one paragraph. 40–60 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. Avoid extreme claims, headings, quotes, or preambles.";
-      const user =
-`Restaurant: ${restaurant || "Unknown"}
-Experience: ${experience || "Good"}
-Highlight: ${highlight || "Food"}
-Keywords: ${(keywords || []).slice(0,3).join(", ") || "—"}
-Optional details: ${extra || "—"}
-
-Write a single paragraph suitable to paste into Google.`;
-      const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method:"POST",
-        headers:{ "Authorization": \`Bearer \${TEST_GROQ_KEY}\`, "Content-Type":"application/json" },
-        body: JSON.stringify({
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          temperature: 0.65,
-          max_tokens: 140,
-          messages: [{role:"system",content:system},{role:"user",content:user}]
-        })
-      });
-      if (!resp.ok){ const t=await resp.text().catch(()=>"(no body)"); throw new Error(\`Groq HTTP \${resp.status}: \${t.slice(0,150)}\`); }
-      const data = await resp.json();
-      return (data?.choices?.[0]?.message?.content || "").trim();
+      return Promise.resolve();
+    }
+    function googleUrl(google){
+      if (google && google.mapsUrl) return google.mapsUrl;
+      if (google && google.placeId) return "https://search.google.com/local/writereview?placeid="+encodeURIComponent(google.placeId);
+      return "";
     }
 
-    /***********************
-     * Deterministic writer (fallback)
-     ***********************/
-    function writeShortReview({name, experience, highlight, keywords, details}) {
-      const tone = experience === "Excellent"
-        ? ["Dinner at","An evening at","My visit to"][Math.floor(Math.random()*3)]
-        : ["I stopped by","I visited","I had a meal at"][Math.floor(Math.random()*3)];
-      const k = (keywords||[]).slice(0,3);
-      const dishLine = k.length ? ` The ${k.join(", ")} ${k.length===1?"was":"were"} well prepared and full of flavor.` : "";
-      const hlMap = {
+    /* ========= FALLBACK REVIEW ========= */
+    function writeShortReview(args) {
+      var name = args.name || "This restaurant";
+      var exp = args.experience || "Good";
+      var highlight = args.highlight || "";
+      var keywords = args.keywords || [];
+      var details = args.details || "";
+
+      var openersGood = ["I stopped by","I visited","I had a meal at"];
+      var openersEx   = ["Dinner at","An evening at","My visit to"];
+      var opener = (exp === "Excellent" ? openersEx : openersGood)[Math.floor(Math.random()*3)];
+
+      var k = keywords.slice(0,3);
+      var dishLine = k.length ? (" The " + k.join(", ") + (k.length===1?" was":" were") + " well prepared and full of flavor.") : "";
+      var hlMap = {
         "Food":" The kitchen’s attention to detail showed. 🍽",
         "Service":" Service was attentive and well-timed. 🤝",
         "Atmosphere":" The room felt calm and welcoming. 🌆",
         "Authenticity":" Flavors felt thoughtful and true to the cuisine. 🌍"
       };
-      const extra = details ? ` ${details}.` : "";
-      const closer = experience === "Excellent" ? " Highly recommended." : " I’d happily return.";
-      return `${tone} ${name} was ${experience?.toLowerCase?.() || "good"}.` + dishLine + (hlMap[highlight]||"") + extra + closer;
+      var hl = hlMap[highlight] || "";
+      var extra = details ? (" " + details + ".") : "";
+      var closer = (exp==="Excellent") ? " Highly recommended." : " I’d happily return.";
+      return opener + " " + name + " was " + exp.toLowerCase() + "." + dishLine + hl + extra + closer;
     }
-
-    function detailsSummary(d) {
-      const parts=[];
-      if (d.veg) parts.push(`Vegetarian options: ${d.veg}`);
-      if (d.diet?.length) parts.push(`Dietary: ${d.diet.join(", ")}`);
-      if (d.parking) parts.push(`Parking: ${d.parking}`);
-      if (d.kids?.length) parts.push(`Kid-friendliness: ${d.kids.join(", ")}`);
-      if (d.access?.length) parts.push(`Accessibility: ${d.access.join(", ")}`);
+    function detailsSummary(d){
+      var parts=[];
+      if (d.veg) parts.push("Vegetarian options: " + d.veg);
+      if (d.diet && d.diet.length) parts.push("Dietary: " + d.diet.join(", "));
+      if (d.parking) parts.push("Parking: " + d.parking);
+      if (d.kids && d.kids.length) parts.push("Kid-friendliness: " + d.kids.join(", "));
+      if (d.access && d.access.length) parts.push("Accessibility: " + d.access.join(", "));
       return parts.join(" | ");
     }
 
-    /***************
-     * State
-     ***************/
-    const state = {
+    /* ========= STATE ========= */
+    var state = {
       tenant: null,
       experience: null,
       highlight: null,
@@ -243,256 +215,253 @@ Write a single paragraph suitable to paste into Google.`;
       wizStep: 0
     };
 
-    /*****************
-     * Chips & groups
-     *****************/
-    function makeChip(text, pressed=false, onClick=()=>{}) {
-      const b=document.createElement("button");
+    /* ========= CHIPS ========= */
+    function makeChip(text, pressed, onClick){
+      var b=document.createElement("button");
       b.type="button"; b.className="chip smooth"; b.setAttribute("aria-pressed", pressed?"true":"false");
       b.textContent = text;
-      b.addEventListener("click", onClick);
+      b.addEventListener("click", onClick || function(){});
       return b;
     }
-
-    function renderKeywords() {
-      const wrap=qs("#kwWrap"); if (!wrap) return; wrap.innerHTML="";
-      const list = state.tenant?.keywords || [];
-      const max = state.showAllKw ? list.length : Math.min(16, list.length);
-      list.slice(0,max).forEach(k=>{
-        const pressed = state.selectedTags.has(k);
-        wrap.appendChild(makeChip(k, pressed, ()=>{
-          const on = state.selectedTags.has(k);
-          if (!on && state.selectedTags.size>=3) return;
-          on ? state.selectedTags.delete(k) : state.selectedTags.add(k);
-          renderKeywords();
-        }));
-      });
-      const t=qs("#kwToggle");
-      if (t) {
+    function renderKeywords(){
+      var wrap=qs("#kwWrap"); if (!wrap) return; wrap.innerHTML="";
+      var list = (state.tenant && state.tenant.keywords) ? state.tenant.keywords : [];
+      var max = state.showAllKw ? list.length : Math.min(16, list.length);
+      for (var i=0;i<Math.min(max, list.length);i++){
+        (function(k){
+          var pressed = state.selectedTags.has(k);
+          wrap.appendChild(makeChip(k, pressed, function(){
+            var on = state.selectedTags.has(k);
+            if (!on && state.selectedTags.size>=3) return;
+            if (on) state.selectedTags.delete(k); else state.selectedTags.add(k);
+            renderKeywords();
+          }));
+        })(list[i]);
+      }
+      var t = qs("#kwToggle");
+      if (t){
         if (list.length<=16) t.classList.add("hidden");
-        else { t.classList.remove("hidden"); t.textContent = state.showAllKw? "See fewer" : "See more"; }
+        else {
+          t.classList.remove("hidden");
+          t.textContent = state.showAllKw ? "See fewer" : "See more";
+        }
       }
     }
-
-    function renderHighlights() {
-      const wrap=qs("#hlWrap"); if (!wrap) return; wrap.innerHTML="";
-      const opts = state.tenant?.highlightOptions || ["Food","Service","Atmosphere","Authenticity"];
-      opts.forEach(h=>{
-        const pressed = state.highlight===h;
-        wrap.appendChild(makeChip(h, pressed, ()=>{
-          state.highlight = (state.highlight===h) ? null : h;
-          renderHighlights();
-        }));
-      });
+    function renderHighlights(){
+      var wrap=qs("#hlWrap"); if (!wrap) return; wrap.innerHTML="";
+      var opts = (state.tenant && state.tenant.highlightOptions) ? state.tenant.highlightOptions : ["Food","Service","Atmosphere","Authenticity"];
+      for (var i=0;i<opts.length;i++){
+        (function(h){
+          var pressed = state.highlight===h;
+          wrap.appendChild(makeChip(h, pressed, function(){
+            state.highlight = (state.highlight===h) ? null : h;
+            renderHighlights();
+          }));
+        })(opts[i]);
+      }
+    }
+    function chipGroup(sel, options, multi, getter, setter){
+      var wrap=qs(sel); if (!wrap) return; wrap.innerHTML="";
+      var current = getter();
+      var selSet = new Set(Array.isArray(current) ? current : (current ? [current] : []));
+      for (var i=0;i<options.length;i++){
+        (function(opt){
+          wrap.appendChild(makeChip(opt, selSet.has(opt), function(){
+            var on = selSet.has(opt);
+            if (multi){ if (on) selSet.delete(opt); else selSet.add(opt); setter(Array.from(selSet)); }
+            else { selSet.clear(); selSet.add(opt); setter(opt); }
+            chipGroup(sel, options, multi, getter, setter);
+          }));
+        })(options[i]);
+      }
+    }
+    function buildPositiveDetailsUI(){
+      chipGroup("#pos-veg", ["Yes","No","Not sure"], false, function(){return state.posDetails.veg;}, function(v){state.posDetails.veg=v;});
+      chipGroup("#pos-diet", ["Gluten-free options","Vegan options","Halal options","Nut-aware","Dairy-free","Other"], true, function(){return state.posDetails.diet;}, function(v){state.posDetails.diet=v;});
+      chipGroup("#pos-parking", ["Street","Lot","Valet","None / not sure"], false, function(){return state.posDetails.parking;}, function(v){state.posDetails.parking=v;});
+      chipGroup("#pos-kids", ["Good for kids","High chairs","Kids menu","Not kid-focused"], true, function(){return state.posDetails.kids;}, function(v){state.posDetails.kids=v;});
+      chipGroup("#pos-access", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], true, function(){return state.posDetails.access;}, function(v){state.posDetails.access=v;});
+    }
+    function buildNegativeUI(){
+      var nq = (state.tenant && state.tenant.negativeQuestions) ? state.tenant.negativeQuestions : {};
+      chipGroup("#q-dining", nq.diningModes || ["Dine in","Take out","Delivery"], false, function(){return state.neg.dining;}, function(v){state.neg.dining=v;});
+      chipGroup("#q-meal",   nq.meals || ["Breakfast","Brunch","Lunch","Dinner","Other"], false, function(){return state.neg.meal;}, function(v){state.neg.meal=v;});
+      chipGroup("#q-spend",  nq.spendRanges || ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"], false, function(){return state.neg.spend;}, function(v){state.neg.spend=v;});
+      var nf=qs("#negFeedback"); if (nf) nf.addEventListener("input", function(e){ state.neg.feedback = e.target.value; });
     }
 
-    function chipGroup(el, options, multi=false, getter, setter) {
-      const wrap=qs(el); if (!wrap) return; wrap.innerHTML="";
-      const sel=new Set(Array.isArray(getter())?getter():[getter()].filter(Boolean));
-      options.forEach(opt=>{
-        wrap.appendChild(makeChip(opt, sel.has(opt), ()=>{
-          const isOn = sel.has(opt);
-          if (multi) { isOn ? sel.delete(opt) : sel.add(opt); setter([...sel]); }
-          else { sel.clear(); sel.add(opt); setter(opt); }
-          chipGroup(el, options, multi, getter, setter);
-        }));
-      });
-    }
+    /* ========= WIZARD ========= */
+    var WIZ_IDS = ["kw","hl","veg","diet","parking","kids","access","review"];
+    function renderWizardStep(){
+      var id = WIZ_IDS[state.wizStep];
+      var total = WIZ_IDS.length;
+      qs("#wizProgress").textContent = "Step " + (state.wizStep+1) + " of " + total;
 
-    function buildPositiveDetailsUI() {
-      chipGroup("#pos-veg", ["Yes","No","Not sure"], false, ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
-      chipGroup("#pos-diet", ["Gluten-free options","Vegan options","Halal options","Nut-aware","Dairy-free","Other"], true, ()=>state.posDetails.diet, v=>state.posDetails.diet=v);
-      chipGroup("#pos-parking", ["Street","Lot","Valet","None / not sure"], false, ()=>state.posDetails.parking, v=>state.posDetails.parking=v);
-      chipGroup("#pos-kids", ["Good for kids","High chairs","Kids menu","Not kid-focused"], true, ()=>state.posDetails.kids, v=>state.posDetails.kids=v);
-      chipGroup("#pos-access", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], true, ()=>state.posDetails.access, v=>state.posDetails.access=v);
-    }
+      var c = qs("#wizContent");
+      var back = qs("#wizBack");
+      var next = qs("#wizNext");
+      var skipAll = qs("#wizSkipAll");
+      var sub = qs("#wizSub");
 
-    function buildNegativeUI() {
-      const nq = state.tenant?.negativeQuestions || {};
-      chipGroup("#q-dining", nq.diningModes || ["Dine in","Take out","Delivery"], false, ()=>state.neg.dining, v=>state.neg.dining=v);
-      chipGroup("#q-meal",   nq.meals || ["Breakfast","Brunch","Lunch","Dinner","Other"], false, ()=>state.neg.meal, v=>state.neg.meal=v);
-      chipGroup("#q-spend",  nq.spendRanges || ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"], false, ()=>state.neg.spend, v=>state.neg.spend=v);
-      const nf=qs("#negFeedback"); if (nf) nf.addEventListener("input", e=> state.neg.feedback = e.target.value);
-    }
-
-    /***************
-     * Wizard
-     ***************/
-    const WIZ_IDS = ["kw","hl","veg","diet","parking","kids","access","review"];
-
-    function renderWizardStep() {
-      const stepId = WIZ_IDS[state.wizStep];
-      const total = WIZ_IDS.length;
-      qs("#wizProgress").textContent = `Step ${state.wizStep+1} of ${total}`;
-
-      const c = qs("#wizContent");
-      const back = qs("#wizBack");
-      const next = qs("#wizNext");
-      const skipAll = qs("#wizSkipAll");
-      const sub = qs("#wizSub");
-
-      back.disabled = state.wizStep === 0;
+      back.disabled = (state.wizStep === 0);
       next.classList.remove("hidden");
       skipAll.classList.remove("hidden");
       sub.classList.remove("hidden");
 
-      if (stepId === "kw") {
-        c.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between">
-              <p class="text-sm font-medium text-slate-700">Pick up to 3 keywords</p>
-              <button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>
-            </div>
-            <div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>`;
+      if (id === "kw"){
+        c.innerHTML = ''+
+          '<div>'+
+            '<div class="flex items-center justify-between">'+
+              '<p class="text-sm font-medium text-slate-700">Pick up to 3 keywords</p>'+
+              '<button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>'+
+            '</div>'+
+            '<div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
+          '</div>';
         renderKeywords();
-        qs("#kwToggle")?.addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); });
+        var t=qs("#kwToggle"); if(t){ t.addEventListener("click", function(){ state.showAllKw=!state.showAllKw; renderKeywords(); }); }
       }
-      else if (stepId === "hl") {
-        c.innerHTML = `
-          <div>
-            <p class="text-sm font-medium text-slate-700">What stood out the most?</p>
-            <div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>`;
+      else if (id === "hl"){
+        c.innerHTML = ''+
+          '<div>'+
+            '<p class="text-sm font-medium text-slate-700">What stood out the most?</p>'+
+            '<div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
+          '</div>';
         renderHighlights();
       }
-      else if (stepId === "veg") {
-        c.innerHTML = `
-          <div>
-            <p class="text-sm font-medium text-slate-700">Vegetarian options?</p>
-            <div id="pos-veg" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>`;
+      else if (id === "veg"){
+        c.innerHTML = '<div><p class="text-sm font-medium text-slate-700">Vegetarian options?</p><div id="pos-veg" class="mt-3 flex flex-wrap gap-2"></div></div>';
         buildPositiveDetailsUI();
       }
-      else if (stepId === "diet") {
-        c.innerHTML = `
-          <div>
-            <p class="text-sm font-medium text-slate-700">Any dietary considerations?</p>
-            <div id="pos-diet" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>`;
+      else if (id === "diet"){
+        c.innerHTML = '<div><p class="text-sm font-medium text-slate-700">Any dietary considerations?</p><div id="pos-diet" class="mt-3 flex flex-wrap gap-2"></div></div>';
         buildPositiveDetailsUI();
       }
-      else if (stepId === "parking") {
-        c.innerHTML = `
-          <div>
-            <p class="text-sm font-medium text-slate-700">Parking</p>
-            <div id="pos-parking" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>`;
+      else if (id === "parking"){
+        c.innerHTML = '<div><p class="text-sm font-medium text-slate-700">Parking</p><div id="pos-parking" class="mt-3 flex flex-wrap gap-2"></div></div>';
         buildPositiveDetailsUI();
       }
-      else if (stepId === "kids") {
-        c.innerHTML = `
-          <div>
-            <p class="text-sm font-medium text-slate-700">Kid-friendliness</p>
-            <div id="pos-kids" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>`;
+      else if (id === "kids"){
+        c.innerHTML = '<div><p class="text-sm font-medium text-slate-700">Kid-friendliness</p><div id="pos-kids" class="mt-3 flex flex-wrap gap-2"></div></div>';
         buildPositiveDetailsUI();
       }
-      else if (stepId === "access") {
-        c.innerHTML = `
-          <div>
-            <p class="text-sm font-medium text-slate-700">Wheelchair accessibility</p>
-            <div id="pos-access" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>`;
+      else if (id === "access"){
+        c.innerHTML = '<div><p class="text-sm font-medium text-slate-700">Wheelchair accessibility</p><div id="pos-access" class="mt-3 flex flex-wrap gap-2"></div></div>';
         buildPositiveDetailsUI();
       }
-      else if (stepId === "review") {
+      else if (id === "review"){
         sub.classList.add("hidden");
         skipAll.classList.add("hidden");
         next.classList.add("hidden");
-        c.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between">
-              <label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>
-              <label class="inline-flex items-center gap-2 cursor-pointer">
-                <input id="editToggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[var(--brand)] focus:ring-[var(--brand)]" checked />
-                <span class="text-sm text-slate-700">Enable editing</span>
-              </label>
-            </div>
-            <textarea id="reviewText" rows="5" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6" aria-describedby="copyHelp" placeholder="Generating…"></textarea>
-            <p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>
-
-            <div class="mt-3 flex flex-wrap items-center gap-3">
-              <button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>
-              <button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>
-              <span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>
-            </div>
-          </div>`;
-        // Editable by default
-        qs("#editToggle").addEventListener("change", e=>{
-          const ta=qs("#reviewText");
-          e.target.checked ? ta.removeAttribute("readonly") : ta.setAttribute("readonly","");
+        c.innerHTML = ''+
+          '<div>'+
+            '<div class="flex items-center justify-between">'+
+              '<label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>'+
+              '<label class="inline-flex items-center gap-2 cursor-pointer">'+
+                '<input id="editToggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[var(--brand)] focus:ring-[var(--brand)]" checked />'+
+                '<span class="text-sm text-slate-700">Enable editing</span>'+
+              '</label>'+
+            '</div>'+
+            '<textarea id="reviewText" rows="5" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6" aria-describedby="copyHelp" placeholder="Generating…"></textarea>'+
+            '<p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>'+
+            '<div class="mt-3 flex flex-wrap items-center gap-3">'+
+              '<button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>'+
+              '<button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>'+
+              '<span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>'+
+            '</div>'+
+          '</div>';
+        var ed=qs("#editToggle");
+        ed.addEventListener("change", function(e){
+          var ta=qs("#reviewText");
+          if (ed.checked) ta.removeAttribute("readonly"); else ta.setAttribute("readonly","");
         });
-        // Copy behavior (2s)
         attachCopyBehavior();
-        // Generate immediately, then allow regenerating
-        generateReview(); // auto
+        generateReview();              // auto
         qs("#aiBtn").addEventListener("click", generateReview); // regenerate
       }
     }
-
     function wizardNext(){ if (state.wizStep < WIZ_IDS.length-1){ state.wizStep++; renderWizardStep(); } }
     function wizardBack(){ if (state.wizStep > 0){ state.wizStep--; renderWizardStep(); } }
     function wizardSkipAll(){ state.wizStep = WIZ_IDS.indexOf("review"); renderWizardStep(); }
 
-    /**********************
-     * Review generation
-     **********************/
-    async function generateReview(){
-      const status=qs("#aiStatus");
-      if (status) status.textContent = "Polishing…";
-      const details = detailsSummary(state.posDetails);
-      const body = {
-        restaurant: state.tenant?.name || "This restaurant",
+    /* ========= AI (browser test) ========= */
+    function callGroqDirect(payload){
+      if (!TEST_GROQ_KEY) return Promise.reject(new Error("TEST_GROQ_KEY is empty"));
+      var system = "You write polished restaurant reviews. Return ONLY one paragraph. 40–60 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. Avoid extreme claims, headings, quotes, or preambles.";
+      var user =
+        "Restaurant: " + (payload.restaurant||"Unknown") + "\n" +
+        "Experience: " + (payload.experience||"Good") + "\n" +
+        "Highlight: " + (payload.highlight||"Food") + "\n" +
+        "Keywords: " + ((payload.keywords||[]).slice(0,3).join(", ") || "—") + "\n" +
+        "Optional details: " + (payload.extra||"—") + "\n\n" +
+        "Write a single paragraph suitable to paste into Google.";
+      return fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method:"POST",
+        headers:{ "Authorization":"Bearer " + TEST_GROQ_KEY, "Content-Type":"application/json" },
+        body: JSON.stringify({
+          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          temperature: 0.65,
+          max_tokens: 140,
+          messages: [{role:"system",content:system},{role:"user",content:user}]
+        })
+      }).then(function(resp){
+        if (!resp.ok) return resp.text().then(function(t){ throw new Error("Groq HTTP " + resp.status + ": " + t.slice(0,150)); });
+        return resp.json();
+      }).then(function(data){
+        return ((data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "").trim();
+      });
+    }
+    function generateReview(){
+      var status=qs("#aiStatus"); if (status) status.textContent="Polishing…";
+      var details = detailsSummary(state.posDetails);
+      var body = {
+        restaurant: (state.tenant && state.tenant.name) ? state.tenant.name : "This restaurant",
         experience: state.experience || "Good",
         highlight: state.highlight || "Food",
-        keywords: [...state.selectedTags],
+        keywords: Array.from(state.selectedTags),
         extra: details
       };
-      try {
-        let text="";
-        if (TEST_GROQ_KEY) {
-          text = await callGroqDirect(body);
-        } else {
-          const r = await fetch("/.netlify/functions/review-ai", {
-            method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
-          });
-          if (!r.ok) throw new Error("AI function not available");
-          const j = await r.json();
-          text = (j?.text || "").trim();
-        }
-        if (!text) throw new Error("AI returned empty text");
+      function done(text, usedAI){
         qs("#reviewText").value = text;
         qs("#copyBtn").removeAttribute("disabled");
-        if (status) status.textContent = "AI suggestion applied.";
-      } catch (e){
-        const fallback = writeShortReview({
-          name: body.restaurant,
-          experience: body.experience,
-          highlight: body.highlight,
-          keywords: body.keywords,
-          details
+        if (status) status.textContent = usedAI ? "AI suggestion applied." : "Draft created.";
+      }
+      if (TEST_GROQ_KEY){
+        return callGroqDirect(body).then(function(text){
+          if (!text) throw new Error("empty");
+          done(text, true);
+        }).catch(function(){
+          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
         });
-        qs("#reviewText").value = fallback;
-        qs("#copyBtn").removeAttribute("disabled");
-        if (status) status.textContent = "AI not available; used a concise draft.";
+      } else {
+        // Try Netlify Function; fall back if missing
+        return fetch("/.netlify/functions/review-ai", {
+          method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
+        }).then(function(r){
+          if (!r.ok) throw new Error("no function");
+          return r.json();
+        }).then(function(j){
+          var text = (j && j.text) ? String(j.text).trim() : "";
+          if (!text) throw new Error("empty");
+          done(text, true);
+        }).catch(function(){
+          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
+        });
       }
     }
-
     function attachCopyBehavior(){
-      const btn=qs("#copyBtn"); if (!btn) return;
-      const label=btn.querySelector(".btn-label"); const original=label.textContent;
-      btn.addEventListener("click", async ()=>{
-        const txt=qs("#reviewText")?.value?.trim(); if (!txt) return;
-        await copyText(txt);
-        label.textContent="Copied"; qs("#sr-live").textContent="Copied to clipboard";
-        setTimeout(()=>label.textContent=original, 2000);
+      var btn=qs("#copyBtn"); if (!btn) return;
+      var label=btn.querySelector(".btn-label"); var original=label.textContent;
+      btn.addEventListener("click", function(){
+        var txt = (qs("#reviewText") && qs("#reviewText").value) ? qs("#reviewText").value.trim() : "";
+        if (!txt) return;
+        copyText(txt).then(function(){
+          label.textContent="Copied"; qs("#sr-live").textContent="Copied to clipboard";
+          setTimeout(function(){ label.textContent=original; }, 2000);
+        });
       });
     }
 
-    /**********************
-     * Flow interactions
-     **********************/
+    /* ========= FLOW ========= */
     function setExperience(xp){
       state.experience = xp;
       if (xp==="Not great"){
@@ -503,12 +472,10 @@ Write a single paragraph suitable to paste into Google.`;
         qs("#positive").classList.remove("hidden"); qs("#positive").setAttribute("aria-hidden","false");
       }
     }
-
-    async function sendNegative(){
-      const btn=qs("#sendNegative"); const status=qs("#negStatus");
+    function sendNegative(){
+      var btn=qs("#sendNegative"); var status=qs("#negStatus");
       btn.disabled=true; status.textContent="Sending…";
-
-      const payload = {
+      var payload = {
         tenantId: state.tenant.slug,
         restaurantName: state.tenant.name,
         timestampISO: new Date().toISOString(),
@@ -516,23 +483,18 @@ Write a single paragraph suitable to paste into Google.`;
         answers: state.neg,
         userAgent: navigator.userAgent
       };
-
-      try {
-        await fetch("/.netlify/functions/feedback", {
-          method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
-        });
-      } catch (_) { /* ignore errors */ }
-
+      // Non-blocking; ignore errors
+      fetch("/.netlify/functions/feedback", {
+        method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
+      })["catch"](function(){});
       status.textContent="";
-      const form=qs("#negForm"); const done=qs("#negDone");
+      var form=qs("#negForm"); var done=qs("#negDone");
       form.classList.add("opacity-0","translate-y-2");
-      setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
+      setTimeout(function(){ form.classList.add("hidden"); done.classList.remove("hidden"); }, 220);
     }
 
-    /****************
-     * DEFAULT TENANT (fallback if dataset missing)
-     ****************/
-    const DEFAULT_TENANT = {
+    /* ========= DEFAULT TENANT ========= */
+    var DEFAULT_TENANT = {
       slug: "sahara",
       name: "Sahara",
       brand: { primary: "#b91c1c" },
@@ -552,51 +514,64 @@ Write a single paragraph suitable to paste into Google.`;
       }
     };
 
-    /****************
-     * Initialization
-     ****************/
-    async function init(){
-      // Load dataset (never return early)
-      let cfg = null;
-      try {
-        const res = await fetch(DATA_URL, { cache:"no-store" });
-        if (res.ok) { cfg = await res.json(); }
-        else { console.warn("[dataset] Not found:", res.status, DATA_URL); }
-      } catch (e) { console.warn("[dataset] Fetch error:", e, DATA_URL); }
-      if (!cfg) cfg = DEFAULT_TENANT;
-      state.tenant = cfg;
+    /* ========= INIT ========= */
+    function init(){
+      // Load dataset (no early return)
+      var cfg=null;
+      function afterLoad(){
+        if (!cfg) cfg = DEFAULT_TENANT;
+        state.tenant = cfg;
 
-      // Brand & Google
-      setBrand(cfg.brand?.primary);
-      qs("#restName").textContent = cfg.name;
-      const gURL = googleUrl(cfg.google);
-      const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop");
-      if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
-      else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
+        // Brand & Google
+        setBrand(cfg.brand && cfg.brand.primary ? cfg.brand.primary : "#b91c1c");
+        qs("#restName").textContent = cfg.name || "Your Restaurant";
+        var gURL = googleUrl(cfg.google || null);
+        var glTop = qs("#googleTopLink"); var tipTop=qs("#googleTipTop");
+        if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
+        else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
 
-      // Build choice controls
-      buildNegativeUI();
+        // Build UI controls
+        buildNegativeUI();
 
-      // Experience buttons
-      qsa("[data-exp]").forEach(b=> b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp"))));
+        // Experience buttons
+        qsa("[data-exp]").forEach(function(b){
+          b.addEventListener("click", function(){ setExperience(b.getAttribute("data-exp")); });
+        });
 
-      // Reveal AI wizard
-      qs("#revealAi").addEventListener("click", ()=>{
-        qs("#craftWrap").classList.remove("hidden");
-        state.wizStep = 0;
-        state.selectedTags.clear();
-        state.highlight = null;
-        state.posDetails = { veg:null, diet:[], parking:null, kids:[], access:[] };
-        renderWizardStep();
-      });
+        // Reveal AI wizard
+        var reveal = qs("#revealAi");
+        if (reveal) reveal.addEventListener("click", function(){
+          qs("#craftWrap").classList.remove("hidden");
+          state.wizStep = 0;
+          state.selectedTags.clear();
+          state.highlight = null;
+          state.posDetails = { veg:null, diet:[], parking:null, kids:[], access:[] };
+          renderWizardStep();
+        });
 
-      // Wizard nav
-      qs("#wizNext").addEventListener("click", wizardNext);
-      qs("#wizBack").addEventListener("click", wizardBack);
-      qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
+        // Wizard nav
+        qs("#wizNext").addEventListener("click", wizardNext);
+        qs("#wizBack").addEventListener("click", wizardBack);
+        qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
 
-      // Negative send
-      qs("#sendNegative").addEventListener("click", sendNegative);
+        // Negative send
+        qs("#sendNegative").addEventListener("click", sendNegative);
+      }
+
+      if (window.fetch){
+        fetch(DATA_URL, {cache:"no-store"}).then(function(res){
+          if (res.ok) return res.json();
+          return null;
+        }).then(function(json){
+          cfg = json;
+          afterLoad();
+        })["catch"](function(){
+          cfg = null; afterLoad();
+        });
+      } else {
+        // Very old browser: skip fetch and use fallback
+        cfg = null; afterLoad();
+      }
     }
 
     document.addEventListener("DOMContentLoaded", init);
