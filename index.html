@@ -36,7 +36,7 @@
       <!-- Body -->
       <div class="p-6 sm:p-8 space-y-10">
 
-        <!-- STEP 1 — EXPERIENCE (unchanged) -->
+        <!-- STEP 1 — EXPERIENCE -->
         <section id="experience" aria-labelledby="exp-title">
           <h2 id="exp-title" class="text-xl sm:text-2xl font-semibold">How was your experience today?</h2>
           <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -149,9 +149,9 @@
 
   <script>
     /***************
-     * TEST-ONLY API KEY (optional; DON’T ship to prod)
+     * Optional browser test key (do NOT ship to prod)
      ***************/
-    const TEST_GROQ_KEY = ""; // put temporary gsk_... here to call Groq from the browser; leave "" to use Netlify Function
+    const TEST_GROQ_KEY = ""; // put temporary gsk_... here for browser testing, else leave "" and use Netlify Function
 
     /***************
      * Utilities
@@ -164,7 +164,29 @@
       const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
     };
     function slugFromPath(){ const p=location.pathname.replace(/^\/+/, ""); return p.startsWith("r/")?p.split("/")[1]:""; }
-    function googleUrl(google){ if (google?.mapsUrl) return google.mapsUrl; if (google?.placeId) return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(google.placeId)}`; return ""; }
+
+    // Resolve a base path so /app/r/sahara still loads /app/data/tenants/sahara.json
+    function basePathForData(){
+      const path = location.pathname;
+      const idx = path.indexOf("/r/");
+      if (idx !== -1) return path.slice(0, idx+1); // keep leading slash, ends with "/"
+      // If no /r/, strip filename and keep folder
+      return path.endsWith("/") ? path : path.replace(/[^/]+$/, "");
+    }
+
+    function datasetUrlFor(slug){
+      if (location.protocol === "file:") {
+        return `data/tenants/${encodeURIComponent(slug)}.json`;
+      }
+      const base = basePathForData(); // e.g., "/", "/app/"
+      return new URL(`data/tenants/${encodeURIComponent(slug)}.json`, location.origin + base).toString();
+    }
+
+    function googleUrl(google){
+      if (google?.mapsUrl) return google.mapsUrl;
+      if (google?.placeId) return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(google.placeId)}`;
+      return "";
+    }
 
     /***********************
      * AI (browser test only)
@@ -416,16 +438,13 @@ Write a single paragraph suitable to paste into Google.`;
               <span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>
             </div>
           </div>`;
-        // Editable by default
         qs("#editToggle").addEventListener("change", e=>{
           const ta=qs("#reviewText");
           e.target.checked ? ta.removeAttribute("readonly") : ta.setAttribute("readonly","");
         });
-        // Copy behavior (2s)
         attachCopyBehavior();
-        // Generate immediately, then allow regenerating
-        generateReview(); // auto-generate on entry
-        qs("#aiBtn").addEventListener("click", generateReview); // regenerate
+        generateReview();                 // auto-generate on arrival
+        qs("#aiBtn").addEventListener("click", generateReview); // allow regenerate
       }
     }
 
@@ -464,7 +483,6 @@ Write a single paragraph suitable to paste into Google.`;
         qs("#copyBtn").removeAttribute("disabled");
         if (status) status.textContent = "AI suggestion applied.";
       } catch (e){
-        // Fallback deterministic
         const fallback = writeShortReview({
           name: body.restaurant,
           experience: body.experience,
@@ -500,13 +518,12 @@ Write a single paragraph suitable to paste into Google.`;
       } else {
         qs("#experience").classList.add("hidden");
         qs("#positive").classList.remove("hidden"); qs("#positive").setAttribute("aria-hidden","false");
-        // Wizard is hidden until user clicks Help me with AI
       }
     }
 
     async function sendNegative(){
       const btn=qs("#sendNegative"); const status=qs("#negStatus");
-      btn.disabled=true; status.textContent="Sending…";
+      if (btn) btn.disabled=true; if (status) status.textContent="Sending…";
 
       const payload = {
         tenantId: state.tenant.slug,
@@ -523,10 +540,12 @@ Write a single paragraph suitable to paste into Google.`;
         });
       } catch (_) { /* ignore errors */ }
 
-      status.textContent="";
+      if (status) status.textContent="";
       const form=qs("#negForm"); const done=qs("#negDone");
-      form.classList.add("opacity-0","translate-y-2");
-      setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
+      if (form && done){
+        form.classList.add("opacity-0","translate-y-2");
+        setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
+      }
     }
 
     /****************
@@ -562,10 +581,7 @@ Write a single paragraph suitable to paste into Google.`;
       const slug = (fromRoute || fromQuery || "sahara");
 
       // Load dataset (no early return)
-      const jsonUrl = (location.protocol === "file:")
-        ? `data/tenants/${encodeURIComponent(slug)}.json`
-        : `/data/tenants/${encodeURIComponent(slug)}.json`;
-
+      const jsonUrl = datasetUrlFor(slug);
       let cfg = null;
       try {
         const res = await fetch(jsonUrl, { cache:"no-store" });
@@ -583,7 +599,7 @@ Write a single paragraph suitable to paste into Google.`;
       if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
       else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
 
-      // Negative path controls
+      // Build choice controls
       buildNegativeUI();
 
       // Experience buttons
