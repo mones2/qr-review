@@ -272,9 +272,10 @@
     }
 
     function renderKeywords() {
-      const wrap=qs("#kwWrap"); wrap.innerHTML="";
+      const wrap=qs("#kwWrap"); if (!wrap) return;
       const list = state.tenant?.keywords || [];
       const max = state.showAllKw ? list.length : Math.min(16, list.length);
+      wrap.innerHTML="";
       list.slice(0,max).forEach(k=>{
         const pressed = state.selectedTags.has(k);
         wrap.appendChild(makeChip(k, pressed, ()=>{
@@ -285,12 +286,16 @@
         }));
       });
       const t=qs("#kwToggle");
-      if (list.length<=16) t.classList.add("hidden"); else { t.classList.remove("hidden"); t.textContent = state.showAllKw? "See fewer" : "See more"; }
+      if (t) {
+        if (list.length<=16) t.classList.add("hidden");
+        else { t.classList.remove("hidden"); t.textContent = state.showAllKw? "See fewer" : "See more"; }
+      }
     }
 
     function renderHighlights() {
       const opts = state.tenant?.highlightOptions || ["Food","Service","Atmosphere","Authenticity"];
-      const wrap=qs("#hlWrap"); wrap.innerHTML="";
+      const wrap=qs("#hlWrap"); if (!wrap) return;
+      wrap.innerHTML="";
       opts.forEach(h=>{
         const pressed = state.highlight===h;
         wrap.appendChild(makeChip(h, pressed, ()=>{
@@ -301,7 +306,8 @@
     }
 
     function chipGroup(el, options, multi=false, getter, setter) {
-      const wrap=qs(el); wrap.innerHTML="";
+      const wrap=qs(el); if (!wrap) return;
+      wrap.innerHTML="";
       const sel=new Set(Array.isArray(getter())?getter():[getter()].filter(Boolean));
       options.forEach(opt=>{
         wrap.appendChild(makeChip(opt, sel.has(opt), ()=>{
@@ -326,7 +332,7 @@
       chipGroup("#q-dining", nq.diningModes || ["Dine in","Take out","Delivery"], false, ()=>state.neg.dining, v=>state.neg.dining=v);
       chipGroup("#q-meal",   nq.meals || ["Breakfast","Brunch","Lunch","Dinner","Other"], false, ()=>state.neg.meal, v=>state.neg.meal=v);
       chipGroup("#q-spend",  nq.spendRanges || ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"], false, ()=>state.neg.spend, v=>state.neg.spend=v);
-      qs("#negFeedback").addEventListener("input", e=> state.neg.feedback = e.target.value);
+      const nf=qs("#negFeedback"); if (nf) nf.addEventListener("input", e=> state.neg.feedback = e.target.value);
     }
 
     /**********************
@@ -334,11 +340,12 @@
      **********************/
     function setExperience(xp){
       state.experience = xp;
-      qs("#reviewText").value = "";
-      qs("#copyBtn").setAttribute("disabled","true");
-      qs("#copyStatus").textContent = "";
-      qs("#aiStatus").textContent = "";
-      qs("#editToggle").checked=false; qs("#reviewText").setAttribute("readonly","");
+      const rt=qs("#reviewText"), cb=qs("#copyBtn"), cs=qs("#copyStatus"), as=qs("#aiStatus"), et=qs("#editToggle");
+      if (rt) rt.value = "";
+      if (cb) cb.setAttribute("disabled","true");
+      if (cs) cs.textContent = "";
+      if (as) as.textContent = "";
+      if (et && rt){ et.checked=false; rt.setAttribute("readonly",""); }
 
       if (xp==="Not great"){
         qs("#experience").classList.add("hidden");
@@ -350,7 +357,8 @@
     }
 
     function attachCopyBehavior(){
-      const btn=qs("#copyBtn"); const label=btn.querySelector(".btn-label"); const original=label.textContent;
+      const btn=qs("#copyBtn"); if (!btn) return;
+      const label=btn.querySelector(".btn-label"); const original=label.textContent;
       btn.addEventListener("click", async ()=>{
         const txt=qs("#reviewText").value.trim(); if (!txt) return;
         await copyText(txt);
@@ -361,9 +369,9 @@
 
     async function polishWithAI(){
       const status=qs("#aiStatus");
-      if (!state.experience || state.experience==="Not great"){ status.textContent="Choose Excellent or Good first."; return; }
+      if (!state.experience || state.experience==="Not great"){ if(status) status.textContent="Choose Excellent or Good first."; return; }
 
-      status.textContent="Polishing…";
+      if (status) status.textContent="Polishing…";
       try{
         const details = detailsSummary(state.posDetails);
         const body = {
@@ -374,7 +382,7 @@
           extra: details
         };
 
-        // Netlify Function (add later). Friendly fallback if missing.
+        // Netlify Function (secure). Friendly fallback if missing.
         const r = await fetch("/.netlify/functions/review-ai", {
           method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
         });
@@ -385,17 +393,18 @@
         if (txt){
           qs("#reviewText").value = txt;
           qs("#copyBtn").removeAttribute("disabled");
-          status.textContent = "AI suggestion applied.";
+          if (status) status.textContent = "AI suggestion applied.";
         } else {
-          status.textContent = "AI returned no text. Try again.";
+          if (status) status.textContent = "AI returned no text. Try again.";
         }
       }catch(_){
-        status.textContent = "AI endpoint isn’t set up yet. Use “Write review” for now, or add a Netlify Function at /.netlify/functions/review-ai.";
+        if (status) status.textContent = "AI endpoint isn’t set up yet. Use “Write review” for now, or add a Netlify Function at /.netlify/functions/review-ai.";
       }
     }
 
     function writeDeterministic(){
-      if (!state.experience || state.experience==="Not great"){ qs("#aiStatus").textContent="Choose Excellent or Good first."; return; }
+      const status=qs("#aiStatus");
+      if (!state.experience || state.experience==="Not great"){ if(status) status.textContent="Choose Excellent or Good first."; return; }
       const txt = writeShortReview({
         name: state.tenant.name,
         experience: state.experience,
@@ -405,12 +414,12 @@
       });
       qs("#reviewText").value = txt;
       qs("#copyBtn").removeAttribute("disabled");
-      qs("#aiStatus").textContent = "Draft created.";
+      if (status) status.textContent = "Draft created.";
     }
 
     async function sendNegative(){
       const btn=qs("#sendNegative"); const status=qs("#negStatus");
-      btn.disabled=true; status.textContent="Sending…";
+      if (btn) btn.disabled=true; if (status) status.textContent="Sending…";
 
       const payload = {
         tenantId: state.tenant.slug,
@@ -427,33 +436,65 @@
         });
       } catch (_) { /* ignore errors – UI should still show success */ }
 
-      status.textContent="";
+      if (status) status.textContent="";
       const form=qs("#negForm"); const done=qs("#negDone");
-      form.classList.add("opacity-0","translate-y-2");
-      setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
+      if (form && done){
+        form.classList.add("opacity-0","translate-y-2");
+        setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
+      }
     }
+
+    /****************
+     * DEFAULT TENANT (fallback if dataset fails)
+     ****************/
+    const DEFAULT_TENANT = {
+      slug: "sahara",
+      name: "Sahara",
+      brand: { primary: "#b91c1c" },
+      google: {
+        mapsUrl: "https://www.google.com/maps/place/Sahara+Restaurant/@40.5000681,-74.4567202,17z/data=!4m8!3m7!1s0x89c3c6ff3e35125b:0xc9ebce3f3d21e043!8m2!3d40.5000681!4d-74.4541453!9m1!1b1!16s%2Fg%2F1tczldzb?hl=en-US&entry=ttu&g_ep=EgoyMDI1MDgyNC4wIKXMDSoASAFQAw%3D%3D"
+      },
+      keywords: [
+        "chicken kebab","adana kebab","lamb chops","hummus","baba ghanoush",
+        "falafel","tabouleh","baklava","salmon","shrimp","tilapia",
+        "roasted eggplant","couscous","shepherd’s salad","pita","turkish coffee"
+      ],
+      highlightOptions: ["Food","Service","Atmosphere","Authenticity"],
+      negativeQuestions: {
+        diningModes: ["Dine in","Take out","Delivery"],
+        meals: ["Breakfast","Brunch","Lunch","Dinner","Other"],
+        spendRanges: ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"]
+      }
+    };
 
     /****************
      * Initialization
      ****************/
     async function init(){
-      // Read tenant slug (fallback to 'sahara' so you can test quickly)
-      const path = location.pathname.replace(/^\/+/, "");
-      const fromRoute = path.startsWith("r/") ? path.split("/")[1] : "";
-      const fromQuery = new URLSearchParams(location.search).get("id") || "";
-      const slug = (fromRoute || fromQuery || "sahara");
+      // Figure out slug
+      const pathPart = slugFromPath();
+      const queryPart = new URLSearchParams(location.search).get("id") || "";
+      const slug = (pathPart || queryPart || "sahara");
 
-      // Fetch JSON (relative for file:// preview support)
+      // URL for dataset
       const jsonUrl = (location.protocol === "file:")
         ? `data/tenants/${encodeURIComponent(slug)}.json`
         : `/data/tenants/${encodeURIComponent(slug)}.json`;
 
-      const res = await fetch(jsonUrl).catch(()=>null);
-      if (!res || !res.ok){
-        qs("#title").innerHTML = `Restaurant <span class="brand-txt">not found</span>`;
-        return;
+      // Try to load dataset; if it fails, use DEFAULT_TENANT (no early return!)
+      let cfg = null;
+      try {
+        const res = await fetch(jsonUrl, { cache: "no-store" });
+        if (res.ok) {
+          cfg = await res.json();
+        } else {
+          console.warn("[dataset] Not found or not ok:", res.status, jsonUrl);
+        }
+      } catch (e) {
+        console.warn("[dataset] Fetch error:", e, jsonUrl);
       }
-      const cfg = await res.json(); state.tenant = cfg;
+      if (!cfg) cfg = DEFAULT_TENANT;
+      state.tenant = cfg;
 
       // Brand + titles
       setBrand(cfg.brand?.primary);
@@ -468,14 +509,20 @@
       // Build positive/negative controls
       renderKeywords(); renderHighlights(); buildPositiveDetailsUI(); buildNegativeUI();
 
-      // Wire buttons
+      // Wire buttons (do this ALWAYS, even if dataset failed)
       qsa("[data-exp]").forEach(b=> b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp"))));
-      qs("#kwToggle").addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); });
-      qs("#editToggle").addEventListener("change", e=>{ const ta=qs("#reviewText"); e.target.checked?ta.removeAttribute("readonly"):ta.setAttribute("readonly",""); });
+      const kwToggle = qs("#kwToggle"); if (kwToggle) kwToggle.addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); });
+      const editToggle = qs("#editToggle"); if (editToggle) editToggle.addEventListener("change", e=>{ const ta=qs("#reviewText"); e.target.checked?ta.removeAttribute("readonly"):ta.setAttribute("readonly",""); });
       attachCopyBehavior();
-      qs("#writeBtn").addEventListener("click", writeDeterministic);
-      qs("#aiBtn").addEventListener("click", polishWithAI);
-      qs("#sendNegative").addEventListener("click", sendNegative);
+      const wb=qs("#writeBtn"); if (wb) wb.addEventListener("click", writeDeterministic);
+      const ab=qs("#aiBtn"); if (ab) ab.addEventListener("click", polishWithAI);
+      const sn=qs("#sendNegative"); if (sn) sn.addEventListener("click", sendNegative);
+
+      // Optional: show which dataset loaded
+      if (cfg === DEFAULT_TENANT) {
+        console.warn("[dataset] Using DEFAULT_TENANT fallback. Expected file missing at:", jsonUrl);
+        qs("#title").innerHTML = `Share your experience at <span class="brand-txt">${cfg.name}</span>`;
+      }
     }
 
     document.addEventListener("DOMContentLoaded", init);
