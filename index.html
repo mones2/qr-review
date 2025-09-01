@@ -31,6 +31,7 @@
         <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">
           Share your experience at <span id="restName" class="brand-txt">Sahara</span>
         </h1>
+        <p class="mt-1 text-[11px] text-slate-400 select-none">build v1-simple</p>
       </header>
 
       <!-- Body -->
@@ -80,7 +81,7 @@
           <div id="craftWrap" class="hidden mt-6">
             <div id="wizard" class="rounded-xl border border-slate-200 p-5 sm:p-6">
               <div class="flex items-center justify-between">
-                <h2 id="wizTitle" class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
+                <h2 class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
                 <span id="wizProgress" class="text-sm text-slate-500">Step 1</span>
               </div>
               <div id="wizSub" class="mt-1 text-sm text-slate-600">Answer a few quick questions, or skip straight to review.</div>
@@ -149,9 +150,10 @@
 
   <script>
     /***************
-     * Optional browser test key (do NOT ship to prod)
+     * Config (simple & stable)
      ***************/
-    const TEST_GROQ_KEY = ""; // put temporary gsk_... here for browser testing, else leave "" and use Netlify Function
+    const DATA_URL = "/data/tenants/sahara.json"; // always Sahara for now
+    const TEST_GROQ_KEY = ""; // optional: temporary gsk_... for browser-only testing
 
     /***************
      * Utilities
@@ -161,32 +163,10 @@
     const setBrand = hex => document.documentElement.style.setProperty("--brand", hex || "#b91c1c");
     const copyText = async (t)=>{
       if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
-      const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+      const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
     };
-    function slugFromPath(){ const p=location.pathname.replace(/^\/+/, ""); return p.startsWith("r/")?p.split("/")[1]:""; }
-
-    // Resolve a base path so /app/r/sahara still loads /app/data/tenants/sahara.json
-    function basePathForData(){
-      const path = location.pathname;
-      const idx = path.indexOf("/r/");
-      if (idx !== -1) return path.slice(0, idx+1); // keep leading slash, ends with "/"
-      // If no /r/, strip filename and keep folder
-      return path.endsWith("/") ? path : path.replace(/[^/]+$/, "");
-    }
-
-    function datasetUrlFor(slug){
-      if (location.protocol === "file:") {
-        return `data/tenants/${encodeURIComponent(slug)}.json`;
-      }
-      const base = basePathForData(); // e.g., "/", "/app/"
-      return new URL(`data/tenants/${encodeURIComponent(slug)}.json`, location.origin + base).toString();
-    }
-
-    function googleUrl(google){
-      if (google?.mapsUrl) return google.mapsUrl;
-      if (google?.placeId) return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(google.placeId)}`;
-      return "";
-    }
+    const googleUrl = g => g?.mapsUrl ? g.mapsUrl : (g?.placeId ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(g.placeId)}` : "");
 
     /***********************
      * AI (browser test only)
@@ -438,13 +418,16 @@ Write a single paragraph suitable to paste into Google.`;
               <span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>
             </div>
           </div>`;
+        // Editable by default
         qs("#editToggle").addEventListener("change", e=>{
           const ta=qs("#reviewText");
           e.target.checked ? ta.removeAttribute("readonly") : ta.setAttribute("readonly","");
         });
+        // Copy behavior (2s)
         attachCopyBehavior();
-        generateReview();                 // auto-generate on arrival
-        qs("#aiBtn").addEventListener("click", generateReview); // allow regenerate
+        // Generate immediately, then allow regenerating
+        generateReview(); // auto
+        qs("#aiBtn").addEventListener("click", generateReview); // regenerate
       }
     }
 
@@ -523,7 +506,7 @@ Write a single paragraph suitable to paste into Google.`;
 
     async function sendNegative(){
       const btn=qs("#sendNegative"); const status=qs("#negStatus");
-      if (btn) btn.disabled=true; if (status) status.textContent="Sending…";
+      btn.disabled=true; status.textContent="Sending…";
 
       const payload = {
         tenantId: state.tenant.slug,
@@ -540,12 +523,10 @@ Write a single paragraph suitable to paste into Google.`;
         });
       } catch (_) { /* ignore errors */ }
 
-      if (status) status.textContent="";
+      status.textContent="";
       const form=qs("#negForm"); const done=qs("#negDone");
-      if (form && done){
-        form.classList.add("opacity-0","translate-y-2");
-        setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
-      }
+      form.classList.add("opacity-0","translate-y-2");
+      setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
     }
 
     /****************
@@ -575,19 +556,13 @@ Write a single paragraph suitable to paste into Google.`;
      * Initialization
      ****************/
     async function init(){
-      // Determine tenant
-      const fromRoute = slugFromPath();
-      const fromQuery = new URLSearchParams(location.search).get("id") || "";
-      const slug = (fromRoute || fromQuery || "sahara");
-
-      // Load dataset (no early return)
-      const jsonUrl = datasetUrlFor(slug);
+      // Load dataset (never return early)
       let cfg = null;
       try {
-        const res = await fetch(jsonUrl, { cache:"no-store" });
+        const res = await fetch(DATA_URL, { cache:"no-store" });
         if (res.ok) { cfg = await res.json(); }
-        else { console.warn("[dataset] Not found:", res.status, jsonUrl); }
-      } catch (e) { console.warn("[dataset] Fetch error:", e, jsonUrl); }
+        else { console.warn("[dataset] Not found:", res.status, DATA_URL); }
+      } catch (e) { console.warn("[dataset] Fetch error:", e, DATA_URL); }
       if (!cfg) cfg = DEFAULT_TENANT;
       state.tenant = cfg;
 
