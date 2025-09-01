@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Share Your Experience</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Tailwind CDN -->
+  <!-- Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --brand: #b91c1c }
@@ -25,19 +25,18 @@
 </head>
 <body class="min-h-screen bg-gradient-to-br from-stone-50 to-stone-200 text-slate-800 antialiased">
   <main class="mx-auto max-w-3xl px-4 py-10">
-    <section class="mx-auto max-w-2xl rounded-2xl bg-white card ring-1 ring-black/5">
+    <section class="mx-auto max-w-2xl rounded-2xl bg-white card ring-1 ring-black/5 overflow-hidden">
       <!-- Header -->
       <header class="p-6 sm:p-8 border-b border-slate-100">
         <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Share your experience at <span id="restName" class="brand-txt">your restaurant</span>
+          Share your experience at <span id="restName" class="brand-txt">Sahara</span>
         </h1>
-        <!-- subtitle intentionally removed per request -->
       </header>
 
-      <!-- Content -->
+      <!-- Body -->
       <div class="p-6 sm:p-8 space-y-10">
 
-        <!-- STEP 1 — EXPERIENCE -->
+        <!-- STEP 1 — EXPERIENCE (unchanged) -->
         <section id="experience" aria-labelledby="exp-title">
           <h2 id="exp-title" class="text-xl sm:text-2xl font-semibold">How was your experience today?</h2>
           <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -61,7 +60,7 @@
 
         <!-- POSITIVE PATH -->
         <section id="positive" class="hidden" aria-hidden="true">
-          <!-- TOP: primary Google button first -->
+          <!-- Google first -->
           <div class="mb-6">
             <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
                class="inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">
@@ -70,73 +69,33 @@
             <p id="googleTipTop" class="mt-2 text-sm text-slate-500"></p>
           </div>
 
-          <h2 class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
-          <p class="mt-1 text-sm text-slate-600">Or write a short paragraph to paste into Google. The AI helper is optional.</p>
-
-          <!-- Keywords -->
-          <div class="mt-4">
-            <div class="flex items-center justify-between">
-              <p class="text-sm font-medium text-slate-700">Pick a few keywords</p>
-              <button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>
-            </div>
-            <p class="mt-1 text-sm text-slate-500">Choose up to 3.</p>
-            <div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button id="revealAi" type="button"
+                    class="inline-flex sm:w-auto items-center justify-center rounded-lg px-4 py-3 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">
+              ✨ Help me with AI
+            </button>
           </div>
 
-          <!-- Highlight -->
-          <div class="mt-6">
-            <p class="text-sm font-medium text-slate-700">What stood out the most?</p>
-            <div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>
-          </div>
+          <!-- AI WIZARD -->
+          <div id="craftWrap" class="hidden mt-6">
+            <div id="wizard" class="rounded-xl border border-slate-200 p-5 sm:p-6">
+              <div class="flex items-center justify-between">
+                <h2 id="wizTitle" class="text-xl sm:text-2xl font-semibold">Craft your review</h2>
+                <span id="wizProgress" class="text-sm text-slate-500">Step 1</span>
+              </div>
+              <div id="wizSub" class="mt-1 text-sm text-slate-600">Answer a few quick questions, or skip straight to review.</div>
 
-          <!-- Review -->
-          <div class="mt-6">
-            <div class="flex items-center justify-between">
-              <label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>
-              <label class="inline-flex items-center gap-2 cursor-pointer">
-                <input id="editToggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[var(--brand)] focus:ring-[var(--brand)]" />
-                <span class="text-sm text-slate-700">Enable editing</span>
-              </label>
-            </div>
-            <textarea id="reviewText" rows="5" readonly placeholder="Click 'Write review' (no AI) or 'Polish with AI' to generate a short paragraph (under 60 words)."
-              class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6"
-              aria-describedby="copyHelp"></textarea>
-            <p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>
+              <div id="wizContent" class="mt-5"><!-- dynamic step content --></div>
 
-            <div class="mt-3 flex flex-wrap items-center gap-3">
-              <button id="writeBtn" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth">Write review</button>
-              <button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>
-
-              <button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>
-              <span id="copyStatus" class="text-sm text-slate-600" aria-live="polite"></span>
-            </div>
-            <div id="aiStatus" class="mt-2 text-sm text-slate-600" aria-live="polite"></div>
-          </div>
-
-          <!-- Optional details to include -->
-          <div class="mt-8">
-            <p class="text-sm font-medium text-slate-700">Add more details to help others</p>
-            <div class="mt-3 space-y-3">
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Vegetarian options</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-veg"></div>
-              </details>
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Dietary restrictions</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-diet"></div>
-              </details>
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Parking</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-parking"></div>
-              </details>
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Kid-friendliness</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-kids"></div>
-              </details>
-              <details class="rounded-lg border border-slate-200 px-4 py-3">
-                <summary class="cursor-pointer select-none font-medium">Wheelchair accessibility</summary>
-                <div class="mt-3 flex flex-wrap gap-2" id="pos-access"></div>
-              </details>
+              <div class="mt-6 flex flex-wrap gap-3 justify-between">
+                <div class="flex gap-3">
+                  <button id="wizBack" type="button" class="rounded-lg px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 smooth" aria-label="Back">Back</button>
+                </div>
+                <div class="flex gap-3">
+                  <button id="wizSkipAll" type="button" class="rounded-lg px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 smooth" aria-label="Skip to review">Skip to review</button>
+                  <button id="wizNext" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Next">Next</button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -190,6 +149,11 @@
 
   <script>
     /***************
+     * TEST-ONLY API KEY (optional; DON’T ship to prod)
+     ***************/
+    const TEST_GROQ_KEY = ""; // put temporary gsk_... here to call Groq from the browser; leave "" to use Netlify Function
+
+    /***************
      * Utilities
      ***************/
     const qs  = (s, r=document)=>r.querySelector(s);
@@ -199,30 +163,49 @@
       if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
       const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
     };
+    function slugFromPath(){ const p=location.pathname.replace(/^\/+/, ""); return p.startsWith("r/")?p.split("/")[1]:""; }
+    function googleUrl(google){ if (google?.mapsUrl) return google.mapsUrl; if (google?.placeId) return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(google.placeId)}`; return ""; }
 
-    function slugFromPath() {
-      const path = location.pathname.replace(/^\/+/, "");
-      return path.startsWith("r/") ? path.split("/")[1] : "";
-    }
+    /***********************
+     * AI (browser test only)
+     ***********************/
+    async function callGroqDirect(payload){
+      if (!TEST_GROQ_KEY) throw new Error("TEST_GROQ_KEY is empty");
+      const { restaurant, experience, highlight, keywords, extra } = payload;
+      const system =
+        "You write polished restaurant reviews. Return ONLY one paragraph. 40–60 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. Avoid extreme claims, headings, quotes, or preambles.";
+      const user =
+`Restaurant: ${restaurant || "Unknown"}
+Experience: ${experience || "Good"}
+Highlight: ${highlight || "Food"}
+Keywords: ${(keywords || []).slice(0,3).join(", ") || "—"}
+Optional details: ${extra || "—"}
 
-    function googleUrl(google) {
-      if (google?.mapsUrl) return google.mapsUrl;
-      if (google?.placeId) return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(google.placeId)}`;
-      return "";
+Write a single paragraph suitable to paste into Google.`;
+      const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method:"POST",
+        headers:{ "Authorization": \`Bearer \${TEST_GROQ_KEY}\`, "Content-Type":"application/json" },
+        body: JSON.stringify({
+          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          temperature: 0.65,
+          max_tokens: 140,
+          messages: [{role:"system",content:system},{role:"user",content:user}]
+        })
+      });
+      if (!resp.ok){ const t=await resp.text().catch(()=>"(no body)"); throw new Error(\`Groq HTTP \${resp.status}: \${t.slice(0,150)}\`); }
+      const data = await resp.json();
+      return (data?.choices?.[0]?.message?.content || "").trim();
     }
 
     /***********************
-     * Deterministic writer
+     * Deterministic writer (fallback)
      ***********************/
     function writeShortReview({name, experience, highlight, keywords, details}) {
-      // keep it under ~60 words (40–58 target)
       const tone = experience === "Excellent"
         ? ["Dinner at","An evening at","My visit to"][Math.floor(Math.random()*3)]
         : ["I stopped by","I visited","I had a meal at"][Math.floor(Math.random()*3)];
       const k = (keywords||[]).slice(0,3);
-      const dishLine = k.length
-        ? ` The ${k.join(", ")} ${k.length===1?"was":"were"} well prepared and full of flavor.`
-        : "";
+      const dishLine = k.length ? ` The ${k.join(", ")} ${k.length===1?"was":"were"} well prepared and full of flavor.` : "";
       const hlMap = {
         "Food":" The kitchen’s attention to detail showed. 🍽",
         "Service":" Service was attentive and well-timed. 🤝",
@@ -230,11 +213,8 @@
         "Authenticity":" Flavors felt thoughtful and true to the cuisine. 🌍"
       };
       const extra = details ? ` ${details}.` : "";
-      const closer = experience === "Excellent"
-        ? " Highly recommended."
-        : " I’d happily return.";
-
-      return `${tone} ${name} was ${experience.toLowerCase()}.` + dishLine + (hlMap[highlight]||"") + extra + closer;
+      const closer = experience === "Excellent" ? " Highly recommended." : " I’d happily return.";
+      return `${tone} ${name} was ${experience?.toLowerCase?.() || "good"}.` + dishLine + (hlMap[highlight]||"") + extra + closer;
     }
 
     function detailsSummary(d) {
@@ -257,11 +237,12 @@
       selectedTags: new Set(),
       showAllKw: false,
       posDetails: { veg:null, diet:[], parking:null, kids:[], access:[] },
-      neg: { dining:null, meal:null, spend:null, feedback:"" }
+      neg: { dining:null, meal:null, spend:null, feedback:"" },
+      wizStep: 0
     };
 
     /*****************
-     * Build UI bits
+     * Chips & groups
      *****************/
     function makeChip(text, pressed=false, onClick=()=>{}) {
       const b=document.createElement("button");
@@ -272,10 +253,9 @@
     }
 
     function renderKeywords() {
-      const wrap=qs("#kwWrap"); if (!wrap) return;
+      const wrap=qs("#kwWrap"); if (!wrap) return; wrap.innerHTML="";
       const list = state.tenant?.keywords || [];
       const max = state.showAllKw ? list.length : Math.min(16, list.length);
-      wrap.innerHTML="";
       list.slice(0,max).forEach(k=>{
         const pressed = state.selectedTags.has(k);
         wrap.appendChild(makeChip(k, pressed, ()=>{
@@ -293,9 +273,8 @@
     }
 
     function renderHighlights() {
+      const wrap=qs("#hlWrap"); if (!wrap) return; wrap.innerHTML="";
       const opts = state.tenant?.highlightOptions || ["Food","Service","Atmosphere","Authenticity"];
-      const wrap=qs("#hlWrap"); if (!wrap) return;
-      wrap.innerHTML="";
       opts.forEach(h=>{
         const pressed = state.highlight===h;
         wrap.appendChild(makeChip(h, pressed, ()=>{
@@ -306,8 +285,7 @@
     }
 
     function chipGroup(el, options, multi=false, getter, setter) {
-      const wrap=qs(el); if (!wrap) return;
-      wrap.innerHTML="";
+      const wrap=qs(el); if (!wrap) return; wrap.innerHTML="";
       const sel=new Set(Array.isArray(getter())?getter():[getter()].filter(Boolean));
       options.forEach(opt=>{
         wrap.appendChild(makeChip(opt, sel.has(opt), ()=>{
@@ -335,24 +313,168 @@
       const nf=qs("#negFeedback"); if (nf) nf.addEventListener("input", e=> state.neg.feedback = e.target.value);
     }
 
-    /**********************
-     * Flow interactions
-     **********************/
-    function setExperience(xp){
-      state.experience = xp;
-      const rt=qs("#reviewText"), cb=qs("#copyBtn"), cs=qs("#copyStatus"), as=qs("#aiStatus"), et=qs("#editToggle");
-      if (rt) rt.value = "";
-      if (cb) cb.setAttribute("disabled","true");
-      if (cs) cs.textContent = "";
-      if (as) as.textContent = "";
-      if (et && rt){ et.checked=false; rt.setAttribute("readonly",""); }
+    /***************
+     * Wizard
+     ***************/
+    const WIZ_IDS = ["kw","hl","veg","diet","parking","kids","access","review"];
 
-      if (xp==="Not great"){
-        qs("#experience").classList.add("hidden");
-        qs("#negative").classList.remove("hidden"); qs("#negative").setAttribute("aria-hidden","false");
-      } else {
-        qs("#experience").classList.add("hidden");
-        qs("#positive").classList.remove("hidden"); qs("#positive").setAttribute("aria-hidden","false");
+    function renderWizardStep() {
+      const stepId = WIZ_IDS[state.wizStep];
+      const total = WIZ_IDS.length;
+      qs("#wizProgress").textContent = `Step ${state.wizStep+1} of ${total}`;
+
+      const c = qs("#wizContent");
+      const back = qs("#wizBack");
+      const next = qs("#wizNext");
+      const skipAll = qs("#wizSkipAll");
+      const sub = qs("#wizSub");
+
+      back.disabled = state.wizStep === 0;
+      next.classList.remove("hidden");
+      skipAll.classList.remove("hidden");
+      sub.classList.remove("hidden");
+
+      if (stepId === "kw") {
+        c.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-slate-700">Pick up to 3 keywords</p>
+              <button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>
+            </div>
+            <div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>
+          </div>`;
+        renderKeywords();
+        qs("#kwToggle")?.addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); });
+      }
+      else if (stepId === "hl") {
+        c.innerHTML = `
+          <div>
+            <p class="text-sm font-medium text-slate-700">What stood out the most?</p>
+            <div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>
+          </div>`;
+        renderHighlights();
+      }
+      else if (stepId === "veg") {
+        c.innerHTML = `
+          <div>
+            <p class="text-sm font-medium text-slate-700">Vegetarian options?</p>
+            <div id="pos-veg" class="mt-3 flex flex-wrap gap-2"></div>
+          </div>`;
+        buildPositiveDetailsUI();
+      }
+      else if (stepId === "diet") {
+        c.innerHTML = `
+          <div>
+            <p class="text-sm font-medium text-slate-700">Any dietary considerations?</p>
+            <div id="pos-diet" class="mt-3 flex flex-wrap gap-2"></div>
+          </div>`;
+        buildPositiveDetailsUI();
+      }
+      else if (stepId === "parking") {
+        c.innerHTML = `
+          <div>
+            <p class="text-sm font-medium text-slate-700">Parking</p>
+            <div id="pos-parking" class="mt-3 flex flex-wrap gap-2"></div>
+          </div>`;
+        buildPositiveDetailsUI();
+      }
+      else if (stepId === "kids") {
+        c.innerHTML = `
+          <div>
+            <p class="text-sm font-medium text-slate-700">Kid-friendliness</p>
+            <div id="pos-kids" class="mt-3 flex flex-wrap gap-2"></div>
+          </div>`;
+        buildPositiveDetailsUI();
+      }
+      else if (stepId === "access") {
+        c.innerHTML = `
+          <div>
+            <p class="text-sm font-medium text-slate-700">Wheelchair accessibility</p>
+            <div id="pos-access" class="mt-3 flex flex-wrap gap-2"></div>
+          </div>`;
+        buildPositiveDetailsUI();
+      }
+      else if (stepId === "review") {
+        sub.classList.add("hidden");
+        skipAll.classList.add("hidden");
+        next.classList.add("hidden");
+        c.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>
+              <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input id="editToggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[var(--brand)] focus:ring-[var(--brand)]" checked />
+                <span class="text-sm text-slate-700">Enable editing</span>
+              </label>
+            </div>
+            <textarea id="reviewText" rows="5" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6" aria-describedby="copyHelp" placeholder="Generating…"></textarea>
+            <p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>
+
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+              <button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>
+              <button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>
+              <span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>
+            </div>
+          </div>`;
+        // Editable by default
+        qs("#editToggle").addEventListener("change", e=>{
+          const ta=qs("#reviewText");
+          e.target.checked ? ta.removeAttribute("readonly") : ta.setAttribute("readonly","");
+        });
+        // Copy behavior (2s)
+        attachCopyBehavior();
+        // Generate immediately, then allow regenerating
+        generateReview(); // auto-generate on entry
+        qs("#aiBtn").addEventListener("click", generateReview); // regenerate
+      }
+    }
+
+    function wizardNext(){ if (state.wizStep < WIZ_IDS.length-1){ state.wizStep++; renderWizardStep(); } }
+    function wizardBack(){ if (state.wizStep > 0){ state.wizStep--; renderWizardStep(); } }
+    function wizardSkipAll(){ state.wizStep = WIZ_IDS.indexOf("review"); renderWizardStep(); }
+
+    /**********************
+     * Review generation
+     **********************/
+    async function generateReview(){
+      const status=qs("#aiStatus");
+      if (status) status.textContent = "Polishing…";
+      const details = detailsSummary(state.posDetails);
+      const body = {
+        restaurant: state.tenant?.name || "This restaurant",
+        experience: state.experience || "Good",
+        highlight: state.highlight || "Food",
+        keywords: [...state.selectedTags],
+        extra: details
+      };
+      try {
+        let text="";
+        if (TEST_GROQ_KEY) {
+          text = await callGroqDirect(body);
+        } else {
+          const r = await fetch("/.netlify/functions/review-ai", {
+            method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
+          });
+          if (!r.ok) throw new Error("AI function not available");
+          const j = await r.json();
+          text = (j?.text || "").trim();
+        }
+        if (!text) throw new Error("AI returned empty text");
+        qs("#reviewText").value = text;
+        qs("#copyBtn").removeAttribute("disabled");
+        if (status) status.textContent = "AI suggestion applied.";
+      } catch (e){
+        // Fallback deterministic
+        const fallback = writeShortReview({
+          name: body.restaurant,
+          experience: body.experience,
+          highlight: body.highlight,
+          keywords: body.keywords,
+          details
+        });
+        qs("#reviewText").value = fallback;
+        qs("#copyBtn").removeAttribute("disabled");
+        if (status) status.textContent = "AI not available; used a concise draft.";
       }
     }
 
@@ -360,66 +482,31 @@
       const btn=qs("#copyBtn"); if (!btn) return;
       const label=btn.querySelector(".btn-label"); const original=label.textContent;
       btn.addEventListener("click", async ()=>{
-        const txt=qs("#reviewText").value.trim(); if (!txt) return;
+        const txt=qs("#reviewText")?.value?.trim(); if (!txt) return;
         await copyText(txt);
         label.textContent="Copied"; qs("#sr-live").textContent="Copied to clipboard";
         setTimeout(()=>label.textContent=original, 2000);
       });
     }
 
-    async function polishWithAI(){
-      const status=qs("#aiStatus");
-      if (!state.experience || state.experience==="Not great"){ if(status) status.textContent="Choose Excellent or Good first."; return; }
-
-      if (status) status.textContent="Polishing…";
-      try{
-        const details = detailsSummary(state.posDetails);
-        const body = {
-          restaurant: state.tenant.name,
-          experience: state.experience,
-          highlight: state.highlight || "none",
-          keywords: [...state.selectedTags],
-          extra: details
-        };
-
-        // Netlify Function (secure). Friendly fallback if missing.
-        const r = await fetch("/.netlify/functions/review-ai", {
-          method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
-        });
-
-        if (!r.ok) throw new Error("no endpoint");
-        const j = await r.json();
-        const txt = (j?.text || "").trim();
-        if (txt){
-          qs("#reviewText").value = txt;
-          qs("#copyBtn").removeAttribute("disabled");
-          if (status) status.textContent = "AI suggestion applied.";
-        } else {
-          if (status) status.textContent = "AI returned no text. Try again.";
-        }
-      }catch(_){
-        if (status) status.textContent = "AI endpoint isn’t set up yet. Use “Write review” for now, or add a Netlify Function at /.netlify/functions/review-ai.";
+    /**********************
+     * Flow interactions
+     **********************/
+    function setExperience(xp){
+      state.experience = xp;
+      if (xp==="Not great"){
+        qs("#experience").classList.add("hidden");
+        qs("#negative").classList.remove("hidden"); qs("#negative").setAttribute("aria-hidden","false");
+      } else {
+        qs("#experience").classList.add("hidden");
+        qs("#positive").classList.remove("hidden"); qs("#positive").setAttribute("aria-hidden","false");
+        // Wizard is hidden until user clicks Help me with AI
       }
-    }
-
-    function writeDeterministic(){
-      const status=qs("#aiStatus");
-      if (!state.experience || state.experience==="Not great"){ if(status) status.textContent="Choose Excellent or Good first."; return; }
-      const txt = writeShortReview({
-        name: state.tenant.name,
-        experience: state.experience,
-        highlight: state.highlight,
-        keywords: [...state.selectedTags],
-        details: detailsSummary(state.posDetails)
-      });
-      qs("#reviewText").value = txt;
-      qs("#copyBtn").removeAttribute("disabled");
-      if (status) status.textContent = "Draft created.";
     }
 
     async function sendNegative(){
       const btn=qs("#sendNegative"); const status=qs("#negStatus");
-      if (btn) btn.disabled=true; if (status) status.textContent="Sending…";
+      btn.disabled=true; status.textContent="Sending…";
 
       const payload = {
         tenantId: state.tenant.slug,
@@ -434,18 +521,16 @@
         await fetch("/.netlify/functions/feedback", {
           method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
         });
-      } catch (_) { /* ignore errors – UI should still show success */ }
+      } catch (_) { /* ignore errors */ }
 
-      if (status) status.textContent="";
+      status.textContent="";
       const form=qs("#negForm"); const done=qs("#negDone");
-      if (form && done){
-        form.classList.add("opacity-0","translate-y-2");
-        setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
-      }
+      form.classList.add("opacity-0","translate-y-2");
+      setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden") }, 220);
     }
 
     /****************
-     * DEFAULT TENANT (fallback if dataset fails)
+     * DEFAULT TENANT (fallback if dataset missing)
      ****************/
     const DEFAULT_TENANT = {
       slug: "sahara",
@@ -471,58 +556,56 @@
      * Initialization
      ****************/
     async function init(){
-      // Figure out slug
-      const pathPart = slugFromPath();
-      const queryPart = new URLSearchParams(location.search).get("id") || "";
-      const slug = (pathPart || queryPart || "sahara");
+      // Determine tenant
+      const fromRoute = slugFromPath();
+      const fromQuery = new URLSearchParams(location.search).get("id") || "";
+      const slug = (fromRoute || fromQuery || "sahara");
 
-      // URL for dataset
+      // Load dataset (no early return)
       const jsonUrl = (location.protocol === "file:")
         ? `data/tenants/${encodeURIComponent(slug)}.json`
         : `/data/tenants/${encodeURIComponent(slug)}.json`;
 
-      // Try to load dataset; if it fails, use DEFAULT_TENANT (no early return!)
       let cfg = null;
       try {
-        const res = await fetch(jsonUrl, { cache: "no-store" });
-        if (res.ok) {
-          cfg = await res.json();
-        } else {
-          console.warn("[dataset] Not found or not ok:", res.status, jsonUrl);
-        }
-      } catch (e) {
-        console.warn("[dataset] Fetch error:", e, jsonUrl);
-      }
+        const res = await fetch(jsonUrl, { cache:"no-store" });
+        if (res.ok) { cfg = await res.json(); }
+        else { console.warn("[dataset] Not found:", res.status, jsonUrl); }
+      } catch (e) { console.warn("[dataset] Fetch error:", e, jsonUrl); }
       if (!cfg) cfg = DEFAULT_TENANT;
       state.tenant = cfg;
 
-      // Brand + titles
+      // Brand & Google
       setBrand(cfg.brand?.primary);
       qs("#restName").textContent = cfg.name;
-
-      // Google link (TOP)
       const gURL = googleUrl(cfg.google);
       const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop");
       if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
       else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
 
-      // Build positive/negative controls
-      renderKeywords(); renderHighlights(); buildPositiveDetailsUI(); buildNegativeUI();
+      // Negative path controls
+      buildNegativeUI();
 
-      // Wire buttons (do this ALWAYS, even if dataset failed)
+      // Experience buttons
       qsa("[data-exp]").forEach(b=> b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp"))));
-      const kwToggle = qs("#kwToggle"); if (kwToggle) kwToggle.addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); });
-      const editToggle = qs("#editToggle"); if (editToggle) editToggle.addEventListener("change", e=>{ const ta=qs("#reviewText"); e.target.checked?ta.removeAttribute("readonly"):ta.setAttribute("readonly",""); });
-      attachCopyBehavior();
-      const wb=qs("#writeBtn"); if (wb) wb.addEventListener("click", writeDeterministic);
-      const ab=qs("#aiBtn"); if (ab) ab.addEventListener("click", polishWithAI);
-      const sn=qs("#sendNegative"); if (sn) sn.addEventListener("click", sendNegative);
 
-      // Optional: show which dataset loaded
-      if (cfg === DEFAULT_TENANT) {
-        console.warn("[dataset] Using DEFAULT_TENANT fallback. Expected file missing at:", jsonUrl);
-        qs("#title").innerHTML = `Share your experience at <span class="brand-txt">${cfg.name}</span>`;
-      }
+      // Reveal AI wizard
+      qs("#revealAi").addEventListener("click", ()=>{
+        qs("#craftWrap").classList.remove("hidden");
+        state.wizStep = 0;
+        state.selectedTags.clear();
+        state.highlight = null;
+        state.posDetails = { veg:null, diet:[], parking:null, kids:[], access:[] };
+        renderWizardStep();
+      });
+
+      // Wizard nav
+      qs("#wizNext").addEventListener("click", wizardNext);
+      qs("#wizBack").addEventListener("click", wizardBack);
+      qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
+
+      // Negative send
+      qs("#sendNegative").addEventListener("click", sendNegative);
     }
 
     document.addEventListener("DOMContentLoaded", init);
