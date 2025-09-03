@@ -23,11 +23,14 @@
     .chip[aria-pressed="true"] { color:#fff; background:var(--brand); border-color:transparent }
     details > summary::-webkit-details-marker { display:none }
 
-    /* Simple step transitions */
+    /* Step transitions */
     .step-enter { opacity: 0; transform: translateY(6px); }
     .step-enter-active { opacity: 1; transform: translateY(0); transition: all 260ms ease; }
     .step-leave { opacity: 1; transform: translateY(0); }
     .step-leave-active { opacity: 0; transform: translateY(-6px); transition: all 200ms ease; }
+
+    /* Tiny dot stepper */
+    .dot { height:6px; width:18px; border-radius:9999px; transition: all 200ms ease; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-stone-50 to-stone-200 text-slate-800 antialiased">
@@ -38,7 +41,6 @@
         <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">
           Share your experience at <span id="restName" class="brand-txt">Sahara</span>
         </h1>
-        <p class="mt-1 text-[11px] text-slate-400 select-none">build v2-animated</p>
       </header>
 
       <!-- Body -->
@@ -68,8 +70,8 @@
 
         <!-- POSITIVE PATH -->
         <section id="positive" class="hidden" aria-hidden="true">
-          <!-- Same row: Google + AI -->
-          <div class="grid grid-cols-2 gap-3 items-center">
+          <!-- Top row: Google + AI -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
             <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
                class="inline-flex items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none"
                aria-label="Open Google to post">
@@ -93,13 +95,12 @@
                   <p id="wizSub" class="mt-1 text-sm text-slate-600">Answer a few quick questions, or skip later.</p>
                 </div>
                 <div class="text-right">
-                  <div id="wizProgress" class="text-sm text-slate-500">Step 1</div>
-                  <!-- Simple dots stepper -->
+                  <div id="wizProgress" class="text-sm text-slate-500">Step 1 of 8</div>
                   <div id="wizDots" class="mt-2 flex items-center gap-1.5" aria-hidden="true"></div>
                 </div>
               </div>
 
-              <div id="wizContent" class="mt-5"><!-- dynamic step content --></div>
+              <div id="wizContent" class="mt-5 step-enter step-enter-active"><!-- dynamic --></div>
 
               <div class="mt-6 flex flex-wrap gap-3 justify-between">
                 <div class="flex gap-3">
@@ -162,11 +163,10 @@
   <div id="sr-live" class="sr-only" aria-live="polite"></div>
 
   <script>
-    /* ========= SIMPLE CONFIG ========= */
-    var DATA_URL = "/data/tenants/sahara.json"; // fixed for now
-    var TEST_GROQ_KEY = ""; // leave empty to use Netlify Function; put gsk_... here TEMPORARILY only for browser tests
+    /* ======== CONFIG ======== */
+    var DATA_URL = "/data/tenants/sahara.json"; // static JSON dataset path
 
-    /* ========= UTILITIES ========= */
+    /* ======== UTILITIES ======== */
     function qs(s, r){ return (r||document).querySelector(s); }
     function qsa(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
     function setBrand(hex){ document.documentElement.style.setProperty("--brand", hex || "#b91c1c"); }
@@ -182,29 +182,30 @@
       return "";
     }
 
-    /* ========= ANIM HELPERS ========= */
-    function swapContent(container, newHTML){
-      // leave
+    /* ======== ANIMATION HELPERS ======== */
+    function swapContent(container, newHTML, after){
       container.classList.remove('step-enter','step-enter-active');
       container.classList.add('step-leave');
-      // force reflow
       void container.offsetWidth;
       container.classList.add('step-leave-active');
+
       setTimeout(function(){
         container.innerHTML = newHTML;
-        // enter
+
         container.classList.remove('step-leave','step-leave-active');
         container.classList.add('step-enter');
         void container.offsetWidth;
         container.classList.add('step-enter-active');
-        // cleanup classes after anim
+
+        if (typeof after === 'function') after();
+
         setTimeout(function(){
           container.classList.remove('step-enter','step-enter-active');
         }, 280);
       }, 200);
     }
 
-    /* ========= FALLBACK REVIEW ========= */
+    /* ======== DRAFT REVIEW (fallback) ======== */
     function writeShortReview(args) {
       var name = args.name || "This restaurant";
       var exp = args.experience || "Good";
@@ -239,7 +240,24 @@
       return parts.join(" | ");
     }
 
-    /* ========= STATE ========= */
+    /* ======== TYPEWRITER ======== */
+    function typeTextIntoTextarea(el, fullText, speed){
+      return new Promise(function(resolve){
+        el.value = "";
+        var i = 0;
+        (function tick(){
+          el.value = fullText.slice(0, i);
+          i++;
+          if (i <= fullText.length){
+            setTimeout(tick, speed);
+          } else {
+            resolve();
+          }
+        })();
+      });
+    }
+
+    /* ======== STATE ======== */
     var state = {
       tenant: null,
       experience: null,
@@ -251,7 +269,7 @@
       wizStep: 0
     };
 
-    /* ========= CHIPS ========= */
+    /* ======== CHIPS ======== */
     function makeChip(text, pressed, onClick){
       var b=document.createElement("button");
       b.type="button"; b.className="chip smooth"; b.setAttribute("aria-pressed", pressed?"true":"false");
@@ -259,6 +277,7 @@
       b.addEventListener("click", onClick || function(){});
       return b;
     }
+
     function renderKeywords(){
       var wrap=qs("#kwWrap"); if (!wrap) return; wrap.innerHTML="";
       var list = (state.tenant && state.tenant.keywords) ? state.tenant.keywords : [];
@@ -283,6 +302,7 @@
         }
       }
     }
+
     function renderHighlights(){
       var wrap=qs("#hlWrap"); if (!wrap) return; wrap.innerHTML="";
       var opts = (state.tenant && state.tenant.highlightOptions) ? state.tenant.highlightOptions : ["Food","Service","Atmosphere","Authenticity"];
@@ -296,6 +316,7 @@
         })(opts[i]);
       }
     }
+
     function chipGroup(sel, options, multi, getter, setter){
       var wrap=qs(sel); if (!wrap) return; wrap.innerHTML="";
       var current = getter();
@@ -311,6 +332,7 @@
         })(options[i]);
       }
     }
+
     function buildPositiveDetailsUI(){
       chipGroup("#pos-veg", ["Yes","No","Not sure"], false, function(){return state.posDetails.veg;}, function(v){state.posDetails.veg=v;});
       chipGroup("#pos-diet", ["Gluten-free options","Vegan options","Halal options","Nut-aware","Dairy-free","Other"], true, function(){return state.posDetails.diet;}, function(v){state.posDetails.diet=v;});
@@ -318,6 +340,7 @@
       chipGroup("#pos-kids", ["Good for kids","High chairs","Kids menu","Not kid-focused"], true, function(){return state.posDetails.kids;}, function(v){state.posDetails.kids=v;});
       chipGroup("#pos-access", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], true, function(){return state.posDetails.access;}, function(v){state.posDetails.access=v;});
     }
+
     function buildNegativeUI(){
       var nq = (state.tenant && state.tenant.negativeQuestions) ? state.tenant.negativeQuestions : {};
       chipGroup("#q-dining", nq.diningModes || ["Dine in","Take out","Delivery"], false, function(){return state.neg.dining;}, function(v){state.neg.dining=v;});
@@ -326,21 +349,19 @@
       var nf=qs("#negFeedback"); if (nf) nf.addEventListener("input", function(e){ state.neg.feedback = e.target.value; });
     }
 
-    /* ========= DOTS ========= */
+    /* ======== DOTS ======== */
     var WIZ_IDS = ["kw","hl","veg","diet","parking","kids","access","review"];
     function renderDots(){
       var dots = qs("#wizDots"); if (!dots) return; dots.innerHTML="";
       for (var i=0;i<WIZ_IDS.length;i++){
-        var d=document.createElement("div");
-        var base="h-1.5 w-4 rounded-full smooth";
-        var cls = i < state.wizStep ? "bg-[color:rgba(185,28,28,.35)]" : "bg-slate-200";
-        if (i === state.wizStep) cls = "bg-[var(--brand)]";
-        d.className = base+" "+cls;
+        var d=document.createElement("div"); d.className="dot bg-slate-200";
+        if (i < state.wizStep) d.style.background = "rgba(185,28,28,.35)";
+        if (i === state.wizStep){ d.style.background = "var(--brand)"; d.style.width="24px"; }
         dots.appendChild(d);
       }
     }
 
-    /* ========= WIZARD ========= */
+    /* ======== WIZARD ======== */
     function renderWizardStep(){
       var id = WIZ_IDS[state.wizStep];
       var total = WIZ_IDS.length;
@@ -353,10 +374,7 @@
       var sub = qs("#wizSub");
 
       back.disabled = (state.wizStep === 0);
-
-      // Skip button: hidden for first two steps, shown afterwards
-      if (state.wizStep < 2) { skipAll.classList.add("invisible"); }
-      else { skipAll.classList.remove("invisible"); }
+      if (state.wizStep < 2) skipAll.classList.add("invisible"); else skipAll.classList.remove("invisible");
 
       sub.classList.remove("hidden");
       next.classList.remove("hidden");
@@ -371,11 +389,11 @@
             '</div>'+
             '<div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(function(){
+
+        swapContent(c, html, function(){
           renderKeywords();
           var t=qs("#kwToggle"); if(t){ t.addEventListener("click", function(){ state.showAllKw=!state.showAllKw; renderKeywords(); }); }
-        }, 0);
+        });
       }
       else if (id === "hl"){
         html =
@@ -383,8 +401,8 @@
             '<p class="text-sm font-medium text-slate-700">What stood out the most?</p>'+
             '<div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(function(){ renderHighlights(); }, 0);
+
+        swapContent(c, html, function(){ renderHighlights(); });
       }
       else if (id === "veg"){
         html =
@@ -392,8 +410,8 @@
             '<p class="text-sm font-medium text-slate-700">Vegetarian options?</p>'+
             '<div id="pos-veg" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+
+        swapContent(c, html, function(){ buildPositiveDetailsUI(); });
       }
       else if (id === "diet"){
         html =
@@ -401,8 +419,8 @@
             '<p class="text-sm font-medium text-slate-700">Any dietary considerations?</p>'+
             '<div id="pos-diet" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+
+        swapContent(c, html, function(){ buildPositiveDetailsUI(); });
       }
       else if (id === "parking"){
         html =
@@ -410,8 +428,8 @@
             '<p class="text-sm font-medium text-slate-700">Parking</p>'+
             '<div id="pos-parking" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+
+        swapContent(c, html, function(){ buildPositiveDetailsUI(); });
       }
       else if (id === "kids"){
         html =
@@ -419,8 +437,8 @@
             '<p class="text-sm font-medium text-slate-700">Kid-friendliness</p>'+
             '<div id="pos-kids" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+
+        swapContent(c, html, function(){ buildPositiveDetailsUI(); });
       }
       else if (id === "access"){
         html =
@@ -428,13 +446,14 @@
             '<p class="text-sm font-medium text-slate-700">Wheelchair accessibility</p>'+
             '<div id="pos-access" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+
+        swapContent(c, html, function(){ buildPositiveDetailsUI(); });
       }
       else if (id === "review"){
         sub.classList.add("hidden");
         next.classList.add("hidden");
         skipAll.classList.add("invisible");
+
         html =
           '<div>'+
             '<div class="flex items-center justify-between">'+
@@ -452,17 +471,17 @@
               '<span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>'+
             '</div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(function(){
+
+        swapContent(c, html, function(){
           var ed=qs("#editToggle");
           ed.addEventListener("change", function(){
             var ta=qs("#reviewText");
             if (ed.checked) ta.removeAttribute("readonly"); else ta.setAttribute("readonly","");
           });
           attachCopyBehavior();
-          generateReview(); // auto
-          qs("#aiBtn").addEventListener("click", generateReview); // regenerate each click
-        }, 0);
+          generateReview(true); // auto, with typewriter
+          qs("#aiBtn").addEventListener("click", function(){ generateReview(true); }); // regenerate, type again
+        });
       }
 
       renderDots();
@@ -472,34 +491,8 @@
     function wizardBack(){ if (state.wizStep > 0){ state.wizStep--; renderWizardStep(); } }
     function wizardSkipAll(){ state.wizStep = WIZ_IDS.indexOf("review"); renderWizardStep(); }
 
-    /* ========= AI (browser test / function) ========= */
-    function callGroqDirect(payload){
-      if (!TEST_GROQ_KEY) return Promise.reject(new Error("TEST_GROQ_KEY is empty"));
-      var system = "You write polished restaurant reviews. Return ONLY one paragraph. 40–60 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. Avoid extreme claims, headings, quotes, or preambles.";
-      var user =
-        "Restaurant: " + (payload.restaurant||"Unknown") + "\n" +
-        "Experience: " + (payload.experience||"Good") + "\n" +
-        "Highlight: " + (payload.highlight||"Food") + "\n" +
-        "Keywords: " + ((payload.keywords||[]).slice(0,3).join(", ") || "—") + "\n" +
-        "Optional details: " + (payload.extra||"—") + "\n\n" +
-        "Write a single paragraph suitable to paste into Google.";
-      return fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method:"POST",
-        headers:{ "Authorization":"Bearer " + TEST_GROQ_KEY, "Content-Type":"application/json" },
-        body: JSON.stringify({
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          temperature: 0.65,
-          max_tokens: 140,
-          messages: [{role:"system",content:system},{role:"user",content:user}]
-        })
-      }).then(function(resp){
-        if (!resp.ok) return resp.text().then(function(t){ throw new Error("Groq HTTP " + resp.status + ": " + t.slice(0,150)); });
-        return resp.json();
-      }).then(function(data){
-        return ((data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "").trim();
-      });
-    }
-    function generateReview(){
+    /* ======== AI / FALLBACK ======== */
+    function generateReview(withTyping){
       var status=qs("#aiStatus"); if (status) status.textContent="Polishing…";
       var details = detailsSummary(state.posDetails);
       var body = {
@@ -509,34 +502,37 @@
         keywords: Array.from(state.selectedTags),
         extra: details
       };
-      function done(text, usedAI){
-        qs("#reviewText").value = text;
-        qs("#copyBtn").removeAttribute("disabled");
-        if (status) status.textContent = usedAI ? "AI suggestion applied." : "Draft created.";
+      function finish(text, usedAI){
+        var ta=qs("#reviewText"); var copyBtn=qs("#copyBtn");
+        var speed = 12; // ms per char (typewriter)
+        if (withTyping){
+          ta.setAttribute("readonly",""); // avoid caret flicker while typing
+          typeTextIntoTextarea(ta, text, speed).then(function(){
+            ta.removeAttribute("readonly");
+            copyBtn.removeAttribute("disabled");
+            if (status) status.textContent = usedAI ? "AI suggestion applied." : "Draft created.";
+          });
+        } else {
+          ta.value = text;
+          copyBtn.removeAttribute("disabled");
+          if (status) status.textContent = usedAI ? "AI suggestion applied." : "Draft created.";
+        }
       }
-      if (TEST_GROQ_KEY){
-        return callGroqDirect(body).then(function(text){
-          if (!text) throw new Error("empty");
-          done(text, true);
-        }).catch(function(){
-          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
-        });
-      } else {
-        // Try Netlify Function; fall back if missing
-        return fetch("/.netlify/functions/review-ai", {
-          method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
-        }).then(function(r){
-          if (!r.ok) throw new Error("no function");
-          return r.json();
-        }).then(function(j){
-          var text = (j && j.text) ? String(j.text).trim() : "";
-          if (!text) throw new Error("empty");
-          done(text, true);
-        }).catch(function(){
-          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
-        });
-      }
+      // Try Netlify Function; fall back to deterministic
+      fetch("/.netlify/functions/review-ai", {
+        method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
+      }).then(function(r){
+        if (!r.ok) throw new Error("no function");
+        return r.json();
+      }).then(function(j){
+        var text = (j && j.text) ? String(j.text).trim() : "";
+        if (!text) throw new Error("empty");
+        finish(text, true);
+      }).catch(function(){
+        finish(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
+      });
     }
+
     function attachCopyBehavior(){
       var btn=qs("#copyBtn"); if (!btn) return;
       var label=btn.querySelector(".btn-label"); var original=label.textContent;
@@ -550,7 +546,7 @@
       });
     }
 
-    /* ========= FLOW ========= */
+    /* ======== FLOW ======== */
     function setExperience(xp){
       state.experience = xp;
       if (xp==="Not great"){
@@ -572,7 +568,6 @@
         answers: state.neg,
         userAgent: navigator.userAgent
       };
-      // Non-blocking; ignore errors
       fetch("/.netlify/functions/feedback", {
         method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
       })["catch"](function(){});
@@ -582,7 +577,7 @@
       setTimeout(function(){ form.classList.add("hidden"); done.classList.remove("hidden"); }, 220);
     }
 
-    /* ========= DEFAULT TENANT ========= */
+    /* ======== DEFAULT TENANT (fallback) ======== */
     var DEFAULT_TENANT = {
       slug: "sahara",
       name: "Sahara",
@@ -603,15 +598,13 @@
       }
     };
 
-    /* ========= INIT ========= */
+    /* ======== INIT ======== */
     function init(){
-      // Load dataset (no early return)
       var cfg=null;
       function afterLoad(){
         if (!cfg) cfg = DEFAULT_TENANT;
         state.tenant = cfg;
 
-        // Brand & Google
         setBrand(cfg.brand && cfg.brand.primary ? cfg.brand.primary : "#b91c1c");
         qs("#restName").textContent = cfg.name || "Your Restaurant";
         var gURL = googleUrl(cfg.google || null);
@@ -619,15 +612,12 @@
         if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
         else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
 
-        // Build UI controls
         buildNegativeUI();
 
-        // Experience buttons
         qsa("[data-exp]").forEach(function(b){
           b.addEventListener("click", function(){ setExperience(b.getAttribute("data-exp")); });
         });
 
-        // Reveal AI wizard
         var reveal = qs("#revealAi");
         if (reveal) reveal.addEventListener("click", function(){
           qs("#craftWrap").classList.remove("hidden");
@@ -638,12 +628,10 @@
           renderWizardStep();
         });
 
-        // Wizard nav
         qs("#wizNext").addEventListener("click", wizardNext);
         qs("#wizBack").addEventListener("click", wizardBack);
         qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
 
-        // Negative send
         qs("#sendNegative").addEventListener("click", sendNegative);
       }
 
@@ -658,7 +646,6 @@
           cfg = null; afterLoad();
         });
       } else {
-        // Very old browser: skip fetch and use fallback
         cfg = null; afterLoad();
       }
     }
