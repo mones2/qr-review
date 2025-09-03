@@ -498,7 +498,7 @@
     /* ========= AI (browser test / function) ========= */
     function callGroqDirect(payload){
       if (!TEST_GROQ_KEY) return Promise.reject(new Error("TEST_GROQ_KEY is empty"));
-      const system = "You write polished restaurant reviews. Return ONLY one paragraph. 40–60 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. Avoid extreme claims, headings, quotes, or preambles.";
+      const system = "You write polished restaurant reviews. Return ONLY one paragraph. 10–15 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. Avoid extreme claims, headings, quotes, or preambles.";
       const user =
         "Restaurant: " + (payload.restaurant||"Unknown") + "\n" +
         "Experience: " + (payload.experience||"Good") + "\n" +
@@ -690,3 +690,4 @@
   </script>
 </body>
 </html>
+
