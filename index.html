@@ -38,7 +38,6 @@
         <h1 id="title" class="text-2xl sm:text-3xl font-semibold tracking-tight">
           Share your experience at <span id="restName" class="brand-txt">Sahara</span>
         </h1>
-        <p class="mt-1 text-[11px] text-slate-400 select-none">build v2-animated (dynamic tenant)</p>
       </header>
 
       <!-- Body -->
@@ -94,7 +93,6 @@
                 </div>
                 <div class="text-right">
                   <div id="wizProgress" class="text-sm text-slate-500">Step 1</div>
-                  <!-- Simple dots stepper -->
                   <div id="wizDots" class="mt-2 flex items-center gap-1.5" aria-hidden="true"></div>
                 </div>
               </div>
@@ -164,99 +162,101 @@
   <script>
     /* ========= ROUTE → TENANT KEY ========= */
     function getTenantKey(){
-      // /?id=<key>
-      var qs = new URLSearchParams(window.location.search);
-      var qid = qs.get("id");
+      const qs = new URLSearchParams(window.location.search);
+      const qid = qs.get("id");
       if (qid) return String(qid).trim().toLowerCase();
 
-      // /r/<key> or /r/<key>/...
-      var path = window.location.pathname.replace(/^\/+/, "");
+      const path = window.location.pathname.replace(/^\/+/, "");
       if (path.indexOf("r/") === 0){
-        var parts = path.split("/");
+        const parts = path.split("/");
         if (parts[1]) return String(parts[1]).trim().toLowerCase();
       }
-
-      // default for testing
-      return "sahara";
+      return "sahara"; // default for testing
     }
 
-    // Build the dataset URL dynamically from key
-    var DATA_URL = "/data/tenants/" + encodeURIComponent(getTenantKey()) + ".json";
+    // Build dataset URL dynamically
+    const DATA_URL = "/data/tenants/" + encodeURIComponent(getTenantKey()) + ".json";
 
-    /* ========= SIMPLE CONFIG ========= */
-    var TEST_GROQ_KEY = ""; // leave empty to use Netlify Function; add gsk_... here TEMPORARILY only for browser tests
+    /* ========= OPTIONAL: browser-only AI key (leave empty in production) ========= */
+    const TEST_GROQ_KEY = ""; // add gsk_... only for quick local tests
 
     /* ========= UTILITIES ========= */
-    function qs(s, r){ return (r||document).querySelector(s); }
-    function qsa(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+    const qs = (s, r)=> (r||document).querySelector(s);
+    const qsa = (s, r)=> Array.prototype.slice.call((r||document).querySelectorAll(s));
     function setBrand(hex){ document.documentElement.style.setProperty("--brand", hex || "#b91c1c"); }
     function copyText(t){
-      if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
-      var ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px";
+      if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
+      const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px";
       document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
       return Promise.resolve();
     }
     function googleUrl(google){
-      if (google && google.mapsUrl) return google.mapsUrl;
-      if (google && google.placeId) return "https://search.google.com/local/writereview?placeid="+encodeURIComponent(google.placeId);
+      if (google?.mapsUrl) return google.mapsUrl;
+      if (google?.placeId) return "https://search.google.com/local/writereview?placeid="+encodeURIComponent(google.placeId);
       return "";
     }
 
     /* ========= ANIM HELPERS ========= */
-    function swapContent(container, newHTML){
+    function swapContent(container, newHTML, after){
+      // leave phase
       container.classList.remove('step-enter','step-enter-active');
       container.classList.add('step-leave');
       void container.offsetWidth;
       container.classList.add('step-leave-active');
+
       setTimeout(function(){
+        // replace HTML
         container.innerHTML = newHTML;
+
+        // setup after DOM exists
+        if (typeof after === 'function') after();
+
+        // enter phase
         container.classList.remove('step-leave','step-leave-active');
         container.classList.add('step-enter');
         void container.offsetWidth;
         container.classList.add('step-enter-active');
-        setTimeout(function(){
-          container.classList.remove('step-enter','step-enter-active');
-        }, 280);
+        setTimeout(()=>container.classList.remove('step-enter','step-enter-active'), 280);
       }, 200);
     }
 
     /* ========= FALLBACK REVIEW ========= */
     function writeShortReview(args) {
-      var name = args.name || "This restaurant";
-      var exp = args.experience || "Good";
-      var highlight = args.highlight || "";
-      var keywords = args.keywords || [];
-      var details = args.details || "";
+      const name = args.name || "This restaurant";
+      const exp = args.experience || "Good";
+      const highlight = args.highlight || "";
+      const keywords = args.keywords || [];
+      const details = args.details || "";
 
-      var openersGood = ["I stopped by","I visited","I had a meal at"];
-      var openersEx   = ["Dinner at","An evening at","My visit to"];
-      var opener = (exp === "Excellent" ? openersEx : openersGood)[Math.floor(Math.random()*3)];
+      const openersGood = ["I stopped by","I visited","I had a meal at"];
+      const openersEx   = ["Dinner at","An evening at","My visit to"];
+      const opener = (exp === "Excellent" ? openersEx : openersGood)[Math.floor(Math.random()*3)];
 
-      var k = keywords.slice(0,3);
-      var dishLine = k.length ? (" The " + k.join(", ") + (k.length===1?" was":" were") + " well prepared and full of flavor.") : "";
-      var hlMap = {
+      const k = keywords.slice(0,3);
+      const dishLine = k.length ? (" The " + k.join(", ") + (k.length===1?" was":" were") + " well prepared and full of flavor.") : "";
+      const hlMap = {
         "Food":" The kitchen’s attention to detail showed. 🍽",
         "Service":" Service was attentive and well-timed. 🤝",
         "Atmosphere":" The room felt calm and welcoming. 🌆",
         "Authenticity":" Flavors felt thoughtful and true to the cuisine. 🌍"
       };
-      var hl = hlMap[highlight] || "";
-      var extra = details ? (" " + details + ".") : "";
-      var closer = (exp==="Excellent") ? " Highly recommended." : " I’d happily return.";
+      const hl = hlMap[highlight] || "";
+      const extra = details ? (" " + details + ".") : "";
+      const closer = (exp==="Excellent") ? " Highly recommended." : " I’d happily return.";
       return opener + " " + name + " was " + exp.toLowerCase() + "." + dishLine + hl + extra + closer;
     }
     function detailsSummary(d){
-      var parts=[];
+      const parts=[];
       if (d.veg) parts.push("Vegetarian options: " + d.veg);
-      if (d.diet && d.diet.length) parts.push("Dietary: " + d.diet.join(", "));
+      if (d.diet?.length) parts.push("Dietary: " + d.diet.join(", "));
       if (d.parking) parts.push("Parking: " + d.parking);
-      if (d.kids && d.kids.length) parts.push("Kid-friendliness: " + d.kids.join(", "));
-      if (d.access && d.access.length) parts.push("Accessibility: " + d.access.join(", "));
+      if (d.kids?.length) parts.push("Kid-friendliness: " + d.kids.join(", "));
+      if (d.access?.length) parts.push("Accessibility: " + d.access.join(", "));
       return parts.join(" | ");
     }
 
     /* ========= STATE ========= */
-    var state = {
+    const state = {
       tenant: null,
       experience: null,
       highlight: null,
@@ -269,106 +269,104 @@
 
     /* ========= CHIPS ========= */
     function makeChip(text, pressed, onClick){
-      var b=document.createElement("button");
+      const b=document.createElement("button");
       b.type="button"; b.className="chip smooth"; b.setAttribute("aria-pressed", pressed?"true":"false");
       b.textContent = text;
       b.addEventListener("click", onClick || function(){});
       return b;
     }
+
+    // Defensive renderer for keywords
     function renderKeywords(){
-    var wrap = qs("#kwWrap");
-    if (!wrap) return;
-    wrap.innerHTML = "";
+      const wrap = qs("#kwWrap");
+      if (!wrap) return;
+      wrap.innerHTML = "";
 
-    // Be strict: only accept an array, otherwise fall back to [].
-    var listRaw = state.tenant && state.tenant.keywords;
-    var list = Array.isArray(listRaw) ? listRaw : [];
+      const listRaw = state.tenant && state.tenant.keywords;
+      const list = Array.isArray(listRaw) ? listRaw : [];
 
-    // If empty, show a small note and hide the toggle.
-    var toggle = qs("#kwToggle");
-    if (!list.length) {
-      if (toggle) toggle.classList.add("hidden");
-      var emptyNote = document.createElement("p");
-      emptyNote.className = "text-sm text-slate-500";
-      emptyNote.textContent = "No keywords found for this restaurant.";
-      wrap.appendChild(emptyNote);
-      return;
-    }
+      const toggle = qs("#kwToggle");
+      if (!list.length) {
+        if (toggle) toggle.classList.add("hidden");
+        const emptyNote = document.createElement("p");
+        emptyNote.className = "text-sm text-slate-500";
+        emptyNote.textContent = "No keywords found for this restaurant.";
+        wrap.appendChild(emptyNote);
+        return;
+      }
 
-    var max = state.showAllKw ? list.length : Math.min(16, list.length);
-    for (var i = 0; i < max; i++) {
-      (function(k){
-        var pressed = state.selectedTags.has(k);
+      const max = state.showAllKw ? list.length : Math.min(16, list.length);
+      for (let i = 0; i < max; i++) {
+        const k = list[i];
+        const pressed = state.selectedTags.has(k);
         wrap.appendChild(makeChip(k, pressed, function(){
-          var on = state.selectedTags.has(k);
-          if (!on && state.selectedTags.size >= 3) return; // cap at 3
+          const on = state.selectedTags.has(k);
+          if (!on && state.selectedTags.size >= 3) return;
           if (on) state.selectedTags.delete(k); else state.selectedTags.add(k);
           renderKeywords();
         }));
-      })(list[i]);
+      }
+
+      if (toggle) {
+        if (list.length <= 16) {
+          toggle.classList.add("hidden");
+        } else {
+          toggle.classList.remove("hidden");
+          toggle.textContent = state.showAllKw ? "See fewer" : "See more";
+        }
+      }
     }
 
-    // Toggle visibility and label
-    if (toggle) {
-      if (list.length <= 16) {
-        toggle.classList.add("hidden");
-      } else {
-        toggle.classList.remove("hidden");
-        toggle.textContent = state.showAllKw ? "See fewer" : "See more";
-      }
-    }
-  }
     function renderHighlights(){
-      var wrap=qs("#hlWrap"); if (!wrap) return; wrap.innerHTML="";
-      var opts = (state.tenant && state.tenant.highlightOptions) ? state.tenant.highlightOptions : ["Food","Service","Atmosphere","Authenticity"];
-      for (var i=0;i<opts.length;i++){
-        (function(h){
-          var pressed = state.highlight===h;
-          wrap.appendChild(makeChip(h, pressed, function(){
-            state.highlight = (state.highlight===h) ? null : h;
-            renderHighlights();
-          }));
-        })(opts[i]);
-      }
+      const wrap=qs("#hlWrap"); if (!wrap) return; wrap.innerHTML="";
+      const opts = state.tenant?.highlightOptions || ["Food","Service","Atmosphere","Authenticity"];
+      opts.forEach(h=>{
+        const pressed = state.highlight===h;
+        wrap.appendChild(makeChip(h, pressed, ()=>{
+          state.highlight = (state.highlight===h) ? null : h;
+          renderHighlights();
+        }));
+      });
     }
+
     function chipGroup(sel, options, multi, getter, setter){
-      var wrap=qs(sel); if (!wrap) return; wrap.innerHTML="";
-      var current = getter();
-      var selSet = new Set(Array.isArray(current) ? current : (current ? [current] : []));
-      for (var i=0;i<options.length;i++){
-        (function(opt){
-          wrap.appendChild(makeChip(opt, selSet.has(opt), function(){
-            var on = selSet.has(opt);
-            if (multi){ if (on) selSet.delete(opt); else selSet.add(opt); setter(Array.from(selSet)); }
-            else { selSet.clear(); selSet.add(opt); setter(opt); }
-            chipGroup(sel, options, multi, getter, setter);
-          }));
-        })(options[i]);
-      }
+      const wrap=qs(sel); if (!wrap) return; wrap.innerHTML="";
+      const current = getter();
+      const selSet = new Set(Array.isArray(current) ? current : (current ? [current] : []));
+      options.forEach(opt=>{
+        wrap.appendChild(makeChip(opt, selSet.has(opt), ()=>{
+          const on = selSet.has(opt);
+          if (multi){ if (on) selSet.delete(opt); else selSet.add(opt); setter(Array.from(selSet)); }
+          else { selSet.clear(); selSet.add(opt); setter(opt); }
+          chipGroup(sel, options, multi, getter, setter);
+        }));
+      });
     }
+
     function buildPositiveDetailsUI(){
-      chipGroup("#pos-veg", ["Yes","No","Not sure"], false, function(){return state.posDetails.veg;}, function(v){state.posDetails.veg=v;});
-      chipGroup("#pos-diet", ["Gluten-free options","Vegan options","Halal options","Nut-aware","Dairy-free","Other"], true, function(){return state.posDetails.diet;}, function(v){state.posDetails.diet=v;});
-      chipGroup("#pos-parking", ["Street","Lot","Valet","None / not sure"], false, function(){return state.posDetails.parking;}, function(v){state.posDetails.parking=v;});
-      chipGroup("#pos-kids", ["Good for kids","High chairs","Kids menu","Not kid-focused"], true, function(){return state.posDetails.kids;}, function(v){state.posDetails.kids=v;});
-      chipGroup("#pos-access", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], true, function(){return state.posDetails.access;}, function(v){state.posDetails.access=v;});
+      chipGroup("#pos-veg", ["Yes","No","Not sure"], false, ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
+      chipGroup("#pos-diet", ["Gluten-free options","Vegan options","Halal options","Nut-aware","Dairy-free","Other"], true, ()=>state.posDetails.diet, v=>state.posDetails.diet=v);
+      chipGroup("#pos-parking", ["Street","Lot","Valet","None / not sure"], false, ()=>state.posDetails.parking, v=>state.posDetails.parking=v);
+      chipGroup("#pos-kids", ["Good for kids","High chairs","Kids menu","Not kid-focused"], true, ()=>state.posDetails.kids, v=>state.posDetails.kids=v);
+      chipGroup("#pos-access", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], true, ()=>state.posDetails.access, v=>state.posDetails.access=v);
     }
+
     function buildNegativeUI(){
-      var nq = (state.tenant && state.tenant.negativeQuestions) ? state.tenant.negativeQuestions : {};
-      chipGroup("#q-dining", nq.diningModes || ["Dine in","Take out","Delivery"], false, function(){return state.neg.dining;}, function(v){state.neg.dining=v;});
-      chipGroup("#q-meal",   nq.meals || ["Breakfast","Brunch","Lunch","Dinner","Other"], false, function(){return state.neg.meal;}, function(v){state.neg.meal=v;});
-      chipGroup("#q-spend",  nq.spendRanges || ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"], false, function(){return state.neg.spend;}, function(v){state.neg.spend=v;});
-      var nf=qs("#negFeedback"); if (nf) nf.addEventListener("input", function(e){ state.neg.feedback = e.target.value; });
+      const nq = state.tenant?.negativeQuestions || {};
+      chipGroup("#q-dining", nq.diningModes || ["Dine in","Take out","Delivery"], false, ()=>state.neg.dining, v=>state.neg.dining=v);
+      chipGroup("#q-meal",   nq.meals || ["Breakfast","Brunch","Lunch","Dinner","Other"], false, ()=>state.neg.meal, v=>state.neg.meal=v);
+      chipGroup("#q-spend",  nq.spendRanges || ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"], false, ()=>state.neg.spend, v=>state.neg.spend=v);
+      const nf=qs("#negFeedback"); if (nf) nf.addEventListener("input", e=> state.neg.feedback = e.target.value);
     }
 
     /* ========= DOTS ========= */
-    var WIZ_IDS = ["kw","hl","veg","diet","parking","kids","access","review"];
+    const WIZ_IDS = ["kw","hl","veg","diet","parking","kids","access","review"];
     function renderDots(){
-      var dots = qs("#wizDots"); if (!dots) return; dots.innerHTML="";
-      for (var i=0;i<WIZ_IDS.length;i++){
-        var d=document.createElement("div");
-        var base="h-1.5 w-4 rounded-full smooth";
-        var cls = i < state.wizStep ? "bg-[color:rgba(185,28,28,.35)]" : "bg-slate-200";
+      const dots = qs("#wizDots"); if (!dots) return; dots.innerHTML="";
+      for (let i=0;i<WIZ_IDS.length;i++){
+        const d=document.createElement("div");
+        const base="h-1.5 w-4 rounded-full smooth";
+        let cls = i < state.wizStep ? "bg-[color:rgba(185,28,28,.35)]" : "bg-slate-200";
         if (i === state.wizStep) cls = "bg-[var(--brand)]";
         d.className = base+" "+cls;
         dots.appendChild(d);
@@ -377,28 +375,26 @@
 
     /* ========= WIZARD ========= */
     function renderWizardStep(){
-      var id = WIZ_IDS[state.wizStep];
-      var total = WIZ_IDS.length;
+      const id = WIZ_IDS[state.wizStep];
+      const total = WIZ_IDS.length;
       qs("#wizProgress").textContent = "Step " + (state.wizStep+1) + " of " + total;
 
-      var c = qs("#wizContent");
-      var back = qs("#wizBack");
-      var next = qs("#wizNext");
-      var skipAll = qs("#wizSkipAll");
-      var sub = qs("#wizSub");
+      const c = qs("#wizContent");
+      const back = qs("#wizBack");
+      const next = qs("#wizNext");
+      const skipAll = qs("#wizSkipAll");
+      const sub = qs("#wizSub");
 
       back.disabled = (state.wizStep === 0);
-
-      // Skip button: hidden for first two steps, shown afterwards
-      if (state.wizStep < 2) { skipAll.classList.add("invisible"); }
-      else { skipAll.classList.remove("invisible"); }
+      // first two steps: hide Skip to review
+      if (state.wizStep < 2) skipAll.classList.add("invisible");
+      else skipAll.classList.remove("invisible");
 
       sub.classList.remove("hidden");
       next.classList.remove("hidden");
 
-      var html="";
       if (id === "kw"){
-        html =
+        const html =
           '<div>'+
             '<div class="flex items-center justify-between">'+
               '<p class="text-sm font-medium text-slate-700">Pick up to 3 keywords</p>'+
@@ -406,71 +402,64 @@
             '</div>'+
             '<div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(function(){
+        swapContent(c, html, ()=>{
           renderKeywords();
-          var t=qs("#kwToggle"); if(t){ t.addEventListener("click", function(){ state.showAllKw=!state.showAllKw; renderKeywords(); }); }
-        }, 0);
+          const t=qs("#kwToggle"); if(t){ t.addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); }); }
+        });
       }
       else if (id === "hl"){
-        html =
+        const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700">What stood out the most?</p>'+
             '<div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(function(){ renderHighlights(); }, 0);
+        swapContent(c, html, ()=> renderHighlights());
       }
       else if (id === "veg"){
-        html =
+        const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700">Vegetarian options?</p>'+
             '<div id="pos-veg" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+        swapContent(c, html, ()=> buildPositiveDetailsUI());
       }
       else if (id === "diet"){
-        html =
+        const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700">Any dietary considerations?</p>'+
             '<div id="pos-diet" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+        swapContent(c, html, ()=> buildPositiveDetailsUI());
       }
       else if (id === "parking"){
-        html =
+        const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700">Parking</p>'+
             '<div id="pos-parking" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+        swapContent(c, html, ()=> buildPositiveDetailsUI());
       }
       else if (id === "kids"){
-        html =
+        const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700">Kid-friendliness</p>'+
             '<div id="pos-kids" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+        swapContent(c, html, ()=> buildPositiveDetailsUI());
       }
       else if (id === "access"){
-        html =
+        const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700">Wheelchair accessibility</p>'+
             '<div id="pos-access" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(buildPositiveDetailsUI, 0);
+        swapContent(c, html, ()=> buildPositiveDetailsUI());
       }
       else if (id === "review"){
         sub.classList.add("hidden");
         next.classList.add("hidden");
         skipAll.classList.add("invisible");
-        html =
+        const html =
           '<div>'+
             '<div class="flex items-center justify-between">'+
               '<label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>'+
@@ -487,17 +476,16 @@
               '<span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>'+
             '</div>'+
           '</div>';
-        swapContent(c, html);
-        setTimeout(function(){
-          var ed=qs("#editToggle");
-          ed.addEventListener("change", function(){
-            var ta=qs("#reviewText");
+        swapContent(c, html, ()=>{
+          const ed=qs("#editToggle");
+          ed.addEventListener("change", ()=>{
+            const ta=qs("#reviewText");
             if (ed.checked) ta.removeAttribute("readonly"); else ta.setAttribute("readonly","");
           });
           attachCopyBehavior();
           generateReview(); // auto
           qs("#aiBtn").addEventListener("click", generateReview); // regenerate each click
-        }, 0);
+        });
       }
 
       renderDots();
@@ -510,8 +498,8 @@
     /* ========= AI (browser test / function) ========= */
     function callGroqDirect(payload){
       if (!TEST_GROQ_KEY) return Promise.reject(new Error("TEST_GROQ_KEY is empty"));
-      var system = "You write polished restaurant reviews. Return ONLY one paragraph. 40–60 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. Avoid extreme claims, headings, quotes, or preambles.";
-      var user =
+      const system = "You write polished restaurant reviews. Return ONLY one paragraph. 40–60 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. Avoid extreme claims, headings, quotes, or preambles.";
+      const user =
         "Restaurant: " + (payload.restaurant||"Unknown") + "\n" +
         "Experience: " + (payload.experience||"Good") + "\n" +
         "Highlight: " + (payload.highlight||"Food") + "\n" +
@@ -527,18 +515,19 @@
           max_tokens: 140,
           messages: [{role:"system",content:system},{role:"user",content:user}]
         })
-      }).then(function(resp){
-        if (!resp.ok) return resp.text().then(function(t){ throw new Error("Groq HTTP " + resp.status + ": " + t.slice(0,150)); });
+      }).then(resp=>{
+        if (!resp.ok) return resp.text().then(t=>{ throw new Error("Groq HTTP " + resp.status + ": " + t.slice(0,150)); });
         return resp.json();
-      }).then(function(data){
-        return ((data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "").trim();
+      }).then(data=>{
+        return (data?.choices?.[0]?.message?.content || "").trim();
       });
     }
+
     function generateReview(){
-      var status=qs("#aiStatus"); if (status) status.textContent="Polishing…";
-      var details = detailsSummary(state.posDetails);
-      var body = {
-        restaurant: (state.tenant && state.tenant.name) ? state.tenant.name : "This restaurant",
+      const status=qs("#aiStatus"); if (status) status.textContent="Polishing…";
+      const details = detailsSummary(state.posDetails);
+      const body = {
+        restaurant: state.tenant?.name || "This restaurant",
         experience: state.experience || "Good",
         highlight: state.highlight || "Food",
         keywords: Array.from(state.selectedTags),
@@ -550,37 +539,38 @@
         if (status) status.textContent = usedAI ? "AI suggestion applied." : "Draft created.";
       }
       if (TEST_GROQ_KEY){
-        return callGroqDirect(body).then(function(text){
+        return callGroqDirect(body).then(text=>{
           if (!text) throw new Error("empty");
           done(text, true);
-        }).catch(function(){
+        }).catch(()=>{
           done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
         });
       } else {
         // Try Netlify Function; fall back if missing
         return fetch("/.netlify/functions/review-ai", {
           method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
-        }).then(function(r){
+        }).then(r=>{
           if (!r.ok) throw new Error("no function");
           return r.json();
-        }).then(function(j){
-          var text = (j && j.text) ? String(j.text).trim() : "";
+        }).then(j=>{
+          const text = (j && j.text) ? String(j.text).trim() : "";
           if (!text) throw new Error("empty");
           done(text, true);
-        }).catch(function(){
+        }).catch(()=>{
           done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
         });
       }
     }
+
     function attachCopyBehavior(){
-      var btn=qs("#copyBtn"); if (!btn) return;
-      var label=btn.querySelector(".btn-label"); var original=label.textContent;
-      btn.addEventListener("click", function(){
-        var txt = (qs("#reviewText") && qs("#reviewText").value) ? qs("#reviewText").value.trim() : "";
+      const btn=qs("#copyBtn"); if (!btn) return;
+      const label=btn.querySelector(".btn-label"); const original=label.textContent;
+      btn.addEventListener("click", ()=>{
+        const txt = (qs("#reviewText")?.value || "").trim();
         if (!txt) return;
-        copyText(txt).then(function(){
+        copyText(txt).then(()=>{
           label.textContent="Copied"; qs("#sr-live").textContent="Copied to clipboard";
-          setTimeout(function(){ label.textContent=original; }, 2000);
+          setTimeout(()=>{ label.textContent=original; }, 2000);
         });
       });
     }
@@ -596,10 +586,11 @@
         qs("#positive").classList.remove("hidden"); qs("#positive").setAttribute("aria-hidden","false");
       }
     }
+
     function sendNegative(){
-      var btn=qs("#sendNegative"); var status=qs("#negStatus");
+      const btn=qs("#sendNegative"); const status=qs("#negStatus");
       btn.disabled=true; status.textContent="Sending…";
-      var payload = {
+      const payload = {
         tenantId: state.tenant.slug,
         restaurantName: state.tenant.name,
         timestampISO: new Date().toISOString(),
@@ -607,18 +598,17 @@
         answers: state.neg,
         userAgent: navigator.userAgent
       };
-      // Non-blocking; ignore errors
       fetch("/.netlify/functions/feedback", {
         method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
-      })["catch"](function(){});
+      }).catch(()=>{});
       status.textContent="";
-      var form=qs("#negForm"); var done=qs("#negDone");
+      const form=qs("#negForm"); const done=qs("#negDone");
       form.classList.add("opacity-0","translate-y-2");
-      setTimeout(function(){ form.classList.add("hidden"); done.classList.remove("hidden"); }, 220);
+      setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden"); }, 220);
     }
 
     /* ========= DEFAULT TENANT (fallback) ========= */
-    var DEFAULT_TENANT = {
+    const DEFAULT_TENANT = {
       slug: "sahara",
       name: "Sahara",
       brand: { primary: "#b91c1c" },
@@ -640,30 +630,30 @@
 
     /* ========= INIT ========= */
     function init(){
-      var cfg=null;
+      let cfg=null;
       function afterLoad(){
         if (!cfg) cfg = DEFAULT_TENANT;
         state.tenant = cfg;
 
         // Brand & Google
-        setBrand(cfg.brand && cfg.brand.primary ? cfg.brand.primary : "#b91c1c");
+        setBrand(cfg.brand?.primary || "#b91c1c");
         qs("#restName").textContent = cfg.name || "Your Restaurant";
-        var gURL = googleUrl(cfg.google || null);
-        var glTop = qs("#googleTopLink"); var tipTop=qs("#googleTipTop");
+        const gURL = googleUrl(cfg.google || null);
+        const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop");
         if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
         else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
 
-        // Build UI controls
+        // Build negative path controls
         buildNegativeUI();
 
         // Experience buttons
-        qsa("[data-exp]").forEach(function(b){
-          b.addEventListener("click", function(){ setExperience(b.getAttribute("data-exp")); });
+        qsa("[data-exp]").forEach(b=>{
+          b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")));
         });
 
         // Reveal AI wizard
-        var reveal = qs("#revealAi");
-        if (reveal) reveal.addEventListener("click", function(){
+        const reveal = qs("#revealAi");
+        if (reveal) reveal.addEventListener("click", ()=>{
           qs("#craftWrap").classList.remove("hidden");
           state.wizStep = 0;
           state.selectedTags.clear();
@@ -682,13 +672,13 @@
       }
 
       if (window.fetch){
-        fetch(DATA_URL, {cache:"no-store"}).then(function(res){
-          if (res && res.ok) return res.json();
+        fetch(DATA_URL, {cache:"no-store"}).then(res=>{
+          if (res?.ok) return res.json();
           return null;
-        }).then(function(json){
+        }).then(json=>{
           cfg = json;
           afterLoad();
-        })["catch"](function(){
+        }).catch(()=>{
           cfg = null; afterLoad();
         });
       } else {
@@ -700,4 +690,3 @@
   </script>
 </body>
 </html>
-
