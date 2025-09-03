@@ -276,29 +276,48 @@
       return b;
     }
     function renderKeywords(){
-      var wrap=qs("#kwWrap"); if (!wrap) return; wrap.innerHTML="";
-      var list = (state.tenant && state.tenant.keywords) ? state.tenant.keywords : [];
-      var max = state.showAllKw ? list.length : Math.min(16, list.length);
-      for (var i=0;i<Math.min(max, list.length);i++){
-        (function(k){
-          var pressed = state.selectedTags.has(k);
-          wrap.appendChild(makeChip(k, pressed, function(){
-            var on = state.selectedTags.has(k);
-            if (!on && state.selectedTags.size>=3) return;
-            if (on) state.selectedTags.delete(k); else state.selectedTags.add(k);
-            renderKeywords();
-          }));
-        })(list[i]);
-      }
-      var t = qs("#kwToggle");
-      if (t){
-        if (list.length<=16) t.classList.add("hidden");
-        else {
-          t.classList.remove("hidden");
-          t.textContent = state.showAllKw ? "See fewer" : "See more";
-        }
+    var wrap = qs("#kwWrap");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+
+    // Be strict: only accept an array, otherwise fall back to [].
+    var listRaw = state.tenant && state.tenant.keywords;
+    var list = Array.isArray(listRaw) ? listRaw : [];
+
+    // If empty, show a small note and hide the toggle.
+    var toggle = qs("#kwToggle");
+    if (!list.length) {
+      if (toggle) toggle.classList.add("hidden");
+      var emptyNote = document.createElement("p");
+      emptyNote.className = "text-sm text-slate-500";
+      emptyNote.textContent = "No keywords found for this restaurant.";
+      wrap.appendChild(emptyNote);
+      return;
+    }
+
+    var max = state.showAllKw ? list.length : Math.min(16, list.length);
+    for (var i = 0; i < max; i++) {
+      (function(k){
+        var pressed = state.selectedTags.has(k);
+        wrap.appendChild(makeChip(k, pressed, function(){
+          var on = state.selectedTags.has(k);
+          if (!on && state.selectedTags.size >= 3) return; // cap at 3
+          if (on) state.selectedTags.delete(k); else state.selectedTags.add(k);
+          renderKeywords();
+        }));
+      })(list[i]);
+    }
+
+    // Toggle visibility and label
+    if (toggle) {
+      if (list.length <= 16) {
+        toggle.classList.add("hidden");
+      } else {
+        toggle.classList.remove("hidden");
+        toggle.textContent = state.showAllKw ? "See fewer" : "See more";
       }
     }
+  }
     function renderHighlights(){
       var wrap=qs("#hlWrap"); if (!wrap) return; wrap.innerHTML="";
       var opts = (state.tenant && state.tenant.highlightOptions) ? state.tenant.highlightOptions : ["Food","Service","Atmosphere","Authenticity"];
@@ -681,3 +700,4 @@
   </script>
 </body>
 </html>
+
