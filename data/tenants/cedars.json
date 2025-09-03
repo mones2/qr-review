@@ -1,0 +1,15 @@
+{
+  "slug": "cedars",
+  "name": "Cedars",
+  "brand": { "primary": "#0ea5e9" },
+  "google": {
+    "placeId": "ChIJxxxxxxxxxxxxxxxxxx" 
+  },
+  "keywords": ["mixed grill", "fattoush", "labneh", "knafeh", "mint tea"],
+  "highlightOptions": ["Food","Service","Atmosphere","Authenticity"],
+  "negativeQuestions": {
+    "diningModes": ["Dine in","Take out","Delivery"],
+    "meals": ["Lunch","Dinner","Other"],
+    "spendRanges": ["$10–20","$20–30","$30–50","$50–100"]
+  }
+}
