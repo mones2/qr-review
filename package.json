@@ -2,6 +2,8 @@
   "name": "qr-review",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
   "dependencies": {
     "@netlify/neon": "^0.7.0"
   }
