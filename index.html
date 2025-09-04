@@ -175,7 +175,7 @@
     }
 
     // Build dataset URL dynamically
-    const DATA_URL = "/data/tenants/" + encodeURIComponent(getTenantKey()) + ".json";
+    const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey());
 
     /* ========= OPTIONAL: browser-only AI key (leave empty in production) ========= */
     const TEST_GROQ_KEY = ""; // add gsk_... only for quick local tests
@@ -690,6 +690,7 @@
   </script>
 </body>
 </html>
+
 
 
 
