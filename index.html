@@ -13,7 +13,6 @@
     .brand-ring{ --tw-ring-color: var(--brand) }
     .smooth    { transition: all 220ms ease }
     .card      { box-shadow: 0 10px 30px rgba(0,0,0,.06) }
-
     .chip {
       display:inline-flex; align-items:center; gap:.4rem;
       border:1.5px solid #e2e8f0; padding:.44rem .8rem; border-radius:9999px;
@@ -22,12 +21,14 @@
     .chip:hover { background:#f8fafc }
     .chip[aria-pressed="true"] { color:#fff; background:var(--brand); border-color:transparent }
     details > summary::-webkit-details-marker { display:none }
-
     /* Simple step transitions */
     .step-enter { opacity: 0; transform: translateY(6px); }
     .step-enter-active { opacity: 1; transform: translateY(0); transition: all 260ms ease; }
     .step-leave { opacity: 1; transform: translateY(0); }
     .step-leave-active { opacity: 0; transform: translateY(-6px); transition: all 200ms ease; }
+    @media (prefers-reduced-motion: reduce) {
+      .smooth, .step-enter-active, .step-leave-active { transition: none !important; }
+    }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-stone-50 to-stone-200 text-slate-800 antialiased">
@@ -72,7 +73,7 @@
             <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
                class="inline-flex items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none"
                aria-label="Open Google to post">
-              ⭐ <span class="ml-2">Open Google to post</span>
+              ⭐ <span class="ml-2" id="googleTopText">Open Google to post</span>
             </a>
 
             <button id="revealAi" type="button"
@@ -174,7 +175,7 @@
       return "sahara"; // default for testing
     }
 
-    // Build dataset URL dynamically
+    // Build dataset URL dynamically (DB-backed)
     const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey());
 
     /* ========= OPTIONAL: browser-only AI key (leave empty in production) ========= */
@@ -198,20 +199,13 @@
 
     /* ========= ANIM HELPERS ========= */
     function swapContent(container, newHTML, after){
-      // leave phase
       container.classList.remove('step-enter','step-enter-active');
       container.classList.add('step-leave');
       void container.offsetWidth;
       container.classList.add('step-leave-active');
-
       setTimeout(function(){
-        // replace HTML
         container.innerHTML = newHTML;
-
-        // setup after DOM exists
         if (typeof after === 'function') after();
-
-        // enter phase
         container.classList.remove('step-leave','step-leave-active');
         container.classList.add('step-enter');
         void container.offsetWidth;
@@ -276,7 +270,6 @@
       return b;
     }
 
-    // Defensive renderer for keywords
     function renderKeywords(){
       const wrap = qs("#kwWrap");
       if (!wrap) return;
@@ -386,7 +379,6 @@
       const sub = qs("#wizSub");
 
       back.disabled = (state.wizStep === 0);
-      // first two steps: hide Skip to review
       if (state.wizStep < 2) skipAll.classList.add("invisible");
       else skipAll.classList.remove("invisible");
 
@@ -483,8 +475,8 @@
             if (ed.checked) ta.removeAttribute("readonly"); else ta.setAttribute("readonly","");
           });
           attachCopyBehavior();
-          generateReview(); // auto
-          qs("#aiBtn").addEventListener("click", generateReview); // regenerate each click
+          generateReview();
+          qs("#aiBtn").addEventListener("click", generateReview);
         });
       }
 
@@ -546,7 +538,6 @@
           done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
         });
       } else {
-        // Try Netlify Function; fall back if missing
         return fetch("/.netlify/functions/review-ai", {
           method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
         }).then(r=>{
@@ -607,19 +598,13 @@
       setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden"); }, 220);
     }
 
-    /* ========= DEFAULT TENANT (fallback) ========= */
+    /* ========= DEFAULT TENANT (offline fallback only) ========= */
     const DEFAULT_TENANT = {
       slug: "sahara",
       name: "Sahara",
       brand: { primary: "#b91c1c" },
-      google: {
-        mapsUrl: "https://www.google.com/maps/place/Sahara+Restaurant/@40.5000681,-74.4567202,17z/data=!4m8!3m7!1s0x89c3c6ff3e35125b:0xc9ebce3f3d21e043!8m2!3d40.5000681!4d-74.4541453!9m1!1b1!16s%2Fg%2F1tczldzb?hl=en-US&entry=ttu&g_ep=EgoyMDI1MDgyNC4wIKXMDSoASAFQAw%3D%3D"
-      },
-      keywords: [
-        "chicken kebab","adana kebab","lamb chops","hummus","baba ghanoush",
-        "falafel","tabouleh","baklava","salmon","shrimp","tilapia",
-        "roasted eggplant","couscous","shepherd’s salad","pita","turkish coffee"
-      ],
+      google: { mapsUrl: "https://www.google.com/maps/place/Sahara+Restaurant/@40.5000681,-74.4567202,17z/data=!4m8!3m7!1s0x89c3c6ff3e35125b:0xc9ebce3f3d21e043!8m2!3d40.5000681!4d-74.4541453!9m1!1b1!16s%2Fg%2F1tczldzb?hl=en-US&entry=ttu" },
+      keywords: ["chicken kebab","adana kebab","lamb chops","hummus","baba ghanoush","falafel","tabouleh","baklava","salmon","shrimp","tilapia","roasted eggplant","couscous","shepherd’s salad","pita","turkish coffee"],
       highlightOptions: ["Food","Service","Atmosphere","Authenticity"],
       negativeQuestions: {
         diningModes: ["Dine in","Take out","Delivery"],
@@ -628,69 +613,109 @@
       }
     };
 
+    /* ========= NOT FOUND RENDER ========= */
+    function renderNotFound(slug){
+      setBrand("#6b7280");
+      qs("#restName").textContent = slug ? `Not found: ${slug}` : "Not found";
+      // Hide main experience section and show a simple note
+      qs("#experience")?.classList.add("hidden");
+      const holder = document.createElement("div");
+      holder.className = "px-6 pb-8";
+      holder.innerHTML = `<p class="text-slate-600">We couldn’t find that restaurant. Double-check the link (e.g. <code>/r/sahara</code>) or ask the owner to set it up.</p>`;
+      document.querySelector("main .card")?.appendChild(holder);
+    }
+
     /* ========= INIT ========= */
     function init(){
-      let cfg=null;
-      function afterLoad(){
-        if (!cfg) cfg = DEFAULT_TENANT;
-        state.tenant = cfg;
+      const slug = getTenantKey();
 
-        // Brand & Google
-        setBrand(cfg.brand?.primary || "#b91c1c");
-        qs("#restName").textContent = cfg.name || "Your Restaurant";
-        const gURL = googleUrl(cfg.google || null);
-        const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop");
-        if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
-        else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
+      // Fetch tenant from DB-backed function
+      fetch(DATA_URL, { cache: "no-store" })
+        .then(res => {
+          if (res.status === 404) return { notFound: true };
+          if (!res.ok) throw new Error("fetch failed");
+          return res.json();
+        })
+        .then(json => {
+          if (json && json.notFound) {
+            renderNotFound(slug);
+            return;
+          }
+          const cfg = (json && json.tenant) ? json.tenant : null;
 
-        // Build negative path controls
-        buildNegativeUI();
+          // If fetch worked, but no tenant returned (unlikely), show Not found
+          if (!cfg) {
+            renderNotFound(slug);
+            return;
+          }
 
-        // Experience buttons
-        qsa("[data-exp]").forEach(b=>{
-          b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")));
+          // Normal init using DB config
+          state.tenant = cfg;
+          setBrand(cfg.brand?.primary || "#b91c1c");
+          qs("#restName").textContent = cfg.name || "Your Restaurant";
+
+          const gURL = googleUrl(cfg.google || null);
+          const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop"); const glTxt=qs("#googleTopText");
+          if (gURL) { glTop.href = gURL; glTxt.textContent = `Post a review on Google for ${cfg.name}`; tipTop.textContent=""; }
+          else { glTop.removeAttribute("href"); glTop.setAttribute("aria-disabled","true"); glTxt.textContent="Google link not set"; tipTop.textContent="Ask your provider to set a Google Maps URL or Place ID."; }
+
+          buildNegativeUI();
+
+          qsa("[data-exp]").forEach(b=>{
+            b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")));
+          });
+
+          const reveal = qs("#revealAi");
+          if (reveal) reveal.addEventListener("click", ()=>{
+            qs("#craftWrap").classList.remove("hidden");
+            state.wizStep = 0;
+            state.selectedTags.clear();
+            state.highlight = null;
+            state.posDetails = { veg:null, diet:[], parking:null, kids:[], access:[] };
+            renderWizardStep();
+          });
+
+          qs("#wizNext").addEventListener("click", wizardNext);
+          qs("#wizBack").addEventListener("click", wizardBack);
+          qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
+          qs("#sendNegative").addEventListener("click", sendNegative);
+        })
+        .catch(() => {
+          // Offline or function error → offline fallback so the page still works
+          const cfg = DEFAULT_TENANT;
+          state.tenant = cfg;
+          setBrand(cfg.brand?.primary || "#b91c1c");
+          qs("#restName").textContent = cfg.name || "Your Restaurant";
+
+          const gURL = googleUrl(cfg.google || null);
+          const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop");
+          if (gURL) { glTop.href = gURL; tipTop.textContent = ""; }
+          else { glTop.removeAttribute("href"); tipTop.textContent = "Ask your provider to set a Google Maps URL or Place ID."; }
+
+          buildNegativeUI();
+
+          qsa("[data-exp]").forEach(b=>{
+            b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")));
+          });
+
+          const reveal = qs("#revealAi");
+          if (reveal) reveal.addEventListener("click", ()=>{
+            qs("#craftWrap").classList.remove("hidden");
+            state.wizStep = 0;
+            state.selectedTags.clear();
+            state.highlight = null;
+            state.posDetails = { veg:null, diet:[], parking:null, kids:[], access:[] };
+            renderWizardStep();
+          });
+
+          qs("#wizNext").addEventListener("click", wizardNext);
+          qs("#wizBack").addEventListener("click", wizardBack);
+          qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
+          qs("#sendNegative").addEventListener("click", sendNegative);
         });
-
-        // Reveal AI wizard
-        const reveal = qs("#revealAi");
-        if (reveal) reveal.addEventListener("click", ()=>{
-          qs("#craftWrap").classList.remove("hidden");
-          state.wizStep = 0;
-          state.selectedTags.clear();
-          state.highlight = null;
-          state.posDetails = { veg:null, diet:[], parking:null, kids:[], access:[] };
-          renderWizardStep();
-        });
-
-        // Wizard nav
-        qs("#wizNext").addEventListener("click", wizardNext);
-        qs("#wizBack").addEventListener("click", wizardBack);
-        qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
-
-        // Negative send
-        qs("#sendNegative").addEventListener("click", sendNegative);
-      }
-
-      if (window.fetch){
-        fetch(DATA_URL, {cache:"no-store"}).then(res=>{
-          if (res?.ok) return res.json();
-          return null;
-        }).then(json=>{
-          cfg = json;
-          afterLoad();
-        }).catch(()=>{
-          cfg = null; afterLoad();
-        });
-      } else {
-        cfg = null; afterLoad();
-      }
     }
 
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>
-
-
-
-
