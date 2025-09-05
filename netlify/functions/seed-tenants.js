@@ -4,7 +4,6 @@ export const handler = async () => {
   try {
     const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
-    // Two example tenants (mirror your current JSON)
     const tenants = [
       {
         slug: "sahara",
@@ -29,7 +28,7 @@ export const handler = async () => {
         name: "Cedars",
         brand_primary: "#0ea5e9",
         google_maps_url: null,
-        google_place_id: null, // fill this later if you have it
+        google_place_id: null,
         keywords: ["shawarma","hummus","grape leaves","kabob","baklava"],
         highlight_options: ["Food","Service","Atmosphere","Authenticity"],
         negative_questions: {
@@ -44,10 +43,12 @@ export const handler = async () => {
       await sql`
         INSERT INTO tenants (
           slug, name, brand_primary, google_place_id, google_maps_url,
-          keywords, highlight_options, negative_questions
+          keywords,            highlight_options,            negative_questions
         ) VALUES (
           ${t.slug}, ${t.name}, ${t.brand_primary}, ${t.google_place_id}, ${t.google_maps_url},
-          ${sql.json(t.keywords)}, ${sql.json(t.highlight_options)}, ${sql.json(t.negative_questions)}
+          ${JSON.stringify(t.keywords)}::jsonb,
+          ${JSON.stringify(t.highlight_options)}::jsonb,
+          ${JSON.stringify(t.negative_questions)}::jsonb
         )
         ON CONFLICT (slug) DO UPDATE SET
           name = EXCLUDED.name,
