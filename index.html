@@ -300,7 +300,7 @@
 
     /* ========= DOTS / WIZARD STEPS ========= */
     // Seven steps: 1 kw, 2 visit+parking, 3 family+access, 4 standout, 5 veg, 6 details (textarea), 7 review (char-by-char)
-    const WIZ_IDS = ["kw","visit","family_access","standout","veg","details","review"];
+    const WIZ_IDS = ["kw","visit","details","review"];
     function renderDots(){
       const dots = qs("#wizDots"); if (!dots) return; dots.innerHTML="";
       for (let i=0;i<WIZ_IDS.length;i++){
@@ -697,3 +697,4 @@
   </script>
 </body>
 </html>
+
