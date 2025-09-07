@@ -284,7 +284,7 @@
 
     /* ========= DOTS ========= */
     // We keep 7 steps with review as the 7th.
-    const WIZ_IDS = ["kw","visit","family_access","standout","veg","placeholder","review"];
+    const WIZ_IDS = ["kw","visit","family_access","standout","veg","review"];
     function renderDots(){
       const dots = qs("#wizDots"); if (!dots) return; dots.innerHTML="";
       for (let i=0;i<WIZ_IDS.length;i++){
@@ -402,14 +402,6 @@
           chipGroup("#pos-veg", ["Yes","No","Not sure"], false,
             ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
         });
-      }
-      else if (id === "placeholder"){
-        // a tiny spacer step to keep total = 7 so final review shows “Step 7 of 7”
-        const html =
-          '<div>'+
-            '<p class="text-sm text-slate-600">You’re almost done. Review comes next.</p>'+
-          '</div>';
-        swapContent(c, html);
       }
       else if (id === "review"){
         // final step — nav hidden, big CTA placed nicely under textarea
@@ -654,3 +646,4 @@
   </script>
 </body>
 </html>
+
