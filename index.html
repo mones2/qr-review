@@ -281,10 +281,22 @@
         }));
       });
     }
+    function typeInto(el, text, speed = 12){
+  if (!el) return;
+  el.value = "";
+  let i = 0;
+  (function tick(){
+    if (i <= text.length){
+      el.value = text.slice(0, i++);
+      setTimeout(tick, speed);
+    }
+  })();
+}
+
 
     /* ========= DOTS ========= */
     // We keep 7 steps with review as the 7th.
-    const WIZ_IDS = ["kw","visit","family_access","standout","veg","review"];
+    const WIZ_IDS = ["kw","visit","family_access","standout","veg","placeholder","review"];
     function renderDots(){
       const dots = qs("#wizDots"); if (!dots) return; dots.innerHTML="";
       for (let i=0;i<WIZ_IDS.length;i++){
@@ -403,6 +415,65 @@
             ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
         });
       }
+        else if (id === "placeholder"){
+  // Step 6: show the textarea and generate the draft (typewriter),
+  // keep the nav visible, Google button comes in Step 7.
+  const html = `
+    <div>
+      <label for="reviewText6" class="text-sm font-medium text-slate-700">Your review (preview)</label>
+      <textarea id="reviewText6" rows="5"
+        class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6"
+        placeholder="Generating…"></textarea>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Text is generating — you can edit it now. The next step shows the Google button.
+      </p>
+
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button id="aiBtn6" type="button"
+          class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)]
+                 hover:bg-[var(--brand)] hover:text-white focus:outline-none
+                 focus-visible:ring-2 brand-ring smooth">
+          Refine wording
+        </button>
+        <button id="copyBtn6" type="button" disabled
+          class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40
+                 disabled:pointer-events-none hover:brightness-95 focus:outline-none
+                 focus-visible:ring-2 smooth">
+          <span class="btn-label">Copy</span>
+        </button>
+      </div>
+    </div>`;
+
+  swapContent(c, html, ()=>{
+    const ta = qs("#reviewText6");
+
+    // Put a quick deterministic draft immediately…
+    ta.value = writeShortReview(buildPayload());
+    qs("#copyBtn6").removeAttribute("disabled");
+
+    // …then replace with AI using a typewriter effect.
+    generateReview()
+      .then(txt => typeInto(ta, txt || ta.value, 12))
+      .catch(()=>{ /* keep the deterministic one */ });
+
+    // Allow “Refine wording” to re-generate with typing
+    qs("#aiBtn6")?.addEventListener("click", ()=>{
+      generateReview()
+        .then(txt => typeInto(ta, txt || ta.value, 12))
+        .catch(()=>{});
+    });
+
+    // Copy
+    qs("#copyBtn6")?.addEventListener("click", ()=>{
+      copyText(ta.value).then(()=>{
+        const btn = qs("#copyBtn6 .btn-label"); if (btn){ const o=btn.textContent; btn.textContent="Copied"; setTimeout(()=>btn.textContent=o, 1200); }
+        qs("#sr-live").textContent="Copied to clipboard";
+      });
+    });
+  });
+}
+
       else if (id === "review"){
         // final step — nav hidden, big CTA placed nicely under textarea
         const html =
@@ -646,5 +717,6 @@
   </script>
 </body>
 </html>
+
 
 
