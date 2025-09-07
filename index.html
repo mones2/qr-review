@@ -23,7 +23,7 @@
     .chip[aria-pressed="true"] { color:#fff; background:var(--brand); border-color:transparent }
     details > summary::-webkit-details-marker { display:none }
 
-    /* Simple step transitions */
+    /* Step transitions */
     .step-enter { opacity: 0; transform: translateY(6px); }
     .step-enter-active { opacity: 1; transform: translateY(0); transition: all 260ms ease; }
     .step-leave { opacity: 1; transform: translateY(0); }
@@ -32,12 +32,12 @@
       .smooth, .step-enter-active, .step-leave-active { transition: none !important; }
     }
 
-    /* Arrow nudge for final Google button */
+    /* Simple arrow nudge for Google button */
     @keyframes nudge {
-      0%,100% { transform: translateX(0); opacity: .9; }
+      0%,100% { transform: translateX(0); opacity: .95; }
       50%     { transform: translateX(6px); opacity: 1; }
     }
-    .arrow-nudge { animation: nudge 1200ms ease-in-out infinite; }
+    .btn-arrow .arrow { display:inline-block; margin-left:.5rem; animation: nudge 1200ms ease-in-out infinite; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-stone-50 to-stone-200 text-slate-800 antialiased">
@@ -77,7 +77,7 @@
 
         <!-- POSITIVE PATH -->
         <section id="positive" class="hidden" aria-hidden="true">
-          <!-- Same row: Google + AI -->
+          <!-- Google + AI in one row (this row disappears entirely when AI opens) -->
           <div id="topRow" class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
             <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
                class="inline-flex h-[52px] items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none"
@@ -88,13 +88,12 @@
             <button id="revealAi" type="button"
                     class="inline-flex h-[52px] items-center justify-center rounded-lg px-4 py-3 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth"
                     aria-label="Help me with AI">
-              ✨ Help me with AI
+              ✍️ Start writing
             </button>
           </div>
-          <p id="googleTipTop" class="mt-2 text-sm text-slate-500"></p>
 
           <!-- AI WIZARD -->
-          <div id="craftWrap" class="hidden mt-6">
+          <div id="craftWrap" class="hidden mt-2">
             <div id="wizard" class="rounded-xl border border-slate-200 p-5 sm:p-6">
               <div class="flex items-start justify-between">
                 <div>
@@ -186,7 +185,6 @@
 
     // DB-backed tenant fetch
     const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey());
-
     const TEST_GROQ_KEY = ""; // leave empty in production
 
     /* ========= UTILITIES ========= */
@@ -250,7 +248,6 @@
     function detailsSummary(d){
       const parts=[];
       if (d.veg) parts.push("Vegetarian options: " + d.veg);
-      if (d.diet?.length) parts.push("Dietary: " + d.diet.join(", "));
       if (d.parking) parts.push("Parking: " + d.parking);
       if (d.kids) parts.push("Kid-friendliness: " + d.kids);
       if (d.access) parts.push("Accessibility: " + d.access);
@@ -274,7 +271,7 @@
       highlight: null,
       selectedTags: new Set(),
       showAllKw: false,
-      posDetails: { veg:null, diet:[], parking:null, kids:null, access:null, visit:null, extra:"" },
+      posDetails: { veg:null, parking:null, kids:null, access:null, visit:null, extra:"" },
       neg: { dining:null, meal:null, spend:null, feedback:"" },
       wizStep: 0
     };
@@ -288,7 +285,7 @@
       return b;
     }
 
-    // Keywords (no 3-cap anymore; user can toggle freely)
+    // Keywords (toggle freely)
     function renderKeywords(){
       const wrap = qs("#kwWrap");
       if (!wrap) return;
@@ -372,7 +369,6 @@
       const sub = qs("#wizSub");
 
       back.disabled = (state.wizStep === 0);
-      // Show "Skip to review" starting AFTER step 2 (index 2 -> family_access)
       if (state.wizStep < 2) skipAll.classList.add("invisible");
       else skipAll.classList.remove("invisible");
 
@@ -394,7 +390,6 @@
         });
       }
       else if (id === "visit"){
-        // VISIT TYPE and PARKING stacked vertically (each with its own subheading)
         const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700 mb-3">Visit type</p>'+
@@ -410,7 +405,7 @@
         });
       }
       else if (id === "family_access"){
-        // STACKED and SINGLE-SELECT for both questions
+        // Stacked and single-select
         const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700 mb-3">Kid-friendliness</p>'+
@@ -440,11 +435,10 @@
           const opts = ["🍽️ Food","🤝 Service","🕯️ Atmosphere","🌿 Authenticity"];
           wrap.innerHTML="";
           opts.forEach(label=>{
-            const h = label.replace(/^.+?\s/, ""); // take word after emoji
+            const h = label.replace(/^.+?\s/, "");
             const pressed = state.highlight===h;
             wrap.appendChild(makeChip(label, pressed, ()=>{
               state.highlight = (state.highlight===h) ? null : h;
-              // re-render
               const children = Array.from(wrap.children);
               children.forEach(ch=>{
                 const isPressed = ch.textContent.endsWith(state.highlight||"");
@@ -479,32 +473,21 @@
         });
       }
       else if (id === "review"){
-        sub.classList.add("hidden");
-        next.classList.add("hidden");
-        skipAll.classList.add("invisible");
-
-        // Final review screen with Google button shown HERE + animated arrow
+        // No helper lines, no status badge, always editable
         const html =
           '<div>'+
-            '<div class="flex items-center justify-between">'+
-              '<label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>'+
-              '<label class="inline-flex items-center gap-2 cursor-pointer">'+
-                '<input id="editToggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[var(--brand)] focus:ring-[var(--brand)]" checked />'+
-                '<span class="text-sm text-slate-700">Enable editing</span>'+
-              '</label>'+
-            '</div>'+
-            '<textarea id="reviewText" rows="5" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6" aria-describedby="copyHelp" placeholder="Generating…"></textarea>'+
-            '<p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>'+
+            '<label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>'+
+            '<textarea id="reviewText" rows="5" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6" placeholder="Generating…"></textarea>'+
 
             '<div class="mt-4 flex flex-wrap items-center gap-3">'+
-              '<button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>'+
+              '<button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">Refine wording</button>'+
               '<button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>'+
-              '<span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>'+
             '</div>'+
 
-            '<div class="mt-6 flex flex-col items-center gap-2">'+
-              '<div class="text-sm text-slate-600 flex items-center gap-2"><span class="arrow-nudge">👉</span><span>Post your review on Google</span></div>'+
-              '<a id="googleFinal" target="_blank" rel="noopener noreferrer" class="inline-flex h-[48px] items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">⭐ <span class="ml-2">Post on Google</span></a>'+
+            '<div class="mt-6 flex items-center justify-center">'+
+              '<a id="googleFinal" target="_blank" rel="noopener noreferrer" class="btn-arrow inline-flex h-[48px] items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">'+
+                '<span>Post on Google</span><span class="arrow">→</span>'+
+              '</a>'+
             '</div>'+
           '</div>';
 
@@ -513,12 +496,6 @@
           const gURL = googleUrl(state.tenant.google || null);
           const final = qs("#googleFinal");
           if (gURL) final.href = gURL; else final.removeAttribute("href");
-
-          const ed=qs("#editToggle");
-          ed.addEventListener("change", ()=>{
-            const ta=qs("#reviewText");
-            if (ed.checked) ta.removeAttribute("readonly"); else ta.setAttribute("readonly","");
-          });
 
           // generate review with typewriter effect
           attachCopyBehavior();
@@ -563,7 +540,6 @@
     }
 
     function generateReview(){
-      const status=qs("#aiStatus"); if (status) status.textContent="Polishing…";
       const details = state.posDetails.extra ? state.posDetails.extra : detailsSummary(state.posDetails);
       const body = {
         restaurant: state.tenant?.name || "This restaurant",
@@ -572,18 +548,17 @@
         keywords: Array.from(state.selectedTags),
         extra: details
       };
-      function done(text, usedAI){
+      function done(text){
         const ta = qs("#reviewText");
         typeInto(ta, text, 12);
         qs("#copyBtn").removeAttribute("disabled");
-        if (status) status.textContent = usedAI ? "AI suggestion applied." : "Draft created.";
       }
       if (TEST_GROQ_KEY){
         return callGroqDirect(body).then(text=>{
           if (!text) throw new Error("empty");
-          done(text, true);
+          done(text);
         }).catch(()=>{
-          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
+          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}));
         });
       } else {
         return fetch("/.netlify/functions/review-ai", {
@@ -594,9 +569,9 @@
         }).then(j=>{
           const text = (j && j.text) ? String(j.text).trim() : "";
           if (!text) throw new Error("empty");
-          done(text, true);
+          done(text);
         }).catch(()=>{
-          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
+          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}));
         });
       }
     }
@@ -653,8 +628,8 @@
       slug: "sahara",
       name: "Sahara",
       brand: { primary: "#b91c1c" },
-      google: { mapsUrl: "https://www.google.com/maps/place/Sahara+Restaurant/@40.5000681,-74.4567202,17z/data=!4m8!3m7!1s0x89c3c6ff3e35125b:0xc9ebce3f3d21e043!8m2!3d40.5000681!4d-74.4541453!9m1!1b1!16s%2Fg%2F1tczldzb?hl=en-US&entry=ttu" },
-      keywords: ["chicken kebab","adana kebab","lamb chops","hummus","baba ghanoush","falafel","tabouleh","baklava","salmon","shrimp","tilapia","roasted eggplant","couscous","shepherd’s salad","pita","turkish coffee"],
+      google: { mapsUrl: "https://www.google.com/maps/place/Sahara+Restaurant/" },
+      keywords: ["shawarma","hummus","grape leaves","kabob","baklava","tabouleh","falafel","pita","saj","knafeh"],
       highlightOptions: ["Food","Service","Atmosphere","Authenticity"]
     };
 
@@ -673,7 +648,6 @@
     function init(){
       const slug = getTenantKey();
 
-      // Fetch tenant
       fetch(DATA_URL, { cache: "no-store" })
         .then(res => {
           if (res.status === 404) return { notFound: true };
@@ -701,19 +675,15 @@
             b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")));
           });
 
-          // Help with AI: hide AI button AND the top Google button,
-          // then show Google again ONLY on the final step
+          // Help with AI: hide the entire row to remove space; show wizard
           const reveal = qs("#revealAi");
           if (reveal) reveal.addEventListener("click", ()=>{
-            reveal.classList.add("hidden");
-            qs("#googleTopLink").classList.add("hidden");
-
-            // show wizard
-            qs("#craftWrap").classList.remove("hidden");
+            qs("#topRow").classList.add("hidden");        // collapse gap
+            qs("#craftWrap").classList.remove("hidden");  // show wizard
             state.wizStep = 0;
             state.selectedTags.clear();
             state.highlight = null;
-            state.posDetails = { veg:null, diet:[], parking:null, kids:null, access:null, visit:null, extra:"" };
+            state.posDetails = { veg:null, parking:null, kids:null, access:null, visit:null, extra:"" };
             renderWizardStep();
           });
 
@@ -738,13 +708,12 @@
 
           const reveal = qs("#revealAi");
           if (reveal) reveal.addEventListener("click", ()=>{
-            reveal.classList.add("hidden");
-            qs("#googleTopLink").classList.add("hidden");
+            qs("#topRow").classList.add("hidden");
             qs("#craftWrap").classList.remove("hidden");
             state.wizStep = 0;
             state.selectedTags.clear();
             state.highlight = null;
-            state.posDetails = { veg:null, diet:[], parking:null, kids:null, access:null, visit:null, extra:"" };
+            state.posDetails = { veg:null, parking:null, kids:null, access:null, visit:null, extra:"" };
             renderWizardStep();
           });
 
