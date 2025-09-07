@@ -28,21 +28,16 @@
     .step-enter-active { opacity: 1; transform: translateY(0); transition: all 260ms ease; }
     .step-leave { opacity: 1; transform: translateY(0); }
     .step-leave-active { opacity: 0; transform: translateY(-6px); transition: all 200ms ease; }
-
     @media (prefers-reduced-motion: reduce) {
       .smooth, .step-enter-active, .step-leave-active { transition: none !important; }
     }
 
-    /* Final-step arrow to Google button */
-    .nudge {
-      animation: nudge 1.2s infinite ease-in-out;
-      transform-origin: center;
-    }
+    /* Arrow nudge for final Google button */
     @keyframes nudge {
-      0% { transform: translateX(0) }
-      50% { transform: translateX(6px) }
-      100% { transform: translateX(0) }
+      0%,100% { transform: translateX(0); opacity: .9; }
+      50%     { transform: translateX(6px); opacity: 1; }
     }
+    .arrow-nudge { animation: nudge 1200ms ease-in-out infinite; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-stone-50 to-stone-200 text-slate-800 antialiased">
@@ -82,16 +77,16 @@
 
         <!-- POSITIVE PATH -->
         <section id="positive" class="hidden" aria-hidden="true">
-          <!-- Same row: Google + AI (equal sizes) -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          <!-- Same row: Google + AI -->
+          <div id="topRow" class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
             <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
-               class="inline-flex items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none"
+               class="inline-flex h-[52px] items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none"
                aria-label="Post on Google">
               ⭐ <span class="ml-2" id="googleTopText">Post on Google</span>
             </a>
 
             <button id="revealAi" type="button"
-                    class="inline-flex items-center justify-center rounded-lg px-4 py-3 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth"
+                    class="inline-flex h-[52px] items-center justify-center rounded-lg px-4 py-3 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth"
                     aria-label="Help me with AI">
               ✨ Help me with AI
             </button>
@@ -119,7 +114,7 @@
                   <button id="wizBack" type="button" class="rounded-lg px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 smooth" aria-label="Back">Back</button>
                 </div>
                 <div class="flex gap-3">
-                  <button id="wizSkipAll" type="button" class="rounded-lg px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 smooth invisible" aria-label="Skip to review">Skip to review</button>
+                  <button id="wizSkipAll" type="button" class="rounded-lg px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 smooth" aria-label="Skip to review">Skip to review</button>
                   <button id="wizNext" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Next">Next</button>
                 </div>
               </div>
@@ -189,11 +184,10 @@
       return "sahara"; // default for testing
     }
 
-    // Build dataset URL dynamically (DB-backed)
+    // DB-backed tenant fetch
     const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey());
 
-    /* ========= OPTIONAL: browser-only AI key (leave empty in production) ========= */
-    const TEST_GROQ_KEY = ""; // add gsk_... only for quick local tests
+    const TEST_GROQ_KEY = ""; // leave empty in production
 
     /* ========= UTILITIES ========= */
     const qs = (s, r)=> (r||document).querySelector(s);
@@ -228,7 +222,7 @@
       }, 200);
     }
 
-    /* ========= FALLBACK REVIEW ========= */
+    /* ========= REVIEW HELPERS ========= */
     function writeShortReview(args) {
       const name = args.name || "This restaurant";
       const exp = args.experience || "Good";
@@ -240,12 +234,13 @@
       const openersEx   = ["Dinner at","An evening at","My visit to"];
       const opener = (exp === "Excellent" ? openersEx : openersGood)[Math.floor(Math.random()*3)];
 
-      const dishLine = keywords.length ? (" The " + keywords.slice(0,3).join(", ") + (keywords.length===1?" was":" were") + " well prepared and full of flavor.") : "";
+      const k = keywords.slice(0,3);
+      const dishLine = k.length ? (" The " + k.join(", ") + (k.length===1?" was":" were") + " well prepared and full of flavor.") : "";
       const hlMap = {
-        "Food":" The kitchen’s attention to detail showed. 🍽",
+        "Food":" The kitchen’s attention to detail showed. 🍽️",
         "Service":" Service was attentive and well-timed. 🤝",
-        "Atmosphere":" The room felt calm and welcoming. 🌆",
-        "Authenticity":" Flavors felt thoughtful and true to the cuisine. 🌍"
+        "Atmosphere":" The room felt calm and welcoming. 🕯️",
+        "Authenticity":" Flavors felt thoughtful and true to the cuisine. 🌿"
       };
       const hl = hlMap[highlight] || "";
       const extra = details ? (" " + details + ".") : "";
@@ -254,13 +249,22 @@
     }
     function detailsSummary(d){
       const parts=[];
-      if (d.visitType) parts.push("Visit: " + d.visitType);
-      if (d.parking) parts.push("Parking: " + d.parking);
-      if (d.kid) parts.push("Kids: " + d.kid);
-      if (d.accessSingle) parts.push("Accessibility: " + d.accessSingle);
-      if (d.veg) parts.push("Vegetarian: " + d.veg);
+      if (d.veg) parts.push("Vegetarian options: " + d.veg);
       if (d.diet?.length) parts.push("Dietary: " + d.diet.join(", "));
+      if (d.parking) parts.push("Parking: " + d.parking);
+      if (d.kids) parts.push("Kid-friendliness: " + d.kids);
+      if (d.access) parts.push("Accessibility: " + d.access);
       return parts.join(" | ");
+    }
+    function typeInto(el, text, speed=12){
+      el.value = "";
+      let i = 0;
+      (function tick(){
+        if (i <= text.length){
+          el.value = text.slice(0, i++);
+          setTimeout(tick, speed);
+        }
+      })();
     }
 
     /* ========= STATE ========= */
@@ -270,11 +274,7 @@
       highlight: null,
       selectedTags: new Set(),
       showAllKw: false,
-      posDetails: {
-        visitType:null, parking:null,
-        kid:null, accessSingle:null,
-        veg:null, diet:[]
-      },
+      posDetails: { veg:null, diet:[], parking:null, kids:null, access:null, visit:null, extra:"" },
       neg: { dining:null, meal:null, spend:null, feedback:"" },
       wizStep: 0
     };
@@ -288,30 +288,43 @@
       return b;
     }
 
-    // Keywords (no cap)
+    // Keywords (no 3-cap anymore; user can toggle freely)
     function renderKeywords(){
-      const wrap = qs("#kwWrap"); if (!wrap) return; wrap.innerHTML = "";
-      const list = Array.isArray(state.tenant?.keywords) ? state.tenant.keywords : [];
-      const toggle = qs("#kwToggle");
+      const wrap = qs("#kwWrap");
+      if (!wrap) return;
+      wrap.innerHTML = "";
 
-      if (!list.length){
+      const listRaw = state.tenant && state.tenant.keywords;
+      const list = Array.isArray(listRaw) ? listRaw : [];
+
+      const toggle = qs("#kwToggle");
+      if (!list.length) {
         if (toggle) toggle.classList.add("hidden");
-        const p=document.createElement("p"); p.className="text-sm text-slate-500"; p.textContent="No keywords found.";
-        wrap.appendChild(p); return;
+        const emptyNote = document.createElement("p");
+        emptyNote.className = "text-sm text-slate-500";
+        emptyNote.textContent = "No keywords found for this restaurant.";
+        wrap.appendChild(emptyNote);
+        return;
       }
 
       const max = state.showAllKw ? list.length : Math.min(16, list.length);
-      for (let i=0;i<max;i++){
-        const k=list[i]; const pressed = state.selectedTags.has(k);
-        wrap.appendChild(makeChip(k, pressed, ()=>{
+      for (let i = 0; i < max; i++) {
+        const k = list[i];
+        const pressed = state.selectedTags.has(k);
+        wrap.appendChild(makeChip(k, pressed, function(){
           const on = state.selectedTags.has(k);
-          if (on) state.selectedTags.delete(k); else state.selectedTags.add(k); // no limit
+          if (on) state.selectedTags.delete(k); else state.selectedTags.add(k);
           renderKeywords();
         }));
       }
-      if (toggle){
-        if (list.length <= 16) toggle.classList.add("hidden");
-        else { toggle.classList.remove("hidden"); toggle.textContent = state.showAllKw ? "See fewer" : "See more"; }
+
+      if (toggle) {
+        if (list.length <= 16) {
+          toggle.classList.add("hidden");
+        } else {
+          toggle.classList.remove("hidden");
+          toggle.textContent = state.showAllKw ? "See fewer" : "See more";
+        }
       }
     }
 
@@ -322,16 +335,18 @@
       options.forEach(opt=>{
         wrap.appendChild(makeChip(opt, selSet.has(opt), ()=>{
           const on = selSet.has(opt);
-          if (multi){ if (on) selSet.delete(opt); else selSet.add(opt); setter(Array.from(selSet)); }
-          else { selSet.clear(); selSet.add(opt); setter(opt); }
+          if (multi){
+            if (on) selSet.delete(opt); else selSet.add(opt); setter(Array.from(selSet));
+          } else {
+            selSet.clear(); selSet.add(opt); setter(opt);
+          }
           chipGroup(sel, options, multi, getter, setter);
         }));
       });
     }
 
     /* ========= DOTS ========= */
-    // Steps: 0 kw, 1 visit+parking, 2 family+access (single), 3 highlight, 4 veg, 5 details, 6 review
-    const WIZ_IDS = ["kw","vp","fa","hl","veg","details","review"];
+    const WIZ_IDS = ["kw","visit","family_access","standout","veg","details","review"];
     function renderDots(){
       const dots = qs("#wizDots"); if (!dots) return; dots.innerHTML="";
       for (let i=0;i<WIZ_IDS.length;i++){
@@ -354,24 +369,21 @@
       const back = qs("#wizBack");
       const next = qs("#wizNext");
       const skipAll = qs("#wizSkipAll");
+      const sub = qs("#wizSub");
 
       back.disabled = (state.wizStep === 0);
-      // Skip visible from step 2 (index 1) onward
-      if (state.wizStep >= 1) skipAll.classList.remove("invisible");
-      else skipAll.classList.add("invisible");
+      // Show "Skip to review" starting AFTER step 2 (index 2 -> family_access)
+      if (state.wizStep < 2) skipAll.classList.add("invisible");
+      else skipAll.classList.remove("invisible");
 
+      sub.classList.remove("hidden");
       next.classList.remove("hidden");
-      skipAll.classList.remove("hidden");
-
-      // Hide Google button while wizard is open
-      qs("#googleTopLink").classList.add("hidden");
 
       if (id === "kw"){
         const html =
           '<div>'+
-            '<p class="text-sm font-medium text-slate-700">Pick keywords</p>'+
-            '<div class="flex items-center justify-between mt-1">'+
-              '<span class="text-xs text-slate-500">Choose any that apply.</span>'+
+            '<div class="flex items-center justify-between">'+
+              '<p class="text-sm font-medium text-slate-700">Pick keywords</p>'+
               '<button id="kwToggle" type="button" class="text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>'+
             '</div>'+
             '<div id="kwWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
@@ -381,53 +393,68 @@
           const t=qs("#kwToggle"); if(t){ t.addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); }); }
         });
       }
-      else if (id === "vp"){ // Visit type & Parking (stacked)
+      else if (id === "visit"){
+        // VISIT TYPE and PARKING stacked vertically (each with its own subheading)
         const html =
           '<div>'+
-            '<p class="text-sm font-medium text-slate-700 mb-3">Visit type & Parking</p>'+
-            '<div class="space-y-5">'+
-              '<div>'+
-                '<p class="text-sm text-slate-700 mb-2">Visit type</p>'+
-                '<div id="pos-visit" class="flex flex-wrap gap-2"></div>'+
-              '</div>'+
-              '<div>'+
-                '<p class="text-sm text-slate-700 mb-2">Parking</p>'+
-                '<div id="pos-parking" class="flex flex-wrap gap-2"></div>'+
-              '</div>'+
+            '<p class="text-sm font-medium text-slate-700 mb-3">Visit type</p>'+
+            '<div id="visitType" class="mb-6 flex flex-wrap gap-2"></div>'+
+            '<p class="text-sm font-medium text-slate-700 mb-3">Parking</p>'+
+            '<div id="visitParking" class="flex flex-wrap gap-2"></div>'+
+          '</div>';
+        swapContent(c, html, ()=>{
+          chipGroup("#visitType", ["Dine-in","Takeout","Delivery"], false,
+            ()=>state.posDetails.visit, v=>state.posDetails.visit=v);
+          chipGroup("#visitParking", ["Street","Lot","Valet","None / not sure"], false,
+            ()=>state.posDetails.parking, v=>state.posDetails.parking=v);
+        });
+      }
+      else if (id === "family_access"){
+        // STACKED and SINGLE-SELECT for both questions
+        const html =
+          '<div>'+
+            '<p class="text-sm font-medium text-slate-700 mb-3">Kid-friendliness</p>'+
+            '<div id="pos-kids" class="flex flex-wrap gap-2"></div>'+
+            '<div class="mt-6">'+
+              '<p class="text-sm font-medium text-slate-700 mb-3">Wheelchair accessibility</p>'+
+              '<div id="pos-access" class="flex flex-wrap gap-2"></div>'+
             '</div>'+
           '</div>';
         swapContent(c, html, ()=>{
-          chipGroup("#pos-visit", ["Dine-in","Takeout","Delivery"], false, ()=>state.posDetails.visitType, v=>state.posDetails.visitType=v);
-          chipGroup("#pos-parking", ["Street","Lot","Valet","None / not sure"], false, ()=>state.posDetails.parking, v=>state.posDetails.parking=v);
+          chipGroup("#pos-kids",
+            ["Good for kids","High chairs","Kids menu","Not kid-focused"],
+            false, ()=>state.posDetails.kids, v=>state.posDetails.kids=v);
+          chipGroup("#pos-access",
+            ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"],
+            false, ()=>state.posDetails.access, v=>state.posDetails.access=v);
         });
       }
-      else if (id === "fa"){ // Family & Accessibility (stacked, single-select each)
-        const html =
-          '<div>'+
-            '<p class="text-sm font-medium text-slate-700 mb-3">Family & Accessibility</p>'+
-            '<div class="space-y-5">'+
-              '<div>'+
-                '<p class="text-sm text-slate-700 mb-2">Kid-friendliness</p>'+
-                '<div id="pos-kid" class="flex flex-col sm:flex-row flex-wrap gap-2"></div>'+
-              '</div>'+
-              '<div>'+
-                '<p class="text-sm text-slate-700 mb-2">Wheelchair accessibility</p>'+
-                '<div id="pos-access-single" class="flex flex-col sm:flex-row flex-wrap gap-2"></div>'+
-              '</div>'+
-            '</div>'+
-          '</div>';
-        swapContent(c, html, ()=>{
-          chipGroup("#pos-kid", ["Good for kids","High chairs","Kids menu","Not kid-focused"], false, ()=>state.posDetails.kid, v=>state.posDetails.kid=v);
-          chipGroup("#pos-access-single", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], false, ()=>state.posDetails.accessSingle, v=>state.posDetails.accessSingle=v);
-        });
-      }
-      else if (id === "hl"){
+      else if (id === "standout"){
         const html =
           '<div>'+
             '<p class="text-sm font-medium text-slate-700">What stood out the most?</p>'+
             '<div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
-        swapContent(c, html, ()=> renderHighlights());
+        swapContent(c, html, ()=>{
+          const wrap=qs("#hlWrap");
+          const opts = ["🍽️ Food","🤝 Service","🕯️ Atmosphere","🌿 Authenticity"];
+          wrap.innerHTML="";
+          opts.forEach(label=>{
+            const h = label.replace(/^.+?\s/, ""); // take word after emoji
+            const pressed = state.highlight===h;
+            wrap.appendChild(makeChip(label, pressed, ()=>{
+              state.highlight = (state.highlight===h) ? null : h;
+              // re-render
+              const children = Array.from(wrap.children);
+              children.forEach(ch=>{
+                const isPressed = ch.textContent.endsWith(state.highlight||"");
+                ch.setAttribute("aria-pressed", isPressed?"true":"false");
+                if (isPressed) ch.classList.add("text-white","bg-[var(--brand)]","border-transparent");
+                else ch.classList.remove("text-white","bg-[var(--brand)]","border-transparent");
+              });
+            }));
+          });
+        });
       }
       else if (id === "veg"){
         const html =
@@ -436,26 +463,27 @@
             '<div id="pos-veg" class="mt-3 flex flex-wrap gap-2"></div>'+
           '</div>';
         swapContent(c, html, ()=>{
-          chipGroup("#pos-veg", ["Yes","No","Not sure"], false, ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
+          chipGroup("#pos-veg", ["Yes","No","Not sure"], false,
+            ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
         });
       }
       else if (id === "details"){
         const html =
           '<div>'+
-            '<p class="text-sm font-medium text-slate-700">Anything to add?</p>'+
-            '<textarea id="freeDetails" rows="4" class="mt-3 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-3" placeholder="Extra details (optional)…"></textarea>'+
+            '<label for="extraDetails" class="text-sm font-medium text-slate-700">More details (optional)</label>'+
+            '<textarea id="extraDetails" rows="4" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-3" placeholder="Anything else that would help someone deciding to visit?"></textarea>'+
           '</div>';
         swapContent(c, html, ()=>{
-          const fd = qs("#freeDetails");
-          if (fd) fd.addEventListener("input", e=> state.posDetails.free = e.target.value);
+          const el=qs("#extraDetails");
+          el.addEventListener("input", ()=>{ state.posDetails.extra = el.value; });
         });
       }
       else if (id === "review"){
-        // Show Google button again (centered) with a little arrow
-        const gl = qs("#googleTopLink");
-        gl.classList.remove("hidden");
-        gl.classList.add("mx-auto","mt-2"); // center it in the grid area
+        sub.classList.add("hidden");
+        next.classList.add("hidden");
+        skipAll.classList.add("invisible");
 
+        // Final review screen with Google button shown HERE + animated arrow
         const html =
           '<div>'+
             '<div class="flex items-center justify-between">'+
@@ -467,32 +495,36 @@
             '</div>'+
             '<textarea id="reviewText" rows="5" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6" aria-describedby="copyHelp" placeholder="Generating…"></textarea>'+
             '<p id="copyHelp" class="mt-2 text-sm text-slate-500">Copy and paste to Google when ready.</p>'+
-            '<div class="mt-3 flex flex-wrap items-center gap-3 justify-between">'+
-              '<div class="flex gap-3">'+
-                '<button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>'+
-                '<button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>'+
-                '<span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>'+
-              '</div>'+
-              '<div class="flex items-center gap-2 text-sm text-slate-600">'+
-                '<span class="nudge">👉</span>'+
-                '<span>Post on Google when you\'re happy</span>'+
-              '</div>'+
+
+            '<div class="mt-4 flex flex-wrap items-center gap-3">'+
+              '<button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">✨ Polish with AI</button>'+
+              '<button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>'+
+              '<span id="aiStatus" class="text-sm text-slate-600" aria-live="polite"></span>'+
+            '</div>'+
+
+            '<div class="mt-6 flex flex-col items-center gap-2">'+
+              '<div class="text-sm text-slate-600 flex items-center gap-2"><span class="arrow-nudge">👉</span><span>Post your review on Google</span></div>'+
+              '<a id="googleFinal" target="_blank" rel="noopener noreferrer" class="inline-flex h-[48px] items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none">⭐ <span class="ml-2">Post on Google</span></a>'+
             '</div>'+
           '</div>';
+
         swapContent(c, html, ()=>{
+          // connect final Google link
+          const gURL = googleUrl(state.tenant.google || null);
+          const final = qs("#googleFinal");
+          if (gURL) final.href = gURL; else final.removeAttribute("href");
+
           const ed=qs("#editToggle");
           ed.addEventListener("change", ()=>{
             const ta=qs("#reviewText");
             if (ed.checked) ta.removeAttribute("readonly"); else ta.setAttribute("readonly","");
           });
-          attachCopyBehavior();
-          generateReview(true);                  // auto with typing
-          qs("#aiBtn").addEventListener("click", ()=>generateReview(true)); // retype on regenerate
-        });
 
-        // Hide Next/Skip on final
-        qs("#wizNext").classList.add("hidden");
-        qs("#wizSkipAll").classList.add("invisible");
+          // generate review with typewriter effect
+          attachCopyBehavior();
+          generateReview();
+          qs("#aiBtn").addEventListener("click", generateReview);
+        });
       }
 
       renderDots();
@@ -505,7 +537,7 @@
     /* ========= AI (browser test / function) ========= */
     function callGroqDirect(payload){
       if (!TEST_GROQ_KEY) return Promise.reject(new Error("TEST_GROQ_KEY is empty"));
-      const system = "You write polished restaurant reviews. Return ONLY one paragraph. 20–30 words, warm fine-dining tone, 1–2 tasteful emojis (🍽 🤝 🌆 🌍 ✨ ❤️ 👍). Mention the restaurant by name. No preambles.";
+      const system = "You write polished restaurant reviews. Return ONLY one paragraph. 20–30 words, warm fine-dining tone, 1–2 tasteful emojis. Mention the restaurant by name. No headings.";
       const user =
         "Restaurant: " + (payload.restaurant||"Unknown") + "\n" +
         "Experience: " + (payload.experience||"Good") + "\n" +
@@ -530,23 +562,9 @@
       });
     }
 
-    // Typewriter writer
-    function typeInto(el, text, speed=14){
-      el.value = "";
-      let i = 0;
-      return new Promise(resolve=>{
-        function step(){
-          if (i >= text.length){ resolve(); return; }
-          el.value += text[i++];
-          setTimeout(step, speed);
-        }
-        step();
-      });
-    }
-
-    function generateReview(withTyping=false){
+    function generateReview(){
       const status=qs("#aiStatus"); if (status) status.textContent="Polishing…";
-      const details = detailsSummary(state.posDetails);
+      const details = state.posDetails.extra ? state.posDetails.extra : detailsSummary(state.posDetails);
       const body = {
         restaurant: state.tenant?.name || "This restaurant",
         experience: state.experience || "Good",
@@ -555,9 +573,8 @@
         extra: details
       };
       function done(text, usedAI){
-        const ta=qs("#reviewText");
-        if (withTyping) typeInto(ta, text);
-        else ta.value = text;
+        const ta = qs("#reviewText");
+        typeInto(ta, text, 12);
         qs("#copyBtn").removeAttribute("disabled");
         if (status) status.textContent = usedAI ? "AI suggestion applied." : "Draft created.";
       }
@@ -565,7 +582,9 @@
         return callGroqDirect(body).then(text=>{
           if (!text) throw new Error("empty");
           done(text, true);
-        }).catch(()=>{ done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false); });
+        }).catch(()=>{
+          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
+        });
       } else {
         return fetch("/.netlify/functions/review-ai", {
           method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
@@ -576,18 +595,22 @@
           const text = (j && j.text) ? String(j.text).trim() : "";
           if (!text) throw new Error("empty");
           done(text, true);
-        }).catch(()=>{ done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false); });
+        }).catch(()=>{
+          done(writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:details}), false);
+        });
       }
     }
 
     function attachCopyBehavior(){
       const btn=qs("#copyBtn"); if (!btn) return;
-      const label=btn.querySelector(".btn-label"); const original=label.textContent;
+      const label=btn.querySelector(".btn-label") || btn;
+      const original=label.textContent;
       btn.addEventListener("click", ()=>{
         const txt = (qs("#reviewText")?.value || "").trim();
         if (!txt) return;
         copyText(txt).then(()=>{
-          label.textContent="Copied"; qs("#sr-live").textContent="Copied to clipboard";
+          label.textContent="Copied";
+          qs("#sr-live").textContent="Copied to clipboard";
           setTimeout(()=>{ label.textContent=original; }, 2000);
         });
       });
@@ -642,7 +665,7 @@
       qs("#experience")?.classList.add("hidden");
       const holder = document.createElement("div");
       holder.className = "px-6 pb-8";
-      holder.innerHTML = `<p class="text-slate-600">We couldn’t find that restaurant. Try <code>/r/sahara</code> or <code>/r/cedars</code>, or ask the owner to set it up.</p>`;
+      holder.innerHTML = `<p class="text-slate-600">We couldn’t find that restaurant. Double-check the link (e.g. <code>/r/sahara</code>) or ask the owner to set it up.</p>`;
       document.querySelector("main .card")?.appendChild(holder);
     }
 
@@ -650,6 +673,7 @@
     function init(){
       const slug = getTenantKey();
 
+      // Fetch tenant
       fetch(DATA_URL, { cache: "no-store" })
         .then(res => {
           if (res.status === 404) return { notFound: true };
@@ -665,22 +689,31 @@
           setBrand(cfg.brand?.primary || "#b91c1c");
           qs("#restName").textContent = cfg.name || "Your Restaurant";
 
+          // Top Google button text + link
           const gURL = googleUrl(cfg.google || null);
-          const glTop = qs("#googleTopLink"); const glTxt=qs("#googleTopText"); const tipTop=qs("#googleTipTop");
-          if (gURL) { glTop.href = gURL; glTxt.textContent = "Post on Google"; tipTop.textContent=""; }
-          else { glTop.removeAttribute("href"); glTop.setAttribute("aria-disabled","true"); glTxt.textContent="Google link not set"; tipTop.textContent="Ask your provider to set a Google Maps URL or Place ID."; }
+          const glTop = qs("#googleTopLink");
+          const glTxt = qs("#googleTopText");
+          if (gURL) { glTop.href = gURL; glTxt.textContent = "Post on Google"; }
+          else { glTop.removeAttribute("href"); glTop.setAttribute("aria-disabled","true"); glTxt.textContent="Google link not set"; }
 
-          qsa("[data-exp]").forEach(b=>{ b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp"))); });
+          // Experience buttons
+          qsa("[data-exp]").forEach(b=>{
+            b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")));
+          });
 
+          // Help with AI: hide AI button AND the top Google button,
+          // then show Google again ONLY on the final step
           const reveal = qs("#revealAi");
           if (reveal) reveal.addEventListener("click", ()=>{
-            // hide google button during wizard
+            reveal.classList.add("hidden");
             qs("#googleTopLink").classList.add("hidden");
+
+            // show wizard
             qs("#craftWrap").classList.remove("hidden");
             state.wizStep = 0;
             state.selectedTags.clear();
             state.highlight = null;
-            state.posDetails = { visitType:null, parking:null, kid:null, accessSingle:null, veg:null, diet:[] };
+            state.posDetails = { veg:null, diet:[], parking:null, kids:null, access:null, visit:null, extra:"" };
             renderWizardStep();
           });
 
@@ -690,26 +723,28 @@
           qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
         })
         .catch(() => {
-          // Fallback offline
+          // Offline fallback
           const cfg = DEFAULT_TENANT;
           state.tenant = cfg;
           setBrand(cfg.brand?.primary || "#b91c1c");
           qs("#restName").textContent = cfg.name || "Your Restaurant";
           const gURL = googleUrl(cfg.google || null);
-          const glTop = qs("#googleTopLink"); const tipTop=qs("#googleTipTop");
-          if (gURL) { glTop.href = gURL; tipTop.textContent=""; }
-          else { glTop.removeAttribute("href"); tipTop.textContent="Ask your provider to set a Google Maps URL or Place ID."; }
+          const glTop = qs("#googleTopLink");
+          if (gURL) glTop.href = gURL; else glTop.removeAttribute("href");
 
-          qsa("[data-exp]").forEach(b=>{ b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp"))); });
+          qsa("[data-exp]").forEach(b=>{
+            b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")));
+          });
 
           const reveal = qs("#revealAi");
           if (reveal) reveal.addEventListener("click", ()=>{
+            reveal.classList.add("hidden");
             qs("#googleTopLink").classList.add("hidden");
             qs("#craftWrap").classList.remove("hidden");
             state.wizStep = 0;
             state.selectedTags.clear();
             state.highlight = null;
-            state.posDetails = { visitType:null, parking:null, kid:null, accessSingle:null, veg:null, diet:[] };
+            state.posDetails = { veg:null, diet:[], parking:null, kids:null, access:null, visit:null, extra:"" };
             renderWizardStep();
           });
 
@@ -717,6 +752,9 @@
           qs("#wizBack").addEventListener("click", wizardBack);
           qs("#wizSkipAll").addEventListener("click", wizardSkipAll);
         });
+
+      // Negative path send
+      qs("#sendNegative")?.addEventListener("click", sendNegative);
     }
 
     document.addEventListener("DOMContentLoaded", init);
