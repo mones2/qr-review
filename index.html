@@ -1,699 +1,554 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Share Your Experience</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Tailwind via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root { --brand: #b91c1c }
-    .brand-bg  { background-color: var(--brand) }
-    .brand-txt { color: var(--brand) }
-    .brand-ring{ --tw-ring-color: var(--brand) }
-    .smooth    { transition: all 180ms ease }
-    .card      { box-shadow: 0 10px 30px rgba(0,0,0,.06) }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Share Your Experience</title>
+<style>
+  :root{
+    --bg:#0b0d14; --surface:#111522;
+    --g1:rgba(255,255,255,.045); --g2:rgba(255,255,255,.02);
+    --border:rgba(255,255,255,.10); --border-2:rgba(255,255,255,.18);
+    --text:#f2f4fb; --muted:#aeb3c4;
 
-    .chip{
-      display:inline-flex;align-items:center;gap:.4rem;
-      border:1.5px solid #e2e8f0;padding:.44rem .8rem;border-radius:9999px;
-      font-size:.875rem;background:#fff;line-height:1
-    }
-    .chip:hover{background:#f8fafc}
-    .chip[aria-pressed="true"]{color:#fff;background:var(--brand);border-color:transparent}
-    details>summary::-webkit-details-marker{display:none}
+    /* Blue gradient (fixed for now) */
+    --a1:#00c7ff; --a2:#3b82f6;
 
-    .step-enter{opacity:0;transform:translateY(6px)}
-    .step-enter-active{opacity:1;transform:translateY(0);transition:all 200ms ease}
-    .step-leave{opacity:1;transform:translateY(0)}
-    .step-leave-active{opacity:0;transform:translateY(-6px);transition:all 160ms ease}
-    @media (prefers-reduced-motion: reduce){.smooth,.step-enter-active,.step-leave-active{transition:none!important}}
+    --success:#8dffcc;
+    --r:20px; --shadow:0 0 30px rgba(0,199,255,.16);
+    --focus:0 0 0 4px rgba(0,199,255,.45);
+    --base-font:18px;
 
-    @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
-    .btn-arrow .arrow{display:inline-block;margin-left:.5rem;animation:nudge 1200ms ease-in-out infinite}
-  </style>
+    --btn-font: clamp(1.1rem, 1rem + 0.6vw, 1.3rem);
+    --chip-font: clamp(.95rem, .9rem + .2vw, 1.05rem);
+    --tap: 56px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text);
+    font:400 var(--base-font)/1.6 system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial;
+    background:
+      radial-gradient(1200px 650px at 15% -10%, rgba(0,199,255,.12), transparent 60%),
+      radial-gradient(1100px 550px at 90% 110%, rgba(59,130,246,.10), transparent 60%),
+      var(--bg);
+  }
+
+  .wrap{max-width:920px;margin:32px auto 96px;padding:0 18px}
+  h1{margin:0 0 .25rem;font-size:clamp(2.2rem,6vw,3.2rem);letter-spacing:-.02em;line-height:1.1}
+  h2{margin:.1rem 0 .9rem;font-size:clamp(1.2rem,3.5vw,1.5rem);font-weight:500;color:var(--muted)}
+  .accent{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .card{
+    background:linear-gradient(180deg,var(--g1),var(--g2)),var(--surface);
+    border:1px solid var(--border); border-radius:var(--r);
+    box-shadow:var(--shadow); padding:20px; margin-top:14px;
+  }
+  .hr{height:1px;background:rgba(255,255,255,.12);margin:1rem 0}
+  .row{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
+  .muted{color:var(--muted)}
+  .hidden{display:none!important}
+
+  /* Buttons */
+  .btn{ font-size:var(--btn-font); font-weight:800; line-height:1; white-space:nowrap; }
+  .btn{
+    min-height:var(--tap); min-width:var(--tap);
+    display:inline-flex; align-items:center; justify-content:center; gap:.6rem;
+    padding:1rem 1.4rem; border-radius:9999px;
+    color:#fff; text-decoration:none; border:1px solid var(--border);
+    background: linear-gradient(271deg, #00c7ffa6, var(--a2));
+    cursor:pointer;
+  }
+  .btn--ghost{ color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--border) }
+  .btn[disabled]{opacity:.55;cursor:not-allowed}
+  button:focus-visible, a:focus-visible{outline:none; box-shadow:var(--focus)}
+  .btn-flex{flex:1 1 280px}
+  @media (max-width:860px){ .btn-flex{flex:1 1 100%} }
+
+  /* Options (step 0) */
+  .optionList{ display:grid; gap:14px }
+  .optionItem{
+    display:flex; align-items:center; gap:14px;
+    padding:16px 18px; border-radius:18px; cursor:pointer;
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.14);
+    text-align:left; transition:transform .12s, border-color .12s, background .12s;
+    color:#fff;
+  }
+  .optionItem:hover{ transform:translateY(-1px); border-color:var(--border-2) }
+  .optIcon{
+    flex:0 0 46px; height:46px; display:grid; place-items:center;
+    border-radius:12px; color:#cbd5ff;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15);
+  }
+  .optText .title{ font-weight:800; font-size:1.05rem }
+  .optText .sub{ color:#fff; margin-top:2px }
+
+  .optionItem[aria-pressed="true"]{
+    background:
+      linear-gradient(180deg, rgba(59,130,246,.18), rgba(59,130,246,.10)),
+      linear-gradient(271deg, #00c7ffa6, var(--a2));
+    border-color:transparent;
+  }
+
+  /* Chips */
+  .chips{display:flex;flex-wrap:wrap;gap:.6rem}
+  .chip{
+    font-size:var(--chip-font);
+    min-height:42px; padding:.45rem .9rem; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.06); color:var(--text); line-height:1; cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{ color:#fff; border-color:transparent; background: linear-gradient(271deg, #00c7ffa6, var(--a2)); }
+
+  textarea{
+    width:100%; min-height:112px; border-radius:14px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+    color:var(--text); padding:1rem; font:inherit;
+  }
+
+  /* Progress */
+  .meter{ margin:.25rem 0 .75rem; width:260px }
+  .meter-track{
+    position:relative; height:8px; border-radius:9999px; overflow:hidden;
+    background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .meter-fill{ position:absolute; inset:0 auto 0 0; width:0%; background:linear-gradient(90deg, var(--a1), var(--a2)) }
+  .meter-knob{
+    position:absolute; top:50%; left:0%; transform:translate(-50%,-50%);
+    width:10px; height:10px; border:2px solid var(--a2); background-color:rgba(59,130,246,.18);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    border-radius:2px;
+  }
+
+  .success{text-align:center; padding:36px 20px;}
+  .success .circle{
+    width:64px;height:64px;border-radius:999px; display:grid; place-items:center;
+    background: radial-gradient(100% 100% at 50% 0, rgba(141,255,204,.35), rgba(141,255,204,.16));
+    border:1px solid rgba(141,255,204,.45);
+    box-shadow:0 0 30px rgba(141,255,204,.28), inset 0 0 14px rgba(141,255,204,.12);
+    margin:0 auto 10px;
+  }
+  .success h3{ margin:.4rem 0 .2rem; font-size:1.35rem }
+  .success p{ margin:.1rem 0; color:var(--muted) }
+
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+</style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-stone-50 to-stone-200 text-slate-800 antialiased">
-  <main class="mx-auto max-w-3xl px-4 py-10">
-    <section class="mx-auto max-w-2xl rounded-2xl bg-white card ring-1 ring-black/5 overflow-hidden">
-      <!-- Header -->
-      <header class="p-6 sm:p-8 border-b border-slate-100">
-        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Share your experience at <span id="restName" class="brand-txt">Sahara</span>
-        </h1>
-      </header>
+<body>
+<main class="wrap">
+  <h1>Share your experience at <span class="accent" id="restName">Sahara</span></h1>
+  <h2>How was your experience today?</h2>
 
-      <!-- Body -->
-      <div class="p-6 sm:p-8 space-y-10">
+  <!-- STEP 0 -->
+  <section id="step0" class="card" role="group" aria-label="Experience">
+    <div class="optionList">
+      <button class="optionItem" data-kind="excellent" aria-pressed="false">
+        <span class="optIcon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.8 6.6 19.8l1-6.1L3.2 9.4l6.1-.9L12 3Z" stroke="currentColor" stroke-width="1.8"/></svg>
+        </span>
+        <span class="optText">
+          <div class="title">Excellent</div>
+          <div class="sub">Everything sang.</div>
+        </span>
+      </button>
 
-        <!-- STEP 1 — EXPERIENCE -->
-        <section id="experience" aria-labelledby="exp-title">
-          <h2 id="exp-title" class="text-xl sm:text-2xl font-semibold">How was your experience today?</h2>
-          <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button type="button" data-exp="Excellent" class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Excellent">
-              <div class="text-2xl">🤩</div>
-              <div class="mt-1 text-base font-medium">Excellent</div>
-              <p class="text-sm text-slate-500">Everything sang.</p>
-            </button>
-            <button type="button" data-exp="Good" class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Good">
-              <div class="text-2xl">🙂</div>
-              <div class="mt-1 text-base font-medium">Good</div>
-              <p class="text-sm text-slate-500">Worth sharing.</p>
-            </button>
-            <button type="button" data-exp="Not great" class="group w-full rounded-xl border border-slate-200 bg-white px-4 py-5 text-left shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Not great">
-              <div class="text-2xl">😕</div>
-              <div class="mt-1 text-base font-medium">Not great</div>
-              <p class="text-sm text-slate-500">Tell us why.</p>
-            </button>
-          </div>
-        </section>
+      <button class="optionItem" data-kind="good" aria-pressed="false">
+        <span class="optIcon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17 4 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="optText">
+          <div class="title">Good</div>
+          <div class="sub">Worth sharing.</div>
+        </span>
+      </button>
 
-        <!-- POSITIVE PATH -->
-        <section id="positive" class="hidden" aria-hidden="true">
-          <!-- Top row: Google + Start writing (hidden once wizard opens) -->
-          <div id="topRow" class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-            <a id="googleTopLink" target="_blank" rel="noopener noreferrer"
-               class="inline-flex h-[52px] items-center justify-center rounded-lg px-4 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth disabled:opacity-40 disabled:pointer-events-none"
-               aria-label="Post on Google">
-              ⭐ <span class="ml-2" id="googleTopText">Post on Google</span>
-            </a>
+      <button class="optionItem" data-kind="bad" aria-pressed="false">
+        <span class="optIcon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        <span class="optText">
+          <div class="title">Not great</div>
+          <div class="sub">Tell us why.</div>
+        </span>
+      </button>
+    </div>
+  </section>
 
-            <button id="revealAi" type="button"
-                    class="inline-flex h-[52px] items-center justify-center rounded-lg px-4 py-3 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth"
-                    aria-label="Start writing">
-              ✍️ Start writing
-            </button>
-          </div>
+  <!-- POSITIVE TOP ROW -->
+  <section id="positive" class="card hidden" aria-live="polite">
+    <div class="row" style="width:100%">
+      <a id="googleTop" class="btn btn--ghost btn-flex" href="#" target="_blank" rel="noopener">Post on Google</a>
+      <button id="helpAI" class="btn btn-flex">Help with AI</button>
+    </div>
+  </section>
 
-          <!-- WIZARD -->
-          <div id="craftWrap" class="hidden mt-2">
-            <div id="wizard" class="rounded-xl border border-slate-200 p-5 sm:p-6">
-              <div class="flex items-start justify-between">
-                <div>
-                  <h2 class="text-xl sm:text-2xl font-semibold">Write your review</h2>
-                  <p class="mt-1 text-sm text-slate-600">Quick questions. Skip anytime.</p>
-                </div>
-                <div class="text-right">
-                  <div id="wizProgress" class="text-sm text-slate-500">Step 1</div>
-                  <div id="wizDots" class="mt-2 flex items-center gap-1.5" aria-hidden="true"></div>
-                </div>
-              </div>
+  <!-- WIZARD (4 steps) -->
+  <section id="wizard" class="card hidden" aria-live="polite">
+    <div class="row" style="justify-content:space-between">
+      <strong id="wLabel">Step 1 of 4</strong>
+      <button id="backBtn" class="btn btn--ghost">Back</button>
+    </div>
 
-              <div id="wizContent" class="mt-5 step-enter step-enter-active"><!-- dynamic step content --></div>
-
-              <!-- Nav (visible on all steps, hidden on final) -->
-              <div id="wizNav" class="mt-6 flex flex-wrap gap-3 justify-between">
-                <div class="flex gap-3">
-                  <button id="wizBack" type="button" class="rounded-lg px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 smooth" aria-label="Back">Back</button>
-                </div>
-                <div class="flex gap-3">
-                  <button id="wizSkipAll" type="button" class="rounded-lg px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 smooth" aria-label="Skip to review">Skip to review</button>
-                  <button id="wizNext" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth" aria-label="Next">Next</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- NEGATIVE PATH -->
-        <section id="negative" class="hidden" aria-hidden="true">
-          <div id="negForm">
-            <div class="text-center">
-              <div class="text-4xl">🙏</div>
-              <h2 class="mt-3 text-xl sm:text-2xl font-semibold">Thank you for your honesty.</h2>
-              <p class="mt-2 text-slate-600">A few quick questions help the team improve.</p>
-            </div>
-
-            <div class="mt-6 space-y-6">
-              <div>
-                <p class="text-sm font-medium text-slate-700">Did you dine in, take out, or get delivery?</p>
-                <div class="mt-3 flex flex-wrap gap-2" id="q-dining"></div>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-slate-700">What did you get?</p>
-                <div class="mt-3 flex flex-wrap gap-2" id="q-meal"></div>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-slate-700">How much did you spend per person?</p>
-                <div class="mt-3 flex flex-wrap gap-2" id="q-spend"></div>
-              </div>
-              <div>
-                <label for="negFeedback" class="text-sm font-medium text-slate-700">Your feedback (optional)</label>
-                <textarea id="negFeedback" rows="4" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-3" placeholder="Write any details you'd like the manager to know…"></textarea>
-              </div>
-              <div class="flex items-center gap-3">
-                <button id="sendNegative" type="button" class="rounded-lg px-4 py-2 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth">Send</button>
-                <span id="negStatus" class="text-sm text-slate-600" aria-live="polite"></span>
-              </div>
-            </div>
-          </div>
-
-          <div id="negDone" class="hidden text-center py-10">
-            <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100 text-green-700 text-3xl">✓</div>
-            <h3 class="mt-4 text-lg font-semibold">Your feedback was sent to the restaurant.</h3>
-            <p class="mt-2 text-slate-600">We appreciate your time.</p>
-          </div>
-        </section>
-
+    <div class="meter" id="meter" aria-hidden="true">
+      <div class="meter-track">
+        <div id="meterFill" class="meter-fill"></div>
+        <div id="meterKnob" class="meter-knob"></div>
       </div>
-    </section>
-  </main>
+    </div>
 
-  <!-- aria-live region -->
-  <div id="sr-live" class="sr-only" aria-live="polite"></div>
+    <div class="hr"></div>
 
-  <script>
-    /* ========= ROUTE → TENANT KEY ========= */
-    function getTenantKey(){
-      const qs = new URLSearchParams(window.location.search);
-      const qid = qs.get("id");
-      if (qid) return String(qid).trim().toLowerCase();
-      const path = window.location.pathname.replace(/^\/+/, "");
-      if (path.indexOf("r/") === 0){
-        const parts = path.split("/");
-        if (parts[1]) return String(parts[1]).trim().toLowerCase();
-      }
-      return "sahara"; // default for testing
+    <!-- Step 1: Keywords with See more/less -->
+    <div id="w1">
+      <div style="font-weight:800;margin:.2rem 0;display:flex;align-items:center;justify-content:space-between;">
+        <span>Pick keywords</span>
+        <button id="kwToggle" class="btn btn--ghost" style="min-height:38px;padding:.5rem .9rem;font-weight:600;">See more</button>
+      </div>
+      <div id="kwList" class="chips"></div>
+      <div class="hr"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button id="next1" class="btn">Next</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Visit + Parking -->
+    <div id="w2" class="hidden">
+      <div style="font-weight:800;margin:.2rem 0">Visit type</div>
+      <div id="visitType" class="chips" data-single></div>
+      <div style="font-weight:800;margin:.9rem 0 .2rem">Parking</div>
+      <div id="parking" class="chips" data-single></div>
+      <div class="hr"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button id="next2" class="btn">Next</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Details -->
+    <div id="w3" class="hidden">
+      <div style="font-weight:800;margin:.2rem 0">More details</div>
+      <textarea id="extra" placeholder="Add a short note..."></textarea>
+      <div class="hr"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button id="next3" class="btn">Next</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Review -->
+    <div id="w4" class="hidden">
+      <div style="font-weight:800;margin:.2rem 0">Write your review</div>
+      <textarea id="review" rows="6"></textarea>
+      <div class="row" style="margin-top:.8rem">
+        <button id="refineBtn" class="btn btn--ghost">Refine wording</button>
+        <button id="copyPostBtn" class="btn">Copy and Post to Google</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEGATIVE PATH -->
+  <section id="negative" class="card hidden">
+    <div style="font-weight:800;margin:.2rem 0">Quick feedback</div>
+    <div style="margin:.6rem 0">
+      <div class="muted">Type</div>
+      <div id="nType" class="chips" data-single></div>
+    </div>
+    <div style="margin:.6rem 0">
+      <div class="muted">Meal</div>
+      <div id="nMeal" class="chips" data-single></div>
+    </div>
+    <div style="margin:.6rem 0">
+      <div class="muted">Spend</div>
+      <div id="nSpend" class="chips" data-single></div>
+    </div>
+    <div style="font-weight:700;margin:.6rem 0 .2rem">Your feedback (optional)</div>
+    <textarea id="nText" placeholder="Type here..."></textarea>
+    <div class="row" style="margin-top:1rem">
+      <button id="sendNeg" class="btn">Send</button>
+      <span id="nStatus" class="muted" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <!-- NEGATIVE SUCCESS -->
+  <section id="negSuccess" class="card hidden success" aria-live="polite">
+    <div class="circle" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M20 6L9 17l-5-5" stroke="#0b2418" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h3>Your feedback was sent to the restaurant.</h3>
+    <p>We appreciate your time.</p>
+  </section>
+</main>
+
+<script>
+/* ------------ Tenant routing ------------ */
+function getTenantKey(){
+  const qs = new URLSearchParams(window.location.search);
+  const qid = qs.get("id");
+  if (qid) return String(qid).trim().toLowerCase();
+  const path = window.location.pathname.replace(/^\/+/, "");
+  if (path.indexOf("r/") === 0){
+    const parts = path.split("/");
+    if (parts[1]) return String(parts[1]).trim().toLowerCase();
+  }
+  return "sahara"; // default for local testing
+}
+const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey());
+
+/* ------------ Helpers ------------ */
+const $ = id => document.getElementById(id);
+const show = el => el.classList.remove("hidden");
+const hide = el => el.classList.add("hidden");
+function copyText(t){
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
+  const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px";
+  document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+  return Promise.resolve();
+}
+function makeChip(label,{single=false}={}){
+  const b=document.createElement("button");
+  b.className="chip"; b.type="button"; b.textContent=label; b.setAttribute("aria-pressed","false");
+  if(single) b.dataset.single="1";
+  b.onclick=()=>{
+    if(b.dataset.single){
+      [...b.parentElement.children].forEach(x=>x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+    }else{
+      const on = b.getAttribute("aria-pressed")==="true";
+      b.setAttribute("aria-pressed", on?"false":"true");
     }
+  };
+  return b;
+}
+function singleValue(container){ const x=container.querySelector('.chip[aria-pressed="true"]'); return x?x.textContent:""; }
 
-    // Netlify function for tenant
-    const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey());
+/* ------------ Global state ------------ */
+const state = {
+  tenant: null,
+  exp: null,
+  keywords: [],
+  visitType: "",
+  parking: "",
+  extra: "",
+  showAllKw: false
+};
 
-    // Optional browser test key (leave empty in prod)
-    const TEST_GROQ_KEY = "";
+/* ------------ Step 0: route selection ------------ */
+document.querySelectorAll("#step0 .optionItem").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#step0 .optionItem").forEach(b=>b.setAttribute("aria-pressed","false"));
+    btn.setAttribute("aria-pressed","true");
+    hide($("step0"));
 
-    /* ========= UTILITIES ========= */
-    const qs  = (s, r)=> (r||document).querySelector(s);
-    const qsa = (s, r)=> Array.prototype.slice.call((r||document).querySelectorAll(s));
-    function setBrand(hex){ document.documentElement.style.setProperty("--brand", hex || "#b91c1c"); }
-    function copyText(t){
-      if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
-      const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px";
-      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-      return Promise.resolve();
+    const kind = btn.dataset.kind;
+    if(kind==="bad"){
+      state.exp="Not great"; show($("negative")); renderNeg();
+    }else{
+      state.exp = (kind==="excellent") ? "Excellent" : "Good";
+      show($("positive")); initTopRow();
     }
-    function googleUrl(google){
-      if (google?.mapsUrl) return google.mapsUrl;
-      if (google?.placeId) return "https://search.google.com/local/writereview?placeid="+encodeURIComponent(google.placeId);
-      return "";
-    }
+  });
+});
 
-    /* ========= ANIM HELPERS ========= */
-    function swapContent(container, newHTML, after){
-      container.classList.remove('step-enter','step-enter-active');
-      container.classList.add('step-leave');
-      void container.offsetWidth;
-      container.classList.add('step-leave-active');
-      setTimeout(function(){
-        container.innerHTML = newHTML;
-        if (typeof after === 'function') after();
-        container.classList.remove('step-leave','step-leave-active');
-        container.classList.add('step-enter');
-        void container.offsetWidth;
-        container.classList.add('step-enter-active');
-        setTimeout(()=>container.classList.remove('step-enter','step-enter-active'), 240);
-      }, 150);
-    }
+/* ------------ Positive top row ------------ */
+function initTopRow(){
+  const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : "";
+  const top = $("googleTop");
+  if (g) { top.href = g; top.textContent = "Post on Google"; }
+  else { top.removeAttribute("href"); top.textContent = "Google link not set"; }
+  $("helpAI").onclick = ()=>{ hide($("positive")); show($("wizard")); wizard.go(0); };
+}
 
-    /* ========= TYPEWRITER ========= */
-    function typeInto(el, text, speed = 12, onStart){
-      if (!el) return;
-      if (typeof onStart === "function") onStart();
-      el.value = "";
-      let i = 0;
-      (function tick(){
-        if (i <= text.length){
-          el.value = text.slice(0, i++);
-          setTimeout(tick, speed);
-        }
-      })();
-    }
+/* ------------ Wizard controller (4 steps) ------------ */
+const wizard = (()=>{
+  const steps=[ $("w1"), $("w2"), $("w3"), $("w4") ];
+  let i=0, meterNow=0;
+  function animateMeterTo(target){
+    target = Math.max(0, Math.min(100, target));
+    const start = meterNow, dur = 800, t0 = performance.now();
+    (function tick(t){
+      const k = Math.min(1,(t - t0)/dur);
+      const cur = start + (target - start)*(1 - Math.pow(1-k,3));
+      $("meterFill").style.width = cur + "%";
+      $("meterKnob").style.left = cur + "%";
+      if(k < 1) requestAnimationFrame(tick); else meterNow = target;
+    })(performance.now());
+  }
+  function set(idx){
+    i=idx; steps.forEach((s,j)=>s.classList.toggle("hidden", j!==i));
+    $("wLabel").textContent = `Step ${i+1} of 4`;
+    $("backBtn").disabled = i===0;
+    animateMeterTo([0,33,66,100][i]);
+  }
+  return { go:set, next(){ if(i<3) set(i+1); }, back(){ if(i>0) set(i-1); } };
+})();
+$("backBtn").onclick = ()=> wizard.back();
 
-    /* ========= REVIEW HELPERS ========= */
-    function writeShortReview(args) {
-      const name = args.name || "This restaurant";
-      const exp = args.experience || "Good";
-      const highlight = args.highlight || "";
-      const keywords = args.keywords || [];
-      const details = args.details || "";
+/* ------------ Step wiring ------------ */
+$("next1").onclick = ()=> { collectStep1(); wizard.next(); };
+$("next2").onclick = ()=> { collectStep2(); wizard.next(); };
+$("next3").onclick = ()=> { collectStep3(); buildAndType(); wizard.next(); };
 
-      const openersGood = ["I stopped by","I visited","I had a meal at"];
-      const openersEx   = ["Dinner at","An evening at","My visit to"];
-      const opener = (exp === "Excellent" ? openersEx : openersGood)[Math.floor(Math.random()*3)];
+/* Step 1: keywords from tenant + See more/less */
+function renderStep1(){
+  const list = Array.isArray(state.tenant?.keywords) ? state.tenant.keywords : [];
+  const kwWrap = $("kwList"); kwWrap.innerHTML = "";
+  const toggleBtn = $("kwToggle");
+  if (!list.length){
+    toggleBtn.classList.add("hidden");
+    kwWrap.innerHTML = '<span class="muted">No keywords found for this restaurant.</span>';
+    return;
+  }
+  const max = state.showAllKw ? list.length : Math.min(16, list.length);
+  for (let i=0;i<max;i++) kwWrap.appendChild(makeChip(list[i]));
+  if (list.length <= 16) toggleBtn.classList.add("hidden");
+  else {
+    toggleBtn.classList.remove("hidden");
+    toggleBtn.textContent = state.showAllKw ? "See fewer" : "See more";
+    toggleBtn.onclick = ()=>{ state.showAllKw = !state.showAllKw; renderStep1(); };
+  }
+}
+function collectStep1(){
+  state.keywords = [...$("kwList").querySelectorAll('.chip[aria-pressed="true"]')].map(x=>x.textContent);
+}
 
-      const k = keywords.slice(0,3);
-      const dishLine = k.length ? (" The " + k.join(", ") + (k.length===1?" was":" were") + " delicious.") : "";
-      const hlMap = {
-        "Food":" The kitchen’s care and flavors stood out. 🍽️",
-        "Service":" Friendly, well-timed service. 🤝",
-        "Atmosphere":" Cozy, welcoming room. ✨",
-        "Authenticity":" Thoughtful, true-to-tradition flavors. 🌿"
-      };
-      const hl = hlMap[highlight] || "";
-      const extra = details ? (" " + details + ".") : "";
-      const closer = (exp==="Excellent") ? " Highly recommended." : " I’d happily return.";
-      return opener + " " + name + " was " + exp.toLowerCase() + "." + dishLine + hl + extra + closer;
-    }
-    function detailsSummary(d){
-      const parts=[];
-      if (d.veg) parts.push("Vegetarian options: " + d.veg);
-      if (d.parking) parts.push("Parking: " + d.parking);
-      if (d.kids) parts.push("Kid-friendliness: " + d.kids);
-      if (d.access) parts.push("Accessibility: " + d.access);
-      return parts.join(" | ");
-    }
+/* Step 2: visit + parking */
+const VISIT = ["Dine-in","Takeout","Delivery"];
+const PARK  = ["Street","Lot","Valet","None / not sure"];
+function renderStep2(){
+  const vt = $("visitType"); vt.innerHTML="";
+  const pk = $("parking");  pk.innerHTML="";
+  VISIT.forEach(k=>vt.appendChild(makeChip(k,{single:true})));
+  PARK .forEach(k=>pk.appendChild(makeChip(k,{single:true})));
+}
+function collectStep2(){
+  state.visitType = singleValue($("visitType"));
+  state.parking = singleValue($("parking"));
+}
 
-    /* ========= STATE ========= */
-    const state = {
-      tenant: null,
-      experience: null,
-      highlight: null,
-      selectedTags: new Set(),
-      showAllKw: false,
-      posDetails: { veg:null, parking:null, kids:null, access:null, visit:null, extra:"" },
-      neg: { dining:null, meal:null, spend:null, feedback:"" },
-      wizStep: 0,
-      aiDraft: null      // prefetched during Step 6 (details)
-    };
+/* Step 3: extra note */
+function collectStep3(){ state.extra = $("extra").value.trim(); }
 
-    /* ========= CHIPS ========= */
-    function makeChip(text, pressed, onClick){
-      const b=document.createElement("button");
-      b.type="button"; b.className="chip smooth"; b.setAttribute("aria-pressed", pressed?"true":"false");
-      b.textContent = text;
-      b.addEventListener("click", onClick || function(){});
-      return b;
-    }
-    function chipGroup(sel, options, multi, getter, setter){
-      const wrap=qs(sel); if (!wrap) return; wrap.innerHTML="";
-      const current = getter();
-      const selSet = new Set(Array.isArray(current) ? current : (current ? [current] : []));
-      options.forEach(opt=>{
-        wrap.appendChild(makeChip(opt, selSet.has(opt), ()=>{
-          const on = selSet.has(opt);
-          if (multi){ if (on) selSet.delete(opt); else selSet.add(opt); setter(Array.from(selSet)); }
-          else { selSet.clear(); selSet.add(opt); setter(opt); }
-          chipGroup(sel, options, multi, getter, setter);
-        }));
-      });
-    }
+/* Step 4: build review + typewriter */
+function buildReview(){
+  const name = state.tenant?.name || "this restaurant";
+  const base = (state.exp==="Excellent" ? `Dinner at ${name} was excellent.` : `I had a good visit to ${name}.`);
+  const kw = state.keywords.length ? ` Highlights: ${state.keywords.join(", ")}.` : "";
+  const bits = [state.visitType && state.visitType.toLowerCase(), state.parking && (state.parking.toLowerCase()+" parking")].filter(Boolean).join(", ");
+  const det = bits ? ` I went for ${bits}.` : "";
+  const extra = state.extra ? " " + state.extra : "";
+  return base + kw + det + extra;
+}
+function typewriter(el, text){
+  el.value = ""; let i=0, sp=12;
+  const t = setInterval(()=>{ el.value += text[i++]||""; if(i>=text.length) clearInterval(t); }, sp);
+}
+function buildAndType(){ typewriter($("review"), buildReview()); }
+$("refineBtn").onclick = async ()=>{
+  try{
+    const ai = await generateAIReview();
+    typewriter($("review"), ai || buildReview());
+  }catch{ typewriter($("review"), buildReview()); }
+};
 
-    /* ========= DOTS / WIZARD STEPS ========= */
-    // Seven steps: 1 kw, 2 visit+parking, 3 family+access, 4 standout, 5 veg, 6 details (textarea), 7 review (char-by-char)
-    const WIZ_IDS = ["kw","visit","details","review"];
-    function renderDots(){
-      const dots = qs("#wizDots"); if (!dots) return; dots.innerHTML="";
-      for (let i=0;i<WIZ_IDS.length;i++){
-        const d=document.createElement("div");
-        const base="h-1.5 w-4 rounded-full smooth";
-        let cls = i < state.wizStep ? "bg-[color:rgba(185,28,28,.35)]" : "bg-slate-200";
-        if (i === state.wizStep) cls = "bg-[var(--brand)]";
-        d.className = base+" "+cls;
-        dots.appendChild(d);
-      }
-    }
+/* Copy + open Google */
+$("copyPostBtn").addEventListener("click", async () => {
+  const btn = $("copyPostBtn"); btn.disabled = true;
+  const text = $("review").value || "";
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied — opening Google..."; }
+  catch { btn.textContent = "Opening Google..."; }
+  const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : "";
+  setTimeout(()=>{ if(g) window.open(g, "_blank", "noopener"); btn.textContent="Copy and Post to Google"; btn.disabled=false; }, 1200);
+});
 
-    /* ========= NAV ========= */
-    function wizardNext(){ if (state.wizStep < WIZ_IDS.length-1){ state.wizStep++; renderWizardStep(); } }
-    function wizardBack(){ if (state.wizStep > 0){ state.wizStep--; renderWizardStep(); } }
-    function wizardSkipAll(){ state.wizStep = WIZ_IDS.indexOf("review"); renderWizardStep(); }
+/* Optional AI via Netlify function (fallback to local builder) */
+async function generateAIReview(){
+  const payload = {
+    restaurant: state.tenant?.name || "This restaurant",
+    experience: state.exp || "Good",
+    keywords: state.keywords || [],
+    extra: state.extra || "",
+    visitType: state.visitType || "",
+    parking: state.parking || ""
+  };
+  try{
+    const res = await fetch("/.netlify/functions/review-ai", {
+      method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), cache:"no-store"
+    });
+    if(!res.ok) throw new Error("AI unavailable");
+    const j = await res.json();
+    const txt = (j && j.text) ? String(j.text).trim() : "";
+    return txt || buildReview();
+  }catch(_e){
+    return buildReview();
+  }
+}
 
-    /* ========= AI ========= */
-    function buildPayload(){
-      const details = state.posDetails.extra ? state.posDetails.extra : detailsSummary(state.posDetails);
-      return {
-        restaurant: state.tenant?.name || "This restaurant",
-        experience: state.experience || "Good",
-        highlight: state.highlight || "Food",
-        keywords: Array.from(state.selectedTags),
-        extra: details
-      };
-    }
-    function callGroqDirect(payload){
-      if (!TEST_GROQ_KEY) return Promise.reject(new Error("TEST_GROQ_KEY is empty"));
-      const system = "You write polished restaurant reviews. One paragraph, ~25–35 words, warm concise tone, 1 tasteful emoji. Mention the restaurant by name. No headings.";
-      const user =
-        "Restaurant: " + (payload.restaurant||"Unknown") + "\n" +
-        "Experience: " + (payload.experience||"Good") + "\n" +
-        "Highlight: " + (payload.highlight||"Food") + "\n" +
-        "Keywords: " + ((payload.keywords||[]).slice(0,3).join(', ') || '—') + "\n" +
-        "Optional details: " + (payload.extra||"—") + "\n\n" +
-        "Write a single paragraph suitable to paste into Google.";
-      return fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method:"POST",
-        headers:{ "Authorization":"Bearer " + TEST_GROQ_KEY, "Content-Type":"application/json" },
-        body: JSON.stringify({
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          temperature: 0.65,
-          max_tokens: 160,
-          messages: [{role:"system",content:system},{role:"user",content:user}]
-        })
-      }).then(r=>{ if(!r.ok) return r.text().then(t=>{throw new Error("Groq "+r.status+": "+t)}); return r.json(); })
-        .then(d=> (d?.choices?.[0]?.message?.content || "").trim());
-    }
-    function generateReview(){
-      const body = buildPayload();
-      const fallbackText = writeShortReview({name:body.restaurant,experience:body.experience,highlight:body.highlight,keywords:body.keywords,details:body.extra});
-      const tryAI = () => {
-        if (TEST_GROQ_KEY) return callGroqDirect(body);
-        return fetch("/.netlify/functions/review-ai", {
-          method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body), cache:"no-store"
-        }).then(r=>{ if(!r.ok) throw new Error("fn"); return r.json(); })
-          .then(j=> (j && j.text ? String(j.text).trim() : "" ));
-      };
-      return Promise.race([ tryAI().catch(()=>fallbackText), new Promise(res=> setTimeout(()=>res(fallbackText), 2200)) ]);
-    }
-    function prefetchAI(){ state.aiDraft = null; generateReview().then(t=>{ state.aiDraft=t; }).catch(()=>{}); }
+/* ------------ Negative path ------------ */
+function renderNeg(){
+  const nType = $("nType"); const nMeal = $("nMeal"); const nSpend = $("nSpend");
+  nType.innerHTML=""; nMeal.innerHTML=""; nSpend.innerHTML="";
+  ["Dine-in","Takeout","Delivery"].forEach(k=>nType.appendChild(makeChip(k,{single:true})));
+  ["Breakfast","Brunch","Lunch","Dinner","Other"].forEach(k=>nMeal.appendChild(makeChip(k,{single:true})));
+  ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"].forEach(k=>nSpend.appendChild(makeChip(k,{single:true})));
+}
+let sent=false;
+$("sendNeg").onclick=()=>{
+  if(sent) return; sent=true;
+  $("sendNeg").disabled=true; $("nStatus").textContent="Sending…";
+  const payload = {
+    tenantId: state.tenant?.slug || "",
+    restaurantName: state.tenant?.name || "",
+    timestampISO: new Date().toISOString(),
+    selection: { experience: "Not great" },
+    answers: {
+      type: singleValue($("nType")),
+      meal: singleValue($("nMeal")),
+      spend: singleValue($("nSpend")),
+      text: ($("nText").value || "").trim()
+    },
+    userAgent: navigator.userAgent
+  };
+  fetch("/.netlify/functions/feedback", {
+    method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
+  }).catch(()=>{});
+  setTimeout(()=>{ hide($("negative")); show($("negSuccess")); }, 850);
+};
 
-    /* ========= WIZARD RENDER ========= */
-    function renderWizardStep(){
-      const id = WIZ_IDS[state.wizStep];
-      const total = WIZ_IDS.length;
-      const c = qs("#wizContent");
-      const nav = qs("#wizNav");
-      const back = qs("#wizBack");
-      const next = qs("#wizNext");
-      const skipAll = qs("#wizSkipAll");
+/* ------------ Init (fetch tenant) ------------ */
+const DEFAULT_TENANT = {
+  slug: "sahara",
+  name: "Sahara",
+  google: { mapsUrl: "" },
+  keywords: ["shawarma","hummus","grape leaves","kabob","baklava","tabouleh","falafel","pita","saj","knafeh","chicken kebab","adana","lamb chops","couscous","shepherd’s salad","turkish coffee"]
+};
+function init(){
+  fetch(DATA_URL, { cache: "no-store" })
+    .then(res => { if (res.status === 404) return { notFound: true }; if (!res.ok) throw new Error("fetch failed"); return res.json(); })
+    .then(json => {
+      const cfg = (json && !json.notFound) ? (json.tenant || json) : DEFAULT_TENANT;
+      state.tenant = cfg;
 
-      qs("#wizProgress").textContent = "Step " + (state.wizStep+1) + " of " + total;
-      renderDots();
+      // Header + top row link
+      $("restName").textContent = cfg.name || "Your Restaurant";
+      const g = cfg.google?.mapsUrl || "";
+      if (g) $("googleTop").href = g;
 
-      // nav visibility
-      if (id === "review") nav.classList.add("hidden"); else nav.classList.remove("hidden");
-      back.disabled = (state.wizStep === 0);
-      skipAll.classList.remove("hidden"); next.classList.remove("hidden");
+      // Prepare steps 1/2 defaults
+      renderStep1();
+      renderStep2();
 
-      if (id === "kw"){
-        const html =
-          '<div>'+
-            '<p class="text-sm font-medium text-slate-700">Pick keywords</p>'+
-            '<div class="mt-3 flex items-start justify-between">'+
-              '<div id="kwWrap" class="flex flex-wrap gap-2"></div>'+
-              '<button id="kwToggle" type="button" class="ml-3 text-sm text-slate-600 hover:text-slate-800 focus:outline-none focus-visible:ring-2 brand-ring rounded-md px-2 py-1 smooth">See more</button>'+
-            '</div>'+
-          '</div>';
-        swapContent(c, html, ()=>{
-          renderKeywords();
-          qs("#kwToggle")?.addEventListener("click", ()=>{ state.showAllKw=!state.showAllKw; renderKeywords(); });
-        });
-      }
-      else if (id === "visit"){
-        // 2 & 3 in the same block
-        const html =
-          '<div>'+
-            '<p class="text-sm font-medium text-slate-700 mb-3">Visit type</p>'+
-            '<div id="visitType" class="mb-6 flex flex-wrap gap-2"></div>'+
-            '<p class="text-sm font-medium text-slate-700 mb-3">Parking</p>'+
-            '<div id="visitParking" class="flex flex-wrap gap-2"></div>'+
-          '</div>';
-        swapContent(c, html, ()=>{
-          chipGroup("#visitType", ["Dine-in","Takeout","Delivery"], false,
-            ()=>state.posDetails.visit, v=>state.posDetails.visit=v);
-          chipGroup("#visitParking", ["Street","Lot","Valet","None / not sure"], false,
-            ()=>state.posDetails.parking, v=>state.posDetails.parking=v);
-        });
-      }
-      else if (id === "family_access"){
-        // 4 & 5 in the same block (single-select)
-        const html =
-          '<div>'+
-            '<p class="text-sm font-medium text-slate-700 mb-3">Kid-friendliness</p>'+
-            '<div id="pos-kids" class="flex flex-wrap gap-2"></div>'+
-            '<div class="mt-6">'+
-              '<p class="text-sm font-medium text-slate-700 mb-3">Wheelchair accessibility</p>'+
-              '<div id="pos-access" class="flex flex-wrap gap-2"></div>'+
-            '</div>'+
-          '</div>';
-        swapContent(c, html, ()=>{
-          chipGroup("#pos-kids", ["Good for kids","High chairs","Kids menu","Not kid-focused"], false,
-            ()=>state.posDetails.kids, v=>state.posDetails.kids=v);
-          chipGroup("#pos-access", ["Step-free entrance","Accessible restroom","Good aisle spacing","Not sure"], false,
-            ()=>state.posDetails.access, v=>state.posDetails.access=v);
-        });
-      }
-      else if (id === "standout"){
-        const html =
-          '<div>'+
-            '<p class="text-sm font-medium text-slate-700">What stood out the most?</p>'+
-            '<div id="hlWrap" class="mt-3 flex flex-wrap gap-2"></div>'+
-          '</div>';
-        swapContent(c, html, ()=>{
-          const wrap=qs("#hlWrap");
-          const opts=["🍽️ Food","🤝 Service","✨ Atmosphere","🌿 Authenticity"];
-          wrap.innerHTML="";
-          opts.forEach(label=>{
-            const h=label.replace(/^.+?\s/,"");
-            const pressed=state.highlight===h;
-            wrap.appendChild(makeChip(label, pressed, ()=>{
-              state.highlight=(state.highlight===h)?null:h;
-              Array.from(wrap.children).forEach(ch=>{
-                const on=ch.textContent.endsWith(state.highlight||"");
-                ch.setAttribute("aria-pressed", on?"true":"false");
-                if(on) ch.classList.add("text-white","bg-[var(--brand)]","border-transparent");
-                else ch.classList.remove("text-white","bg-[var(--brand)]","border-transparent");
-              });
-            }));
-          });
-        });
-      }
-      else if (id === "veg"){
-        const html =
-          '<div>'+
-            '<p class="text-sm font-medium text-slate-700">Vegetarian options?</p>'+
-            '<div id="pos-veg" class="mt-3 flex flex-wrap gap-2"></div>'+
-          '</div>';
-        swapContent(c, html, ()=>{
-          chipGroup("#pos-veg", ["Yes","No","Not sure"], false,
-            ()=>state.posDetails.veg, v=>state.posDetails.veg=v);
-        });
-      }
-      else if (id === "details"){
-        // Step 6: free-text details + PREFETCH AI to make step 7 snappy
-        const html =
-          '<div>'+
-            '<label for="extraDetails" class="text-sm font-medium text-slate-700">More details (optional)</label>'+
-            '<textarea id="extraDetails" rows="4" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-3" placeholder="Anything else that would help someone deciding to visit?"></textarea>'+
-          '</div>';
-        swapContent(c, html, ()=>{
-          const el=qs("#extraDetails");
-          el.value = state.posDetails.extra || "";
-          el.addEventListener("input", ()=>{ state.posDetails.extra = el.value; });
-
-          // start fetching AI in the background so Step 7 types immediately
-          prefetchAI();
-        });
-      }
-      else if (id === "review"){
-        // Step 7: char-by-char generation, Google CTA, nav hidden
-        const html =
-          '<div>'+
-            '<label for="reviewText" class="text-sm font-medium text-slate-700">Your review</label>'+
-            '<textarea id="reviewText" rows="5" class="mt-2 w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 brand-ring p-4 text-[15px] leading-6" placeholder=""></textarea>'+
-            '<div class="mt-4 flex flex-wrap items-center gap-3 justify-center sm:justify-start">'+
-              '<button id="aiBtn" type="button" class="rounded-lg px-4 py-2 border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white focus:outline-none focus-visible:ring-2 brand-ring smooth">Refine wording</button>'+
-              '<button id="copyBtn" type="button" disabled class="rounded-lg px-4 py-2 text-white bg-slate-700 disabled:opacity-40 disabled:pointer-events-none hover:brightness-95 focus:outline-none focus-visible:ring-2 smooth"><span class="btn-label">Copy</span></button>'+
-            '</div>'+
-            '<div class="mt-6 flex justify-center">'+
-              '<a id="googleFinal" target="_blank" rel="noopener noreferrer" class="btn-arrow inline-flex min-w-[220px] h-[48px] items-center justify-center rounded-lg px-5 py-3 text-white brand-bg hover:brightness-95 focus:outline-none focus-visible:ring-2 brand-ring smooth">'+
-                '<span>Post on Google</span><span class="arrow">→</span>'+
-              '</a>'+
-            '</div>'+
-          '</div>';
-        swapContent(c, html, ()=>{
-          const ta = qs("#reviewText");
-          const enableCopy = ()=> qs("#copyBtn")?.removeAttribute("disabled");
-
-          // If we prefetched, type immediately; otherwise fetch then type
-          const startTyping = (text) => typeInto(ta, text, 12, enableCopy);
-
-          if (state.aiDraft) startTyping(state.aiDraft);
-          else generateReview().then(t=>startTyping(t)).catch(()=>{
-            // fallback to deterministic typed draft
-            startTyping(writeShortReview(buildPayload()));
-          });
-
-          // Refine -> re-generate and type from empty again
-          qs("#aiBtn").addEventListener("click", ()=>{
-            generateReview().then(txt => startTyping(txt || ta.value)).catch(()=>{});
-          });
-
-          // Copy handler
-          attachCopyBehavior();
-
-          // wire final Google link
-          const gURL = googleUrl(state.tenant.google || null);
-          const final = qs("#googleFinal");
-          if (gURL) final.href = gURL; else final.removeAttribute("href");
-        });
-      }
-
-      // bind nav (ensure single binding)
-      back.onclick = wizardBack;
-      next.onclick = wizardNext;
-      skipAll.onclick = wizardSkipAll;
-    }
-
-    /* ========= Keywords ========= */
-    function renderKeywords(){
-      const wrap = qs("#kwWrap"); if (!wrap) return;
-      wrap.innerHTML = "";
-
-      const listRaw = state.tenant && state.tenant.keywords;
-      const list = Array.isArray(listRaw) ? listRaw : [];
-
-      const toggle = qs("#kwToggle");
-      if (!list.length) {
-        if (toggle) toggle.classList.add("hidden");
-        const emptyNote = document.createElement("p");
-        emptyNote.className = "text-sm text-slate-500";
-        emptyNote.textContent = "No keywords found for this restaurant.";
-        wrap.appendChild(emptyNote);
-        return;
-      }
-
-      const max = state.showAllKw ? list.length : Math.min(16, list.length);
-      for (let i = 0; i < max; i++) {
-        const k = list[i];
-        const pressed = state.selectedTags.has(k);
-        wrap.appendChild(makeChip(k, pressed, function(){
-          const on = state.selectedTags.has(k);
-          if (on) state.selectedTags.delete(k); else state.selectedTags.add(k);
-          renderKeywords();
-        }));
-      }
-
-      if (toggle) {
-        if (list.length <= 16) toggle.classList.add("hidden");
-        else { toggle.classList.remove("hidden"); toggle.textContent = state.showAllKw ? "See fewer" : "See more"; }
-      }
-    }
-
-    /* ========= Copy on final step ========= */
-    function attachCopyBehavior(){
-      const btn=qs("#copyBtn"); if (!btn) return;
-      const label=btn.querySelector(".btn-label") || btn;
-      const original=label.textContent;
-      btn.onclick = ()=>{
-        const txt = (qs("#reviewText")?.value || "").trim(); if (!txt) return;
-        copyText(txt).then(()=>{ label.textContent="Copied"; qs("#sr-live").textContent="Copied to clipboard"; setTimeout(()=>{ label.textContent=original; }, 1400); });
-      };
-    }
-
-    /* ========= POS/NEG FLOW ========= */
-    function setExperience(xp){
-      state.experience = xp;
-      if (xp==="Not great"){
-        qs("#experience").classList.add("hidden");
-        qs("#negative").classList.remove("hidden"); qs("#negative").setAttribute("aria-hidden","false");
-        renderNegative();
-      } else {
-        qs("#experience").classList.add("hidden");
-        qs("#positive").classList.remove("hidden"); qs("#positive").setAttribute("aria-hidden","false");
-      }
-    }
-    function renderNegative(){
-      chipGroup("#q-dining", ["Dine in","Take out","Delivery"], false, ()=>state.neg.dining, v=>state.neg.dining=v);
-      chipGroup("#q-meal",   ["Breakfast","Brunch","Lunch","Dinner","Other"], false, ()=>state.neg.meal, v=>state.neg.meal=v);
-      chipGroup("#q-spend",  ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"], false, ()=>state.neg.spend, v=>state.neg.spend=v);
-      const t=qs("#negFeedback"); if (t){ t.addEventListener("input", ()=> state.neg.feedback = t.value); }
-      qs("#sendNegative")?.addEventListener("click", sendNegative, { once:true });
-    }
-    function sendNegative(){
-      const btn=qs("#sendNegative"); const status=qs("#negStatus");
-      btn.disabled=true; status.textContent="Sending…";
-      const payload = { tenantId: state.tenant.slug, restaurantName: state.tenant.name, timestampISO: new Date().toISOString(), selection:{ experience:"Not great" }, answers: state.neg, userAgent: navigator.userAgent };
-      fetch("/.netlify/functions/feedback", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true }).catch(()=>{});
-      status.textContent="";
-      const form=qs("#negForm"); const done=qs("#negDone");
-      form.classList.add("opacity-0","translate-y-2"); setTimeout(()=>{ form.classList.add("hidden"); done.classList.remove("hidden"); }, 160);
-    }
-
-    /* ========= DEFAULT TENANT ========= */
-    const DEFAULT_TENANT = {
-      slug: "sahara",
-      name: "Sahara",
-      brand: { primary: "#b91c1c" },
-      google: { mapsUrl: "https://www.google.com/maps/place/Sahara+Restaurant/" },
-      keywords: ["shawarma","hummus","grape leaves","kabob","baklava","tabouleh","falafel","pita","saj","knafeh","chicken kebab","adana","lamb chops","couscous","shepherd’s salad","turkish coffee"]
-    };
-
-    /* ========= NOT FOUND ========= */
-    function renderNotFound(slug){
-      setBrand("#6b7280");
-      qs("#restName").textContent = slug ? `Not found: ${slug}` : "Not found";
-      qs("#experience")?.classList.add("hidden");
-      const holder = document.createElement("div");
-      holder.className = "px-6 pb-8";
-      holder.innerHTML = `<p class="text-slate-600">We couldn’t find that restaurant. Double-check the link (e.g. <code>/r/sahara</code>) or ask the owner to set it up.</p>`;
-      document.querySelector("main .card")?.appendChild(holder);
-    }
-
-    /* ========= INIT ========= */
-    function init(){
-      const slug = getTenantKey();
-      fetch(DATA_URL, { cache: "no-store" })
-        .then(res => { if (res.status === 404) return { notFound: true }; if (!res.ok) throw new Error("fetch failed"); return res.json(); })
-        .then(json => {
-          if (json && json.notFound) { renderNotFound(slug); return; }
-          const cfg = (json && json.tenant) ? json.tenant : null;
-          const data = cfg || DEFAULT_TENANT;
-          state.tenant = data;
-          setBrand(data.brand?.primary || "#b91c1c");
-          qs("#restName").textContent = data.name || "Your Restaurant";
-
-          const gURL = googleUrl(data.google || null);
-          const glTop = qs("#googleTopLink"); const glTxt = qs("#googleTopText");
-          if (gURL) { glTop.href = gURL; glTxt.textContent = "Post on Google"; }
-          else { glTop.removeAttribute("href"); glTop.setAttribute("aria-disabled","true"); glTxt.textContent="Google link not set"; }
-
-          // experience buttons
-          qsa("[data-exp]").forEach(b=> b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")) ));
-
-          // open wizard
-          const reveal = qs("#revealAi");
-          if (reveal) reveal.addEventListener("click", ()=>{
-            qs("#topRow").classList.add("hidden");
-            qs("#craftWrap").classList.remove("hidden");
-            state.wizStep = 0;
-            state.selectedTags.clear();
-            state.highlight = null;
-            state.posDetails = { veg:null, parking:null, kids:null, access:null, visit:null, extra:"" };
-            state.aiDraft = null;
-            renderWizardStep();
-          });
-
-          // nav handlers (bind once)
-          qs("#wizBack").onclick = wizardBack;
-          qs("#wizNext").onclick = wizardNext;
-          qs("#wizSkipAll").onclick = wizardSkipAll;
-        })
-        .catch(() => {
-          const data = DEFAULT_TENANT;
-          state.tenant = data;
-          setBrand(data.brand?.primary || "#b91c1c");
-          qs("#restName").textContent = data.name || "Your Restaurant";
-          const gURL = googleUrl(data.google || null);
-          const glTop = qs("#googleTopLink");
-          if (gURL) glTop.href = gURL; else glTop.removeAttribute("href");
-          qsa("[data-exp]").forEach(b=> b.addEventListener("click", ()=> setExperience(b.getAttribute("data-exp")) ));
-          const reveal = qs("#revealAi");
-          if (reveal) reveal.addEventListener("click", ()=>{
-            qs("#topRow").classList.add("hidden");
-            qs("#craftWrap").classList.remove("hidden");
-            state.wizStep = 0;
-            state.selectedTags.clear();
-            state.highlight = null;
-            state.posDetails = { veg:null, parking:null, kids:null, access:null, visit:null, extra:"" };
-            state.aiDraft = null;
-            renderWizardStep();
-          });
-          qs("#wizBack").onclick = wizardBack;
-          qs("#wizNext").onclick = wizardNext;
-          qs("#wizSkipAll").onclick = wizardSkipAll;
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", init);
-  </script>
+      // Option buttons already wired; nothing else here
+    })
+    .catch(()=>{
+      state.tenant = DEFAULT_TENANT;
+      $("restName").textContent = state.tenant.name;
+      renderStep1(); renderStep2();
+    });
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
 </body>
 </html>
