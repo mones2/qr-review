@@ -1,1 +1,567 @@
-<!doctype html> <html lang="en"> <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width,initial-scale=1" /> <title>Share Your Experience</title> <style> :root{ --bg:#0b0d14; --surface:#111522; --g1:rgba(255,255,255,.045); --g2:rgba(255,255,255,.02); --border:rgba(255,255,255,.10); --border-2:rgba(255,255,255,.18); --text:#f2f4fb; --muted:#aeb3c4; /* Blue gradient (fixed for now) */ --a1:#00c7ff; --a2:#3b82f6; --success:#8dffcc; --r:20px; --shadow:0 0 30px rgba(0,199,255,.16); --focus:0 0 0 4px rgba(0,199,255,.45); --base-font:18px; --btn-font: clamp(1.1rem, 1rem + 0.6vw, 1.3rem); --chip-font: clamp(.95rem, .9rem + .2vw, 1.05rem); --tap: 56px; } *{box-sizing:border-box} html,body{height:100%} body{ margin:0; color:var(--text); font:400 var(--base-font)/1.6 system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial; background: radial-gradient(1200px 650px at 15% -10%, rgba(0,199,255,.12), transparent 60%), radial-gradient(1100px 550px at 90% 110%, rgba(59,130,246,.10), transparent 60%), var(--bg); } .wrap{max-width:920px;margin:32px auto 96px;padding:0 18px} h1{margin:0 0 .25rem;font-size:clamp(2.2rem,6vw,3.2rem);letter-spacing:-.02em;line-height:1.1} h2{margin:.1rem 0 .9rem;font-size:clamp(1.2rem,3.5vw,1.5rem);font-weight:500;color:var(--muted)} .accent{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent} .card{ background:linear-gradient(180deg,var(--g1),var(--g2)),var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); padding:20px; margin-top:14px; } .hr{height:1px;background:rgba(255,255,255,.12);margin:1rem 0} .row{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center} .muted{color:var(--muted)} .hidden{display:none!important} /* Buttons */ .btn{ font-size:var(--btn-font); font-weight:800; line-height:1; white-space:nowrap; } .btn{ min-height:var(--tap); min-width:var(--tap); display:inline-flex; align-items:center; justify-content:center; gap:.6rem; padding:1rem 1.4rem; border-radius:9999px; color:#fff; text-decoration:none; border:1px solid var(--border); background: linear-gradient(271deg, #00c7ffa6, var(--a2)); cursor:pointer; } .btn--ghost{ color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--border) } .btn[disabled]{opacity:.55;cursor:not-allowed} button:focus-visible, a:focus-visible{outline:none; box-shadow:var(--focus)} .btn-flex{flex:1 1 280px} @media (max-width:860px){ .btn-flex{flex:1 1 100%} } /* Options (step 0) */ .optionList{ display:grid; gap:14px } .optionItem{ display:flex; align-items:center; gap:14px; padding:16px 18px; border-radius:18px; cursor:pointer; background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.14); text-align:left; transition:transform .12s, border-color .12s, background .12s; color:#fff; } .optionItem:hover{ transform:translateY(-1px); border-color:var(--border-2) } .optIcon{ flex:0 0 46px; height:46px; display:grid; place-items:center; border-radius:12px; color:#cbd5ff; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15); } .optText .title{ font-weight:800; font-size:1.05rem } .optText .sub{ color:#fff; margin-top:2px } .optionItem[aria-pressed="true"]{ background: linear-gradient(180deg, rgba(59,130,246,.18), rgba(59,130,246,.10)), linear-gradient(271deg, #00c7ffa6, var(--a2)); border-color:transparent; } /* Chips */ .chips{display:flex;flex-wrap:wrap;gap:.6rem} .chip{ font-size:var(--chip-font); min-height:42px; padding:.45rem .9rem; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:var(--text); line-height:1; cursor:pointer; } .chip[aria-pressed="true"]{ color:#fff; border-color:transparent; background: linear-gradient(271deg, #00c7ffa6, var(--a2)); } textarea{ width:100%; min-height:112px; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:var(--text); padding:1rem; font:inherit; } /* Progress */ .meter{ margin:.25rem 0 .75rem; width:260px } .meter-track{ position:relative; height:8px; border-radius:9999px; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); border:1px solid rgba(255,255,255,.12); } .meter-fill{ position:absolute; inset:0 auto 0 0; width:0%; background:linear-gradient(90deg, var(--a1), var(--a2)) } .meter-knob{ position:absolute; top:50%; left:0%; transform:translate(-50%,-50%); width:10px; height:10px; border:2px solid var(--a2); background-color:rgba(59,130,246,.18); clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); border-radius:2px; } .success{text-align:center; padding:36px 20px;} .success .circle{ width:64px;height:64px;border-radius:999px; display:grid; place-items:center; background: radial-gradient(100% 100% at 50% 0, rgba(141,255,204,.35), rgba(141,255,204,.16)); border:1px solid rgba(141,255,204,.45); box-shadow:0 0 30px rgba(141,255,204,.28), inset 0 0 14px rgba(141,255,204,.12); margin:0 auto 10px; } .success h3{ margin:.4rem 0 .2rem; font-size:1.35rem } .success p{ margin:.1rem 0; color:var(--muted) } @media (prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} } </style> </head> <body> <main class="wrap"> <h1>Share your experience at <span class="accent" id="restName">Sahara</span></h1> <h2>How was your experience today?</h2> <!-- STEP 0 --> <section id="step0" class="card" role="group" aria-label="Experience"> <div class="optionList"> <button class="optionItem" data-kind="excellent" aria-pressed="false"> <span class="optIcon" aria-hidden="true"> <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.8 6.6 19.8l1-6.1L3.2 9.4l6.1-.9L12 3Z" stroke="currentColor" stroke-width="1.8"/></svg> </span> <span class="optText"> <div class="title">Excellent</div> <div class="sub">Everything sang.</div> </span> </button> <button class="optionItem" data-kind="good" aria-pressed="false"> <span class="optIcon" aria-hidden="true"> <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17 4 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> </span> <span class="optText"> <div class="title">Good</div> <div class="sub">Worth sharing.</div> </span> </button> <button class="optionItem" data-kind="bad" aria-pressed="false"> <span class="optIcon" aria-hidden="true"> <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> </span> <span class="optText"> <div class="title">Not great</div> <div class="sub">Tell us why.</div> </span> </button> </div> </section> <!-- POSITIVE TOP ROW --> <section id="positive" class="card hidden" aria-live="polite"> <div class="row" style="width:100%"> <a id="googleTop" class="btn btn--ghost btn-flex" href="#" target="_blank" rel="noopener">Post on Google</a> <button id="helpAI" class="btn btn-flex">Help with AI</button> </div> </section> <!-- WIZARD (4 steps) --> <section id="wizard" class="card hidden" aria-live="polite"> <div class="row" style="justify-content:space-between"> <strong id="wLabel">Step 1 of 4</strong> <button id="backBtn" class="btn btn--ghost">Back</button> </div> <div class="meter" id="meter" aria-hidden="true"> <div class="meter-track"> <div id="meterFill" class="meter-fill"></div> <div id="meterKnob" class="meter-knob"></div> </div> </div> <div class="hr"></div> <!-- Step 1: Keywords with See more/less --> <div id="w1"> <div style="font-weight:800;margin:.2rem 0;display:flex;align-items:center;justify-content:space-between;"> <span>Pick keywords</span> <button id="kwToggle" class="btn btn--ghost" style="min-height:38px;padding:.5rem .9rem;font-weight:600;">See more</button> </div> <div id="kwList" class="chips"></div> <div class="hr"></div> <div class="row" style="justify-content:flex-end"> <button id="next1" class="btn">Next</button> </div> </div> <!-- Step 2: Visit + Parking --> <div id="w2" class="hidden"> <div style="font-weight:800;margin:.2rem 0">Visit type</div> <div id="visitType" class="chips" data-single></div> <div style="font-weight:800;margin:.9rem 0 .2rem">Parking</div> <div id="parking" class="chips" data-single></div> <div class="hr"></div> <div class="row" style="justify-content:flex-end"> <button id="next2" class="btn">Next</button> </div> </div> <!-- Step 3: Details --> <div id="w3" class="hidden"> <div style="font-weight:800;margin:.2rem 0">More details</div> <textarea id="extra" placeholder="Add a short note..."></textarea> <div class="hr"></div> <div class="row" style="justify-content:flex-end"> <button id="next3" class="btn">Next</button> </div> </div> <!-- Step 4: Review --> <div id="w4" class="hidden"> <div style="font-weight:800;margin:.2rem 0">Write your review</div> <textarea id="review" rows="6"></textarea> <div class="row" style="margin-top:.8rem"> <button id="refineBtn" class="btn btn--ghost">Refine wording</button> <button id="copyPostBtn" class="btn">Copy and Post to Google</button> </div> </div> </section> <!-- NEGATIVE PATH --> <section id="negative" class="card hidden"> <div style="font-weight:800;margin:.2rem 0">Quick feedback</div> <div style="margin:.6rem 0"> <div class="muted">Type</div> <div id="nType" class="chips" data-single></div> </div> <div style="margin:.6rem 0"> <div class="muted">Meal</div> <div id="nMeal" class="chips" data-single></div> </div> <div style="margin:.6rem 0"> <div class="muted">Spend</div> <div id="nSpend" class="chips" data-single></div> </div> <div style="font-weight:700;margin:.6rem 0 .2rem">Your feedback (optional)</div> <textarea id="nText" placeholder="Type here..."></textarea> <div class="row" style="margin-top:1rem"> <button id="sendNeg" class="btn">Send</button> <span id="nStatus" class="muted" role="status" aria-live="polite"></span> </div> </section> <!-- NEGATIVE SUCCESS --> <section id="negSuccess" class="card hidden success" aria-live="polite"> <div class="circle" aria-hidden="true"> <svg width="30" height="30" viewBox="0 0 24 24" fill="none"> <path d="M20 6L9 17l-5-5" stroke="#0b2418" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/> </svg> </div> <h3>Your feedback was sent to the restaurant.</h3> <p>We appreciate your time.</p> </section> </main> <script> /* ------------ Tenant routing ------------ */ function getTenantKey(){ const qs = new URLSearchParams(window.location.search); const qid = qs.get("id"); if (qid) return String(qid).trim().toLowerCase(); const path = window.location.pathname.replace(/^\/+/, ""); if (path.indexOf("r/") === 0){ const parts = path.split("/"); if (parts[1]) return String(parts[1]).trim().toLowerCase(); } return "sahara"; // default for local testing } const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey()); /* ------------ Helpers ------------ */ const $ = id => document.getElementById(id); const show = el => el.classList.remove("hidden"); const hide = el => el.classList.add("hidden"); function copyText(t){ if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t); const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); return Promise.resolve(); } function makeChip(label,{single=false}={}){ const b=document.createElement("button"); b.className="chip"; b.type="button"; b.textContent=label; b.setAttribute("aria-pressed","false"); if(single) b.dataset.single="1"; b.onclick=()=>{ if(b.dataset.single){ [...b.parentElement.children].forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed","true"); }else{ const on = b.getAttribute("aria-pressed")==="true"; b.setAttribute("aria-pressed", on?"false":"true"); } }; return b; } function singleValue(container){ const x=container.querySelector('.chip[aria-pressed="true"]'); return x?x.textContent:""; } /* ------------ Global state ------------ */ const state = { tenant: null, exp: null, keywords: [], visitType: "", parking: "", extra: "", showAllKw: false }; /* ------------ Step 0: route selection ------------ */ document.querySelectorAll("#step0 .optionItem").forEach(btn=>{ btn.addEventListener("click", ()=>{ document.querySelectorAll("#step0 .optionItem").forEach(b=>b.setAttribute("aria-pressed","false")); btn.setAttribute("aria-pressed","true"); hide($("step0")); const kind = btn.dataset.kind; if(kind==="bad"){ state.exp="Not great"; show($("negative")); renderNeg(); }else{ state.exp = (kind==="excellent") ? "Excellent" : "Good"; show($("positive")); initTopRow(); } }); }); /* ------------ Positive top row ------------ */ function initTopRow(){ const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : ""; const top = $("googleTop"); if (g) { top.href = g; top.textContent = "Post on Google"; } else { top.removeAttribute("href"); top.textContent = "Google link not set"; } $("helpAI").onclick = ()=>{ hide($("positive")); show($("wizard")); wizard.go(0); }; } /* ------------ Wizard controller (4 steps) ------------ */ const wizard = (()=>{ const steps=[ $("w1"), $("w2"), $("w3"), $("w4") ]; let i=0, meterNow=0; function animateMeterTo(target){ target = Math.max(0, Math.min(100, target)); const start = meterNow, dur = 800, t0 = performance.now(); (function tick(t){ const k = Math.min(1,(t - t0)/dur); const cur = start + (target - start)*(1 - Math.pow(1-k,3)); $("meterFill").style.width = cur + "%"; $("meterKnob").style.left = cur + "%"; if(k < 1) requestAnimationFrame(tick); else meterNow = target; })(performance.now()); } function set(idx){ i=idx; steps.forEach((s,j)=>s.classList.toggle("hidden", j!==i)); $("wLabel").textContent = Step ${i+1} of 4; $("backBtn").disabled = i===0; animateMeterTo([0,33,66,100][i]); } return { go:set, next(){ if(i<3) set(i+1); }, back(){ if(i>0) set(i-1); } }; })(); $("backBtn").onclick = ()=> wizard.back(); /* ------------ Step wiring ------------ */ $("next1").onclick = ()=> { collectStep1(); wizard.next(); }; $("next2").onclick = ()=> { collectStep2(); wizard.next(); }; $("next3").onclick = ()=> { collectStep3(); buildAndType(); wizard.next(); }; /* Step 1: keywords from tenant + See more/less */ function renderStep1(){ const list = Array.isArray(state.tenant?.keywords) ? state.tenant.keywords : []; const kwWrap = $("kwList"); kwWrap.innerHTML = ""; const toggleBtn = $("kwToggle"); if (!list.length){ toggleBtn.classList.add("hidden"); kwWrap.innerHTML = '<span class="muted">No keywords found for this restaurant.</span>'; return; } const max = state.showAllKw ? list.length : Math.min(16, list.length); for (let i=0;i<max;i++) kwWrap.appendChild(makeChip(list[i])); if (list.length <= 16) toggleBtn.classList.add("hidden"); else { toggleBtn.classList.remove("hidden"); toggleBtn.textContent = state.showAllKw ? "See fewer" : "See more"; toggleBtn.onclick = ()=>{ state.showAllKw = !state.showAllKw; renderStep1(); }; } } function collectStep1(){ state.keywords = [...$("kwList").querySelectorAll('.chip[aria-pressed="true"]')].map(x=>x.textContent); } /* Step 2: visit + parking */ const VISIT = ["Dine-in","Takeout","Delivery"]; const PARK = ["Street","Lot","Valet","None / not sure"]; function renderStep2(){ const vt = $("visitType"); vt.innerHTML=""; const pk = $("parking"); pk.innerHTML=""; VISIT.forEach(k=>vt.appendChild(makeChip(k,{single:true}))); PARK .forEach(k=>pk.appendChild(makeChip(k,{single:true}))); } function collectStep2(){ state.visitType = singleValue($("visitType")); state.parking = singleValue($("parking")); } /* Step 3: extra note */ function collectStep3(){ state.extra = $("extra").value.trim(); } /* Step 4: build review + typewriter */ function buildReview(){ const name = state.tenant?.name || "this restaurant"; const base = (state.exp==="Excellent" ? Dinner at ${name} was excellent. : I had a good visit to ${name}.); const kw = state.keywords.length ? Highlights: ${state.keywords.join(", ")}. : ""; const bits = [state.visitType && state.visitType.toLowerCase(), state.parking && (state.parking.toLowerCase()+" parking")].filter(Boolean).join(", "); const det = bits ? I went for ${bits}. : ""; const extra = state.extra ? " " + state.extra : ""; return base + kw + det + extra; } function typewriter(el, text){ el.value = ""; let i=0, sp=12; const t = setInterval(()=>{ el.value += text[i++]||""; if(i>=text.length) clearInterval(t); }, sp); } function buildAndType(){ typewriter($("review"), buildReview()); } $("refineBtn").onclick = async ()=>{ try{ const ai = await generateAIReview(); typewriter($("review"), ai || buildReview()); }catch{ typewriter($("review"), buildReview()); } }; /* Copy + open Google */ $("copyPostBtn").addEventListener("click", async () => { const btn = $("copyPostBtn"); btn.disabled = true; const text = $("review").value || ""; try { await navigator.clipboard.writeText(text); btn.textContent = "Copied — opening Google..."; } catch { btn.textContent = "Opening Google..."; } const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : ""; setTimeout(()=>{ if(g) window.open(g, "_blank", "noopener"); btn.textContent="Copy and Post to Google"; btn.disabled=false; }, 1200); }); /* Optional AI via Netlify function (fallback to local builder) */ async function generateAIReview(){ const payload = { restaurant: state.tenant?.name || "This restaurant", experience: state.exp || "Good", keywords: state.keywords || [], extra: state.extra || "", visitType: state.visitType || "", parking: state.parking || "" }; try{ const res = await fetch("/.netlify/functions/review-ai", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), cache:"no-store" }); if(!res.ok) throw new Error("AI unavailable"); const j = await res.json(); const txt = (j && j.text) ? String(j.text).trim() : ""; return txt || buildReview(); }catch(_e){ return buildReview(); } } /* ------------ Negative path ------------ */ function renderNeg(){ const nType = $("nType"); const nMeal = $("nMeal"); const nSpend = $("nSpend"); nType.innerHTML=""; nMeal.innerHTML=""; nSpend.innerHTML=""; ["Dine-in","Takeout","Delivery"].forEach(k=>nType.appendChild(makeChip(k,{single:true}))); ["Breakfast","Brunch","Lunch","Dinner","Other"].forEach(k=>nMeal.appendChild(makeChip(k,{single:true}))); ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"].forEach(k=>nSpend.appendChild(makeChip(k,{single:true}))); } let sent=false; $("sendNeg").onclick=()=>{ if(sent) return; sent=true; $("sendNeg").disabled=true; $("nStatus").textContent="Sending…"; const payload = { tenantId: state.tenant?.slug || "", restaurantName: state.tenant?.name || "", timestampISO: new Date().toISOString(), selection: { experience: "Not great" }, answers: { type: singleValue($("nType")), meal: singleValue($("nMeal")), spend: singleValue($("nSpend")), text: ($("nText").value || "").trim() }, userAgent: navigator.userAgent }; fetch("/.netlify/functions/feedback", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true }).catch(()=>{}); setTimeout(()=>{ hide($("negative")); show($("negSuccess")); }, 850); }; /* ------------ Init (fetch tenant) ------------ */ const DEFAULT_TENANT = { slug: "sahara", name: "Sahara", google: { mapsUrl: "" }, keywords: ["shawarma","hummus","grape leaves","kabob","baklava","tabouleh","falafel","pita","saj","knafeh","chicken kebab","adana","lamb chops","couscous","shepherd’s salad","turkish coffee"] }; function init(){ fetch(DATA_URL, { cache: "no-store" }) .then(res => { if (res.status === 404) return { notFound: true }; if (!res.ok) throw new Error("fetch failed"); return res.json(); }) .then(json => { const cfg = (json && !json.notFound) ? (json.tenant || json) : DEFAULT_TENANT; state.tenant = cfg; // Header + top row link $("restName").textContent = cfg.name || "Your Restaurant"; const g = cfg.google?.mapsUrl || ""; if (g) $("googleTop").href = g; // Prepare steps 1/2 defaults renderStep1(); renderStep2(); // Option buttons already wired; nothing else here }) .catch(()=>{ state.tenant = DEFAULT_TENANT; $("restName").textContent = state.tenant.name; renderStep1(); renderStep2(); }); } document.addEventListener("DOMContentLoaded", init); </script> </body> </html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Share Your Experience</title>
+<style>
+  :root{
+    --bg:#0b0d14; --surface:#111522;
+    --g1:rgba(255,255,255,.045); --g2:rgba(255,255,255,.02);
+    --border:rgba(255,255,255,.10); --border-2:rgba(255,255,255,.18);
+    --text:#f2f4fb; --muted:#aeb3c4;
+
+    /* Blue gradient (fixed for now) */
+    --a1:#00c7ff; --a2:#3b82f6;
+
+    --success:#8dffcc;
+    --r:20px; --shadow:0 0 30px rgba(0,199,255,.16);
+    --focus:0 0 0 4px rgba(0,199,255,.45);
+    --base-font:18px;
+
+    --btn-font: clamp(1.1rem, 1rem + 0.6vw, 1.3rem);
+    --chip-font: clamp(.95rem, .9rem + .2vw, 1.05rem);
+    --tap: 56px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  html,body{overflow-x:hidden}
+  body{
+    margin:0; color:var(--text);
+    font:400 var(--base-font)/1.6 system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial;
+    min-height:100dvh;
+    background:
+      radial-gradient(1100px 650px at 18% -12%, rgba(0,199,255,.13), transparent 60%),
+      radial-gradient(1200px 700px at 82% 0%, rgba(59,130,246,.11), transparent 60%),
+      var(--bg);
+  }
+
+  .wrap{max-width:920px;margin:32px auto 32px;padding:0 18px}
+  h1{margin:0 0 .25rem;font-size:clamp(2.2rem,6vw,3.2rem);letter-spacing:-.02em;line-height:1.1}
+  h2{margin:.1rem 0 .9rem;font-size:clamp(1.2rem,3.5vw,1.5rem);font-weight:500;color:var(--muted)}
+  .accent{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .card{
+    background:linear-gradient(180deg,var(--g1),var(--g2)),var(--surface);
+    border:1px solid var(--border); border-radius:var(--r);
+    box-shadow:var(--shadow); padding:20px; margin-top:14px;
+  }
+  .hr{height:1px;background:rgba(255,255,255,.12);margin:1rem 0}
+  .row{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
+  .muted{color:var(--muted)}
+  .hidden{display:none!important}
+
+  /* Buttons */
+  .btn{ font-size:var(--btn-font); font-weight:800; line-height:1; white-space:nowrap; }
+  .btn{
+    min-height:var(--tap); min-width:var(--tap);
+    display:inline-flex; align-items:center; justify-content:center; gap:.6rem;
+    padding:1rem 1.4rem; border-radius:9999px;
+    color:#fff; text-decoration:none; border:1px solid var(--border);
+    background: linear-gradient(271deg, #00c7ffa6, var(--a2));
+    cursor:pointer;
+  }
+  .btn--ghost{ color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--border) }
+  .btn[disabled]{opacity:.55;cursor:not-allowed}
+  button:focus-visible, a:focus-visible{outline:none; box-shadow:var(--focus)}
+  .btn-flex{flex:1 1 280px}
+  @media (max-width:860px){ .btn-flex{flex:1 1 100%} }
+
+  /* Step 0 Options */
+  .optionList{ display:grid; gap:14px }
+  .optionItem{
+    display:flex; align-items:center; gap:14px;
+    padding:16px 18px; border-radius:18px; cursor:pointer;
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.14);
+    text-align:left; transition:transform .12s, border-color .12s, background .12s, box-shadow .12s;
+    color:#fff;
+  }
+  .optionItem:hover{ transform:translateY(-1px); border-color:var(--border-2) }
+  .optIcon{
+    flex:0 0 46px; height:46px; display:grid; place-items:center;
+    border-radius:12px; color:#cbd5ff;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15);
+  }
+  .optText .title{ font-weight:800; font-size:1.05rem }
+  .optText .sub{ color:#fff; margin-top:2px; opacity:.9 }
+
+  /* Blue style for 'Excellent' like the screenshot */
+  .optionItem--primary{
+    background:
+      linear-gradient(90deg, rgba(0,199,255,.28), rgba(59,130,246,.26)),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    border-color: transparent;
+    box-shadow: 0 10px 30px rgba(0,199,255,.18), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .optionItem--primary .optIcon{
+    background:linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.08));
+    border-color:transparent; color:#e9f2ff;
+  }
+
+  .optionItem[aria-pressed="true"]{
+    background:
+      linear-gradient(180deg, rgba(59,130,246,.18), rgba(59,130,246,.10)),
+      linear-gradient(271deg, #00c7ffa6, var(--a2));
+    border-color:transparent;
+  }
+
+  /* Chips */
+  .chips{display:flex;flex-wrap:wrap;gap:.6rem}
+  .chip{
+    font-size:var(--chip-font);
+    min-height:42px; padding:.45rem .9rem; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.06); color:var(--text); line-height:1; cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{ color:#fff; border-color:transparent; background: linear-gradient(271deg, #00c7ffa6, var(--a2)); }
+
+  textarea{
+    width:100%; min-height:112px; border-radius:14px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+    color:var(--text); padding:1rem; font:inherit;
+  }
+
+  /* Progress */
+  .meter{ margin:.25rem 0 .75rem; width:260px }
+  .meter-track{
+    position:relative; height:8px; border-radius:9999px; overflow:hidden;
+    background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .meter-fill{ position:absolute; inset:0 auto 0 0; width:0%; background:linear-gradient(90deg, var(--a1), var(--a2)) }
+  .meter-knob{
+    position:absolute; top:50%; left:0%; transform:translate(-50%,-50%);
+    width:10px; height:10px; border:2px solid var(--a2); background-color:rgba(59,130,246,.18);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    border-radius:2px;
+  }
+
+  .success{text-align:center; padding:36px 20px;}
+  .success .circle{
+    width:64px;height:64px;border-radius:999px; display:grid; place-items:center;
+    background: radial-gradient(100% 100% at 50% 0, rgba(141,255,204,.35), rgba(141,255,204,.16));
+    border:1px solid rgba(141,255,204,.45);
+    box-shadow:0 0 30px rgba(141,255,204,.28), inset 0 0 14px rgba(141,255,204,.12);
+    margin:0 auto 10px;
+  }
+  .success h3{ margin:.4rem 0 .2rem; font-size:1.35rem }
+  .success p{ margin:.1rem 0; color:var(--muted) }
+
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Share your experience at <span class="accent" id="restName">Sahara</span></h1>
+  <h2>How was your experience today?</h2>
+
+  <!-- STEP 0 -->
+  <section id="step0" class="card" role="group" aria-label="Experience">
+    <div class="optionList">
+      <button class="optionItem optionItem--primary" data-kind="excellent" aria-pressed="false">
+        <span class="optIcon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.8 6.6 19.8l1-6.1L3.2 9.4l6.1-.9L12 3Z" stroke="currentColor" stroke-width="1.8"/></svg>
+        </span>
+        <span class="optText">
+          <div class="title">Excellent</div>
+          <div class="sub">Everything sang.</div>
+        </span>
+      </button>
+
+      <button class="optionItem" data-kind="good" aria-pressed="false">
+        <span class="optIcon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17 4 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="optText">
+          <div class="title">Good</div>
+          <div class="sub">Worth sharing.</div>
+        </span>
+      </button>
+
+      <button class="optionItem" data-kind="bad" aria-pressed="false">
+        <span class="optIcon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        <span class="optText">
+          <div class="title">Not great</div>
+          <div class="sub">Tell us why.</div>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <!-- POSITIVE TOP ROW -->
+  <section id="positive" class="card hidden" aria-live="polite">
+    <div class="row" style="width:100%">
+      <a id="googleTop" class="btn btn--ghost btn-flex" href="#" target="_blank" rel="noopener">Post on Google</a>
+      <button id="helpAI" class="btn btn-flex">Help with AI</button>
+    </div>
+  </section>
+
+  <!-- WIZARD (4 steps) -->
+  <section id="wizard" class="card hidden" aria-live="polite">
+    <div class="row" style="justify-content:space-between">
+      <strong id="wLabel">Step 1 of 4</strong>
+      <button id="backBtn" class="btn btn--ghost">Back</button>
+    </div>
+
+    <div class="meter" id="meter" aria-hidden="true">
+      <div class="meter-track">
+        <div id="meterFill" class="meter-fill"></div>
+        <div id="meterKnob" class="meter-knob"></div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Step 1: Keywords with See more/less -->
+    <div id="w1">
+      <div style="font-weight:800;margin:.2rem 0;display:flex;align-items:center;justify-content:space-between;">
+        <span>Pick keywords</span>
+        <button id="kwToggle" class="btn btn--ghost" style="min-height:38px;padding:.5rem .9rem;font-weight:600;">See more</button>
+      </div>
+      <div id="kwList" class="chips"></div>
+      <div class="hr"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button id="next1" class="btn">Next</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Visit + Parking -->
+    <div id="w2" class="hidden">
+      <div style="font-weight:800;margin:.2rem 0">Visit type</div>
+      <div id="visitType" class="chips" data-single></div>
+      <div style="font-weight:800;margin:.9rem 0 .2rem">Parking</div>
+      <div id="parking" class="chips" data-single></div>
+      <div class="hr"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button id="next2" class="btn">Next</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Details -->
+    <div id="w3" class="hidden">
+      <div style="font-weight:800;margin:.2rem 0">More details</div>
+      <textarea id="extra" placeholder="Add a short note..."></textarea>
+      <div class="hr"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button id="next3" class="btn">Next</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Review -->
+    <div id="w4" class="hidden">
+      <div style="font-weight:800;margin:.2rem 0">Write your review</div>
+      <textarea id="review" rows="6"></textarea>
+      <div class="row" style="margin-top:.8rem">
+        <button id="refineBtn" class="btn btn--ghost">Refine wording</button>
+        <button id="copyPostBtn" class="btn">Copy and Post to Google</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEGATIVE PATH -->
+  <section id="negative" class="card hidden">
+    <div style="font-weight:800;margin:.2rem 0">Quick feedback</div>
+    <div style="margin:.6rem 0">
+      <div class="muted">Type</div>
+      <div id="nType" class="chips" data-single></div>
+    </div>
+    <div style="margin:.6rem 0">
+      <div class="muted">Meal</div>
+      <div id="nMeal" class="chips" data-single></div>
+    </div>
+    <div style="margin:.6rem 0">
+      <div class="muted">Spend</div>
+      <div id="nSpend" class="chips" data-single></div>
+    </div>
+    <div style="font-weight:700;margin:.6rem 0 .2rem">Your feedback (optional)</div>
+    <textarea id="nText" placeholder="Type here..."></textarea>
+    <div class="row" style="margin-top:1rem">
+      <button id="sendNeg" class="btn">Send</button>
+      <span id="nStatus" class="muted" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <!-- NEGATIVE SUCCESS -->
+  <section id="negSuccess" class="card hidden success" aria-live="polite">
+    <div class="circle" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M20 6L9 17l-5-5" stroke="#0b2418" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h3>Your feedback was sent to the restaurant.</h3>
+    <p>We appreciate your time.</p>
+  </section>
+</main>
+
+<script>
+/* ------------ Tenant routing ------------ */
+function getTenantKey(){
+  const qs = new URLSearchParams(window.location.search);
+  const qid = qs.get("id");
+  if (qid) return String(qid).trim().toLowerCase();
+  const path = window.location.pathname.replace(/^\/+/, "");
+  if (path.indexOf("r/") === 0){
+    const parts = path.split("/");
+    if (parts[1]) return String(parts[1]).trim().toLowerCase();
+  }
+  return "sahara"; // default for local testing
+}
+const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey());
+
+/* ------------ Helpers ------------ */
+const $ = id => document.getElementById(id);
+const show = el => el.classList.remove("hidden");
+const hide = el => el.classList.add("hidden");
+function copyText(t){
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
+  const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.left="-9999px";
+  document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+  return Promise.resolve();
+}
+function makeChip(label,{single=false}={}){
+  const b=document.createElement("button");
+  b.className="chip"; b.type="button"; b.textContent=label; b.setAttribute("aria-pressed","false");
+  if(single) b.dataset.single="1";
+  b.onclick=()=>{
+    if(b.dataset.single){
+      [...b.parentElement.children].forEach(x=>x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+    }else{
+      const on = b.getAttribute("aria-pressed")==="true";
+      b.setAttribute("aria-pressed", on?"false":"true");
+    }
+  };
+  return b;
+}
+function singleValue(container){ const x=container.querySelector('.chip[aria-pressed="true"]'); return x?x.textContent:""; }
+
+/* ------------ Global state ------------ */
+const state = {
+  tenant: null,
+  exp: null,
+  keywords: [],
+  visitType: "",
+  parking: "",
+  extra: "",
+  showAllKw: false
+};
+
+/* ------------ Step 0: route selection ------------ */
+document.querySelectorAll("#step0 .optionItem").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#step0 .optionItem").forEach(b=>b.setAttribute("aria-pressed","false"));
+    btn.setAttribute("aria-pressed","true");
+    hide($("step0"));
+
+    const kind = btn.dataset.kind;
+    if(kind==="bad"){
+      state.exp="Not great"; show($("negative")); renderNeg();
+    }else{
+      state.exp = (kind==="excellent") ? "Excellent" : "Good";
+      show($("positive")); initTopRow();
+    }
+  });
+});
+
+/* ------------ Positive top row ------------ */
+function initTopRow(){
+  const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : "";
+  const top = $("googleTop");
+  if (g) { top.href = g; top.textContent = "Post on Google"; }
+  else { top.removeAttribute("href"); top.textContent = "Google link not set"; }
+  $("helpAI").onclick = ()=>{ hide($("positive")); show($("wizard")); wizard.go(0); };
+}
+
+/* ------------ Wizard controller (4 steps) ------------ */
+const wizard = (()=>{
+  const steps=[ $("w1"), $("w2"), $("w3"), $("w4") ];
+  let i=0, meterNow=0;
+  function animateMeterTo(target){
+    target = Math.max(0, Math.min(100, target));
+    const start = meterNow, dur = 800, t0 = performance.now();
+    (function tick(t){
+      const k = Math.min(1,(t - t0)/dur);
+      const cur = start + (target - start)*(1 - Math.pow(1-k,3));
+      $("meterFill").style.width = cur + "%";
+      $("meterKnob").style.left = cur + "%";
+      if(k < 1) requestAnimationFrame(tick); else meterNow = target;
+    })(performance.now());
+  }
+  function set(idx){
+    i=idx; steps.forEach((s,j)=>s.classList.toggle("hidden", j!==i));
+    $("wLabel").textContent = `Step ${i+1} of 4`;
+    $("backBtn").disabled = i===0;
+    animateMeterTo([0,33,66,100][i]);
+  }
+  return { go:set, next(){ if(i<3) set(i+1); }, back(){ if(i>0) set(i-1); } };
+})();
+$("backBtn").onclick = ()=> wizard.back();
+
+/* ------------ Step wiring ------------ */
+$("next1").onclick = ()=> { collectStep1(); wizard.next(); };
+$("next2").onclick = ()=> { collectStep2(); wizard.next(); };
+$("next3").onclick = ()=> { collectStep3(); buildAndType(); wizard.next(); };
+
+/* Step 1: keywords from tenant + See more/less */
+function renderStep1(){
+  const list = Array.isArray(state.tenant?.keywords) ? state.tenant.keywords : [];
+  const kwWrap = $("kwList"); kwWrap.innerHTML = "";
+  const toggleBtn = $("kwToggle");
+  if (!list.length){
+    toggleBtn.classList.add("hidden");
+    kwWrap.innerHTML = '<span class="muted">No keywords found for this restaurant.</span>';
+    return;
+  }
+  const max = state.showAllKw ? list.length : Math.min(16, list.length);
+  for (let i=0;i<max;i++) kwWrap.appendChild(makeChip(list[i]));
+  if (list.length <= 16) toggleBtn.classList.add("hidden");
+  else {
+    toggleBtn.classList.remove("hidden");
+    toggleBtn.textContent = state.showAllKw ? "See fewer" : "See more";
+    toggleBtn.onclick = ()=>{ state.showAllKw = !state.showAllKw; renderStep1(); };
+  }
+}
+function collectStep1(){
+  state.keywords = [...$("kwList").querySelectorAll('.chip[aria-pressed="true"]')].map(x=>x.textContent);
+}
+
+/* Step 2: visit + parking */
+const VISIT = ["Dine-in","Takeout","Delivery"];
+const PARK  = ["Street","Lot","Valet","None / not sure"];
+function renderStep2(){
+  const vt = $("visitType"); vt.innerHTML="";
+  const pk = $("parking");  pk.innerHTML="";
+  VISIT.forEach(k=>vt.appendChild(makeChip(k,{single:true})));
+  PARK .forEach(k=>pk.appendChild(makeChip(k,{single:true})));
+}
+function collectStep2(){
+  state.visitType = singleValue($("visitType"));
+  state.parking = singleValue($("parking"));
+}
+
+/* Step 3: extra note */
+function collectStep3(){ state.extra = $("extra").value.trim(); }
+
+/* Step 4: build review + typewriter */
+function buildReview(){
+  const name = state.tenant?.name || "this restaurant";
+  const base = (state.exp==="Excellent" ? `Dinner at ${name} was excellent.` : `I had a good visit to ${name}.`);
+  const kw = state.keywords.length ? ` Highlights: ${state.keywords.join(", ")}.` : "";
+  const bits = [state.visitType && state.visitType.toLowerCase(), state.parking && (state.parking.toLowerCase()+" parking")].filter(Boolean).join(", ");
+  const det = bits ? ` I went for ${bits}.` : "";
+  const extra = state.extra ? " " + state.extra : "";
+  return base + kw + det + extra;
+}
+function typewriter(el, text){
+  el.value = ""; let i=0, sp=12;
+  const t = setInterval(()=>{ el.value += text[i++]||""; if(i>=text.length) clearInterval(t); }, sp);
+}
+function buildAndType(){ typewriter($("review"), buildReview()); }
+$("refineBtn").onclick = async ()=>{
+  try{
+    const ai = await generateAIReview();
+    typewriter($("review"), ai || buildReview());
+  }catch{ typewriter($("review"), buildReview()); }
+};
+
+/* Copy + open Google */
+$("copyPostBtn").addEventListener("click", async () => {
+  const btn = $("copyPostBtn"); btn.disabled = true;
+  const text = $("review").value || "";
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied — opening Google..."; }
+  catch { btn.textContent = "Opening Google..."; }
+  const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : "";
+  setTimeout(()=>{ if(g) window.open(g, "_blank", "noopener"); btn.textContent="Copy and Post to Google"; btn.disabled=false; }, 1200);
+});
+
+/* Optional AI via Netlify function (fallback to local builder) */
+async function generateAIReview(){
+  const payload = {
+    restaurant: state.tenant?.name || "This restaurant",
+    experience: state.exp || "Good",
+    keywords: state.keywords || [],
+    extra: state.extra || "",
+    visitType: state.visitType || "",
+    parking: state.parking || ""
+  };
+  try{
+    const res = await fetch("/.netlify/functions/review-ai", {
+      method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), cache:"no-store"
+    });
+    if(!res.ok) throw new Error("AI unavailable");
+    const j = await res.json();
+    const txt = (j && j.text) ? String(j.text).trim() : "";
+    return txt || buildReview();
+  }catch(_e){
+    return buildReview();
+  }
+}
+
+/* ------------ Negative path ------------ */
+function renderNeg(){
+  const nType = $("nType"); const nMeal = $("nMeal"); const nSpend = $("nSpend");
+  nType.innerHTML=""; nMeal.innerHTML=""; nSpend.innerHTML="";
+  ["Dine-in","Takeout","Delivery"].forEach(k=>nType.appendChild(makeChip(k,{single:true})));
+  ["Breakfast","Brunch","Lunch","Dinner","Other"].forEach(k=>nMeal.appendChild(makeChip(k,{single:true})));
+  ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"].forEach(k=>nSpend.appendChild(makeChip(k,{single:true})));
+}
+let sent=false;
+$("sendNeg").onclick=()=>{
+  if(sent) return; sent=true;
+  $("sendNeg").disabled=true; $("nStatus").textContent="Sending…";
+  const payload = {
+    tenantId: state.tenant?.slug || "",
+    restaurantName: state.tenant?.name || "",
+    timestampISO: new Date().toISOString(),
+    selection: { experience: "Not great" },
+    answers: {
+      type: singleValue($("nType")),
+      meal: singleValue($("nMeal")),
+      spend: singleValue($("nSpend")),
+      text: ($("nText").value || "").trim()
+    },
+    userAgent: navigator.userAgent
+  };
+  fetch("/.netlify/functions/feedback", {
+    method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
+  }).catch(()=>{});
+  setTimeout(()=>{ hide($("negative")); show($("negSuccess")); }, 850);
+};
+
+/* ------------ Init (fetch tenant) ------------ */
+const DEFAULT_TENANT = {
+  slug: "sahara",
+  name: "Sahara",
+  google: { mapsUrl: "" },
+  keywords: ["shawarma","hummus","grape leaves","kabob","baklava","tabouleh","falafel","pita","saj","knafeh","chicken kebab","adana","lamb chops","couscous","shepherd’s salad","turkish coffee"]
+};
+function init(){
+  fetch(DATA_URL, { cache: "no-store" })
+    .then(res => { if (res.status === 404) return { notFound: true }; if (!res.ok) throw new Error("fetch failed"); return res.json(); })
+    .then(json => {
+      const cfg = (json && !json.notFound) ? (json.tenant || json) : DEFAULT_TENANT;
+      state.tenant = cfg;
+
+      // Header + top row link
+      $("restName").textContent = cfg.name || "Your Restaurant";
+      const g = cfg.google?.mapsUrl || "";
+      if (g) $("googleTop").href = g;
+
+      // Prepare steps 1/2 defaults
+      renderStep1();
+      renderStep2();
+    })
+    .catch(()=>{
+      state.tenant = DEFAULT_TENANT;
+      $("restName").textContent = state.tenant.name;
+      renderStep1(); renderStep2();
+    });
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
