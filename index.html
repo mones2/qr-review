@@ -6,22 +6,23 @@
 <title>Share Your Experience</title>
 <style>
   :root{
-    --bg:#0b0d14; --surface:#111522;
-    --g1:rgba(255,255,255,.045); --g2:rgba(255,255,255,.02);
-    --border:rgba(255,255,255,.10); --border-2:rgba(255,255,255,.18);
-    --text:#f2f4fb; --muted:#aeb3c4;
+    --bg:#0b0d14;            /* flat background (no banding) */
+    --surface:#0f1320;
+    --text:#ffffff;
+    --muted:#aeb3c4;
 
-    /* Blue gradient (fixed for now) */
+    /* Brand/blue gradient for regular buttons */
     --a1:#00c7ff; --a2:#3b82f6;
 
-    --success:#8dffcc;
-    --r:20px; --shadow:0 0 30px rgba(0,199,255,.16);
-    --focus:0 0 0 4px rgba(0,199,255,.45);
-    --base-font:18px;
+    /* Card borders (subtle, no glow) */
+    --border:rgba(255,255,255,.12);
+    --border-2:rgba(255,255,255,.20);
 
-    --btn-font: clamp(1.1rem, 1rem + 0.6vw, 1.3rem);
-    --chip-font: clamp(.95rem, .9rem + .2vw, 1.05rem);
-    --tap: 56px;
+    --r:22px;
+    --base-font:18px;
+    --btn-font: clamp(1.05rem, 1rem + 0.5vw, 1.25rem);
+    --chip-font: clamp(.95rem, .9rem + 0.2vw, 1.05rem);
+    --tap:56px;
   }
 
   *{box-sizing:border-box}
@@ -29,21 +30,22 @@
   body{
     margin:0; color:var(--text);
     font:400 var(--base-font)/1.6 system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial;
-    background:
-      radial-gradient(1200px 650px at 15% -10%, rgba(0,199,255,.12), transparent 60%),
-      radial-gradient(1100px 550px at 90% 110%, rgba(59,130,246,.10), transparent 60%),
-      var(--bg);
+    background: var(--bg);
+    overflow-x:hidden;     /* kill stray horizontal scrollbar */
   }
 
-  .wrap{max-width:920px;margin:32px auto 96px;padding:0 18px}
+  .wrap{max-width:920px;margin:32px auto 72px;padding:0 18px}
   h1{margin:0 0 .25rem;font-size:clamp(2.2rem,6vw,3.2rem);letter-spacing:-.02em;line-height:1.1}
   h2{margin:.1rem 0 .9rem;font-size:clamp(1.2rem,3.5vw,1.5rem);font-weight:500;color:var(--muted)}
   .accent{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
 
+  /* Card shell (no glow) */
   .card{
-    background:linear-gradient(180deg,var(--g1),var(--g2)),var(--surface);
-    border:1px solid var(--border); border-radius:var(--r);
-    box-shadow:var(--shadow); padding:20px; margin-top:14px;
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+    border:1px solid var(--border);
+    border-radius:var(--r);
+    padding:20px;
+    margin-top:14px;
   }
   .hr{height:1px;background:rgba(255,255,255,.12);margin:1rem 0}
   .row{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
@@ -61,35 +63,41 @@
     cursor:pointer;
   }
   .btn--ghost{ color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--border) }
-  .btn[disabled]{opacity:.55;cursor:not-allowed}
-  button:focus-visible, a:focus-visible{outline:none; box-shadow:var(--focus)}
+  .btn[disabled]{opacity:.6;cursor:not-allowed}
+  button:focus-visible, a:focus-visible{outline:none; box-shadow:0 0 0 4px rgba(0,199,255,.35)}
   .btn-flex{flex:1 1 280px}
   @media (max-width:860px){ .btn-flex{flex:1 1 100%} }
 
-  /* Options (step 0) */
-  .optionList{ display:grid; gap:14px }
+  /* Step 0 options (match mock, no glow) */
+  .optionList{ display:grid; gap:18px }
   .optionItem{
-    display:flex; align-items:center; gap:14px;
-    padding:16px 18px; border-radius:18px; cursor:pointer;
-    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-    border:1px solid rgba(255,255,255,.14);
-    text-align:left; transition:transform .12s, border-color .12s, background .12s;
+    display:flex; align-items:center; gap:18px;
+    padding:22px; border-radius:24px; cursor:pointer;
+    border:1px solid var(--border-2);
+    text-align:left; transition:transform .12s, border-color .12s, filter .12s;
     color:#fff;
   }
-  .optionItem:hover{ transform:translateY(-1px); border-color:var(--border-2) }
-  .optIcon{
-    flex:0 0 46px; height:46px; display:grid; place-items:center;
-    border-radius:12px; color:#cbd5ff;
-    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15);
-  }
-  .optText .title{ font-weight:800; font-size:1.05rem }
-  .optText .sub{ color:#fff; margin-top:2px }
+  .optionItem:hover{ transform:translateY(-1px); border-color:#ffffff33 }
+  .optionItem:active{ transform:translateY(0) scale(.99) }
+  .optionItem[aria-pressed="true"]{ filter:brightness(1.03) }
 
-  .optionItem[aria-pressed="true"]{
-    background:
-      linear-gradient(180deg, rgba(59,130,246,.18), rgba(59,130,246,.10)),
-      linear-gradient(271deg, #00c7ffa6, var(--a2));
-    border-color:transparent;
+  .optIcon{
+    flex:0 0 64px; height:64px; display:grid; place-items:center;
+    border-radius:18px; color:#fff;
+    background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.22);
+  }
+  .optText .title{ font-weight:800; font-size:clamp(1.3rem,2.8vw,1.55rem) }
+  .optText .sub{ color:#fff; opacity:.95; margin-top:2px }
+
+  /* Per-card colorways (no glow) */
+  .option--excellent{
+    background:linear-gradient(180deg, #0ea5a3 0%, #047857 100%); /* teal/emerald */
+  }
+  .option--good{
+    background:linear-gradient(180deg, #1d4ed8 0%, #0b3a7b 100%);  /* blue */
+  }
+  .option--bad{
+    background:linear-gradient(180deg, #dc2626 0%, #7f1d1d 100%);  /* red */
   }
 
   /* Chips */
@@ -123,13 +131,12 @@
     border-radius:2px;
   }
 
+  /* Success */
   .success{text-align:center; padding:36px 20px;}
   .success .circle{
     width:64px;height:64px;border-radius:999px; display:grid; place-items:center;
     background: radial-gradient(100% 100% at 50% 0, rgba(141,255,204,.35), rgba(141,255,204,.16));
     border:1px solid rgba(141,255,204,.45);
-    box-shadow:0 0 30px rgba(141,255,204,.28), inset 0 0 14px rgba(141,255,204,.12);
-    margin:0 auto 10px;
   }
   .success h3{ margin:.4rem 0 .2rem; font-size:1.35rem }
   .success p{ margin:.1rem 0; color:var(--muted) }
@@ -142,12 +149,12 @@
   <h1>Share your experience at <span class="accent" id="restName">Sahara</span></h1>
   <h2>How was your experience today?</h2>
 
-  <!-- STEP 0 -->
+  <!-- STEP 0 (colored like the mock, no glow) -->
   <section id="step0" class="card" role="group" aria-label="Experience">
     <div class="optionList">
-      <button class="optionItem" data-kind="excellent" aria-pressed="false">
+      <button class="optionItem option--excellent" data-kind="excellent" aria-pressed="false">
         <span class="optIcon" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.8 6.6 19.8l1-6.1L3.2 9.4l6.1-.9L12 3Z" stroke="currentColor" stroke-width="1.8"/></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.8 6.6 19.8l1-6.1L3.2 9.4l6.1-.9L12 3Z" stroke="currentColor" stroke-width="1.8"/></svg>
         </span>
         <span class="optText">
           <div class="title">Excellent</div>
@@ -155,9 +162,9 @@
         </span>
       </button>
 
-      <button class="optionItem" data-kind="good" aria-pressed="false">
+      <button class="optionItem option--good" data-kind="good" aria-pressed="false">
         <span class="optIcon" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17 4 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17 4 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
         <span class="optText">
           <div class="title">Good</div>
@@ -165,9 +172,9 @@
         </span>
       </button>
 
-      <button class="optionItem" data-kind="bad" aria-pressed="false">
+      <button class="optionItem option--bad" data-kind="bad" aria-pressed="false">
         <span class="optIcon" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </span>
         <span class="optText">
           <div class="title">Not great</div>
@@ -283,7 +290,7 @@
 </main>
 
 <script>
-/* ------------ Tenant routing ------------ */
+/* ---------- Tenant routing ---------- */
 function getTenantKey(){
   const qs = new URLSearchParams(window.location.search);
   const qid = qs.get("id");
@@ -293,11 +300,11 @@ function getTenantKey(){
     const parts = path.split("/");
     if (parts[1]) return String(parts[1]).trim().toLowerCase();
   }
-  return "sahara"; // default for local testing
+  return "sahara";
 }
 const DATA_URL = "/.netlify/functions/get-tenant?slug=" + encodeURIComponent(getTenantKey());
 
-/* ------------ Helpers ------------ */
+/* ---------- Helpers ---------- */
 const $ = id => document.getElementById(id);
 const show = el => el.classList.remove("hidden");
 const hide = el => el.classList.add("hidden");
@@ -324,7 +331,7 @@ function makeChip(label,{single=false}={}){
 }
 function singleValue(container){ const x=container.querySelector('.chip[aria-pressed="true"]'); return x?x.textContent:""; }
 
-/* ------------ Global state ------------ */
+/* ---------- Global state ---------- */
 const state = {
   tenant: null,
   exp: null,
@@ -335,7 +342,7 @@ const state = {
   showAllKw: false
 };
 
-/* ------------ Step 0: route selection ------------ */
+/* ---------- Step 0: choose route ---------- */
 document.querySelectorAll("#step0 .optionItem").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     document.querySelectorAll("#step0 .optionItem").forEach(b=>b.setAttribute("aria-pressed","false"));
@@ -352,7 +359,7 @@ document.querySelectorAll("#step0 .optionItem").forEach(btn=>{
   });
 });
 
-/* ------------ Positive top row ------------ */
+/* ---------- Positive top row ---------- */
 function initTopRow(){
   const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : "";
   const top = $("googleTop");
@@ -361,7 +368,7 @@ function initTopRow(){
   $("helpAI").onclick = ()=>{ hide($("positive")); show($("wizard")); wizard.go(0); };
 }
 
-/* ------------ Wizard controller (4 steps) ------------ */
+/* ---------- Wizard controller ---------- */
 const wizard = (()=>{
   const steps=[ $("w1"), $("w2"), $("w3"), $("w4") ];
   let i=0, meterNow=0;
@@ -386,12 +393,12 @@ const wizard = (()=>{
 })();
 $("backBtn").onclick = ()=> wizard.back();
 
-/* ------------ Step wiring ------------ */
+/* ---------- Step wiring ---------- */
 $("next1").onclick = ()=> { collectStep1(); wizard.next(); };
 $("next2").onclick = ()=> { collectStep2(); wizard.next(); };
 $("next3").onclick = ()=> { collectStep3(); buildAndType(); wizard.next(); };
 
-/* Step 1: keywords from tenant + See more/less */
+/* Step 1 */
 function renderStep1(){
   const list = Array.isArray(state.tenant?.keywords) ? state.tenant.keywords : [];
   const kwWrap = $("kwList"); kwWrap.innerHTML = "";
@@ -414,7 +421,7 @@ function collectStep1(){
   state.keywords = [...$("kwList").querySelectorAll('.chip[aria-pressed="true"]')].map(x=>x.textContent);
 }
 
-/* Step 2: visit + parking */
+/* Step 2 */
 const VISIT = ["Dine-in","Takeout","Delivery"];
 const PARK  = ["Street","Lot","Valet","None / not sure"];
 function renderStep2(){
@@ -428,10 +435,10 @@ function collectStep2(){
   state.parking = singleValue($("parking"));
 }
 
-/* Step 3: extra note */
+/* Step 3 */
 function collectStep3(){ state.extra = $("extra").value.trim(); }
 
-/* Step 4: build review + typewriter */
+/* Step 4 (builder + typewriter) */
 function buildReview(){
   const name = state.tenant?.name || "this restaurant";
   const base = (state.exp==="Excellent" ? `Dinner at ${name} was excellent.` : `I had a good visit to ${name}.`);
@@ -441,16 +448,42 @@ function buildReview(){
   const extra = state.extra ? " " + state.extra : "";
   return base + kw + det + extra;
 }
-function typewriter(el, text){
-  el.value = ""; let i=0, sp=12;
-  const t = setInterval(()=>{ el.value += text[i++]||""; if(i>=text.length) clearInterval(t); }, sp);
+
+/* Typewriter with cancel; keeps refine button clickable */
+let typer = null;
+function typewriter(el, text, {onStart, onDone} = {}){
+  if (typer && typer.cancel) typer.cancel();
+  el.value = "";
+  let i = 0, cancelled = false;
+  const speed = 12;
+  onStart && onStart();
+  function tick(){
+    if (cancelled) return;
+    el.value += text[i++] || "";
+    if (i < text.length) setTimeout(tick, speed);
+    else onDone && onDone();
+  }
+  setTimeout(tick, 10);
+  typer = { cancel: ()=>{ cancelled = true; } };
+  return typer;
 }
-function buildAndType(){ typewriter($("review"), buildReview()); }
-$("refineBtn").onclick = async ()=>{
-  try{
-    const ai = await generateAIReview();
-    typewriter($("review"), ai || buildReview());
-  }catch{ typewriter($("review"), buildReview()); }
+
+function buildAndType(){
+  typewriter($("review"), buildReview(), {
+    onStart: ()=>{},
+    onDone: ()=>{}
+  });
+}
+
+/* Refine wording: show "Generating…" while typing, allow re-clicks */
+const refineBtn = $("refineBtn");
+refineBtn.onclick = async ()=>{
+  refineBtn.textContent = "Generating…";
+  const ai = await generateAIReview();
+  typewriter($("review"), ai || buildReview(), {
+    onStart: ()=>{ refineBtn.textContent = "Generating…"; },
+    onDone:  ()=>{ refineBtn.textContent = "Refine wording"; }
+  });
 };
 
 /* Copy + open Google */
@@ -486,7 +519,7 @@ async function generateAIReview(){
   }
 }
 
-/* ------------ Negative path ------------ */
+/* ---------- Negative path ---------- */
 function renderNeg(){
   const nType = $("nType"); const nMeal = $("nMeal"); const nSpend = $("nSpend");
   nType.innerHTML=""; nMeal.innerHTML=""; nSpend.innerHTML="";
@@ -517,7 +550,7 @@ $("sendNeg").onclick=()=>{
   setTimeout(()=>{ hide($("negative")); show($("negSuccess")); }, 850);
 };
 
-/* ------------ Init (fetch tenant) ------------ */
+/* ---------- Init (fetch tenant) ---------- */
 const DEFAULT_TENANT = {
   slug: "sahara",
   name: "Sahara",
@@ -531,16 +564,12 @@ function init(){
       const cfg = (json && !json.notFound) ? (json.tenant || json) : DEFAULT_TENANT;
       state.tenant = cfg;
 
-      // Header + top row link
       $("restName").textContent = cfg.name || "Your Restaurant";
       const g = cfg.google?.mapsUrl || "";
       if (g) $("googleTop").href = g;
 
-      // Prepare steps 1/2 defaults
       renderStep1();
       renderStep2();
-
-      // Option buttons already wired; nothing else here
     })
     .catch(()=>{
       state.tenant = DEFAULT_TENANT;
@@ -552,3 +581,4 @@ document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
 </html>
+
