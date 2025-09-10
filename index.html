@@ -11,11 +11,13 @@
     --border:rgba(255,255,255,.10); --border-2:rgba(255,255,255,.18);
     --text:#f2f4fb; --muted:#aeb3c4;
 
-    /* Blue gradient (fixed for now) */
-    --a1:#00c7ff; --a2:#3b82f6;
+    /* Accents */
+    --a1:#00c7ff; --a2:#3b82f6;                /* blue gradient */
+    --d1:#ef4444; --d2:#f43f5e;                /* red gradient (Not great) */
 
     --success:#8dffcc;
-    --r:20px; --focus:0 0 0 4px rgba(0,199,255,.45);
+    --r:20px; --shadow:0 0 30px rgba(0,199,255,.16);
+    --focus:0 0 0 4px rgba(0,199,255,.45);
     --base-font:18px;
 
     --btn-font: clamp(1.1rem, 1rem + 0.6vw, 1.3rem);
@@ -24,17 +26,21 @@
   }
 
   *{box-sizing:border-box}
-  html,body{height:100%}
+  html,body{min-height:100dvh}
   body{
     margin:0; color:var(--text);
     font:400 var(--base-font)/1.6 system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial;
-
-    /* keep the original background */
+    background: var(--bg);
+    overflow-x:hidden; /* avoid 1px horizontal scrollbars */
+    position:relative;
+  }
+  /* Fixed overlay for glows so it never changes page height */
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
     background:
       radial-gradient(1200px 650px at 15% -10%, rgba(0,199,255,.12), transparent 60%),
-      radial-gradient(1100px 550px at 90% 110%, rgba(59,130,246,.10), transparent 60%),
-      var(--bg);
-    overflow-x:hidden;
+      radial-gradient(1100px 550px at 90% 110%, rgba(59,130,246,.10), transparent 60%);
   }
 
   .wrap{max-width:920px;margin:32px auto 96px;padding:0 18px}
@@ -45,9 +51,7 @@
   .card{
     background:linear-gradient(180deg,var(--g1),var(--g2)),var(--surface);
     border:1px solid var(--border); border-radius:var(--r);
-    /* no glow */
-    box-shadow:none;
-    padding:20px; margin-top:14px;
+    box-shadow:var(--shadow); padding:20px; margin-top:14px;
   }
   .hr{height:1px;background:rgba(255,255,255,.12);margin:1rem 0}
   .row{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
@@ -63,9 +67,18 @@
     color:#fff; text-decoration:none; border:1px solid var(--border);
     background: linear-gradient(271deg, #00c7ffa6, var(--a2));
     cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease, opacity .2s ease;
   }
+  .btn:hover{ transform:translateY(-1px) }
   .btn--ghost{ color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--border) }
   .btn[disabled]{opacity:.55;cursor:not-allowed}
+  .btn.is-loading{cursor:progress}
+  .btn.is-loading::after{
+    content:""; width:1em; height:1em; margin-left:.4rem;
+    border:2px solid rgba(255,255,255,.65); border-top-color:transparent;
+    border-radius:999px; display:inline-block; animation:spin 1s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
   button:focus-visible, a:focus-visible{outline:none; box-shadow:var(--focus)}
   .btn-flex{flex:1 1 280px}
   @media (max-width:860px){ .btn-flex{flex:1 1 100%} }
@@ -74,31 +87,57 @@
   .optionList{ display:grid; gap:14px }
   .optionItem{
     display:flex; align-items:center; gap:14px;
-    padding:20px 22px; border-radius:22px; cursor:pointer;
-    border:1px solid var(--border-2);
-    text-align:left; transition:transform .12s, border-color .12s;
+    padding:16px 18px; border-radius:18px; cursor:pointer;
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.14);
+    text-align:left; transition:transform .12s, border-color .12s, background .12s, box-shadow .12s;
     color:#fff;
   }
-  .optionItem:hover{ transform:translateY(-1px); border-color:#ffffff33 }
+  .optionItem:hover{ transform:translateY(-1px); border-color:var(--border-2); box-shadow:0 6px 22px rgba(0,0,0,.22) }
   .optIcon{
-    flex:0 0 56px; height:56px; display:grid; place-items:center;
-    border-radius:16px; color:#0b2418;
-    /* use the requested color & border */
-    background: radial-gradient(100% 100% at 50% 0, rgba(141,255,204,.35), rgba(141,255,204,.16));
-    border:1px solid rgba(141,255,204,.45);
+    flex:0 0 46px; height:46px; display:grid; place-items:center;
+    border-radius:12px; color:#cbd5ff;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15);
   }
-  .optText .title{ font-weight:800; font-size:1.15rem; color:#fff }
+  .optText .title{ font-weight:800; font-size:1.05rem; color:#fff }
   .optText .sub{ color:#fff; margin-top:2px; opacity:.95 }
 
-  /* Per-card colorways (no glow) */
+  /* Step 0: specific coloring */
   .optionItem[data-kind="excellent"]{
-    background:linear-gradient(180deg, #0ea5a3 0%, #047857 100%); /* green/teal */
+    background: linear-gradient(271deg, #00c7ffa6, var(--a2));
+    border-color: transparent;
   }
+  .optionItem[data-kind="excellent"] .optIcon{
+    background: rgba(59,130,246,.14); border-color: rgba(59,130,246,.35); color:#dbeafe;
+  }
+
   .optionItem[data-kind="good"]{
-    background:linear-gradient(180deg, #1d4ed8 0%, #0b3a7b 100%);  /* blue */
+    background:
+      linear-gradient(180deg, rgba(59,130,246,.14), rgba(59,130,246,.08)),
+      var(--surface);
+    border-color: rgba(59,130,246,.35);
   }
+  .optionItem[data-kind="good"] .optIcon{
+    background: rgba(59,130,246,.14); border-color: rgba(59,130,246,.35); color:#e0e7ff;
+  }
+
   .optionItem[data-kind="bad"]{
-    background:linear-gradient(180deg, #dc2626 0%, #7f1d1d 100%);  /* red */
+    background: linear-gradient(271deg, rgba(244,63,94,.70), var(--d1));
+    border-color: transparent;
+  }
+  .optionItem[data-kind="bad"] .optIcon{
+    background: rgba(244,63,94,.14); border-color: rgba(244,63,94,.35); color:#ffe4e6;
+  }
+
+  /* Selected states */
+  .optionItem[aria-pressed="true"][data-kind="excellent"],
+  .optionItem[aria-pressed="true"][data-kind="good"]{
+    background: linear-gradient(271deg, #00c7ffa6, var(--a2));
+    border-color: transparent;
+  }
+  .optionItem[aria-pressed="true"][data-kind="bad"]{
+    background: linear-gradient(271deg, rgba(244,63,94,.85), var(--d2));
+    border-color: transparent;
   }
 
   /* Chips */
@@ -108,7 +147,9 @@
     min-height:42px; padding:.45rem .9rem; border-radius:999px;
     border:1px solid rgba(255,255,255,.12);
     background:rgba(255,255,255,.06); color:var(--text); line-height:1; cursor:pointer;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
   }
+  .chip:hover{ transform:translateY(-1px) }
   .chip[aria-pressed="true"]{ color:#fff; border-color:transparent; background: linear-gradient(271deg, #00c7ffa6, var(--a2)); }
 
   textarea{
@@ -137,6 +178,8 @@
     width:64px;height:64px;border-radius:999px; display:grid; place-items:center;
     background: radial-gradient(100% 100% at 50% 0, rgba(141,255,204,.35), rgba(141,255,204,.16));
     border:1px solid rgba(141,255,204,.45);
+    box-shadow:0 0 30px rgba(141,255,204,.28), inset 0 0 14px rgba(141,255,204,.12);
+    margin:0 auto 10px;
   }
   .success h3{ margin:.4rem 0 .2rem; font-size:1.35rem }
   .success p{ margin:.1rem 0; color:var(--muted) }
@@ -396,7 +439,7 @@ $("backBtn").onclick = ()=> wizard.back();
 /* ------------ Step wiring ------------ */
 $("next1").onclick = ()=> { collectStep1(); wizard.next(); };
 $("next2").onclick = ()=> { collectStep2(); wizard.next(); };
-$("next3").onclick = ()=> { collectStep3(); buildAndType(); wizard.next(); };
+$("next3").onclick = ()=> { collectStep3(); typeIntoReview(buildReview()); wizard.next(); };
 
 /* Step 1: keywords from tenant + See more/less */
 function renderStep1(){
@@ -438,7 +481,25 @@ function collectStep2(){
 /* Step 3: extra note */
 function collectStep3(){ state.extra = $("extra").value.trim(); }
 
-/* Step 4: build review + typewriter */
+/* ------------ Typewriter that returns a Promise ------------ */
+let _twTimer=null;
+function typewriter(el, text){
+  if(_twTimer) clearInterval(_twTimer);
+  el.value = "";
+  return new Promise(resolve=>{
+    let i=0, sp=12;
+    _twTimer = setInterval(()=>{
+      el.value += text[i++]||"";
+      if(i>=text.length){
+        clearInterval(_twTimer);
+        _twTimer=null;
+        resolve();
+      }
+    }, sp);
+  });
+}
+
+/* Build baseline review and type it in */
 function buildReview(){
   const name = state.tenant?.name || "this restaurant";
   const base = (state.exp==="Excellent" ? `Dinner at ${name} was excellent.` : `I had a good visit to ${name}.`);
@@ -448,50 +509,27 @@ function buildReview(){
   const extra = state.extra ? " " + state.extra : "";
   return base + kw + det + extra;
 }
-
-/* typewriter (cancel-safe) */
-let twCancel = null;
-function typewriter(el, text){
-  if (twCancel) twCancel();           // stop previous run
-  el.value = "";
-  let i=0, stop=false, speed=12;
-  function tick(){
-    if (stop) return;
-    el.value += text[i++]||"";
-    if (i<text.length) setTimeout(tick, speed);
+async function typeIntoReview(text){
+  setLoading($("refineBtn"), true, "Generating…");
+  try{
+    await typewriter($("review"), text);
+  } finally{
+    setLoading($("refineBtn"), false, "Refine wording");
   }
-  setTimeout(tick, 10);
-  twCancel = ()=>{ stop=true; };
 }
 
-function buildAndType(){ typewriter($("review"), buildReview()); }
-
-/* Refine wording (AI): show "Generating…" and DISABLE button while typing */
-const refineBtn = $("refineBtn");
-refineBtn.onclick = async ()=>{
-  setGenerating(true);
+/* Refine wording (AI): lock button & show "Generating…" while typing */
+$("refineBtn").onclick = async ()=>{
+  setLoading($("refineBtn"), true, "Generating…");
   try{
     const ai = await generateAIReview();
-    typewriter($("review"), ai || buildReview());
-    // Wait roughly for typing to finish (best-effort: time = chars * speed)
-    const ms = Math.max(600, (ai || buildReview()).length * 12 + 80);
-    setTimeout(()=> setGenerating(false), ms);
+    await typewriter($("review"), ai || buildReview());
   }catch{
-    typewriter($("review"), buildReview());
-    const ms = Math.max(600, buildReview().length * 12 + 80);
-    setTimeout(()=> setGenerating(false), ms);
+    await typewriter($("review"), buildReview());
+  }finally{
+    setLoading($("refineBtn"), false, "Refine wording");
   }
 };
-
-function setGenerating(on){
-  if(on){
-    refineBtn.textContent = "Generating…";
-    refineBtn.setAttribute("disabled","true");   // not pressable
-  }else{
-    refineBtn.textContent = "Refine wording";
-    refineBtn.removeAttribute("disabled");
-  }
-}
 
 /* Copy + open Google */
 $("copyPostBtn").addEventListener("click", async () => {
@@ -502,6 +540,20 @@ $("copyPostBtn").addEventListener("click", async () => {
   const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : "";
   setTimeout(()=>{ if(g) window.open(g, "_blank", "noopener"); btn.textContent="Copy and Post to Google"; btn.disabled=false; }, 1200);
 });
+
+/* Small helper for loading state on buttons */
+function setLoading(btn, isLoading, labelWhenLoading="Loading…"){
+  if(!btn) return;
+  if(isLoading){
+    btn.classList.add("is-loading");
+    btn.setAttribute("disabled","true");
+    btn.textContent = labelWhenLoading;
+  }else{
+    btn.classList.remove("is-loading");
+    btn.removeAttribute("disabled");
+    btn.textContent = "Refine wording";
+  }
+}
 
 /* Optional AI via Netlify function (fallback to local builder) */
 async function generateAIReview(){
@@ -571,12 +623,10 @@ function init(){
       const cfg = (json && !json.notFound) ? (json.tenant || json) : DEFAULT_TENANT;
       state.tenant = cfg;
 
-      // Header + top row link
       $("restName").textContent = cfg.name || "Your Restaurant";
       const g = cfg.google?.mapsUrl || "";
       if (g) $("googleTop").href = g;
 
-      // Prepare steps 1/2 defaults
       renderStep1();
       renderStep2();
     })
