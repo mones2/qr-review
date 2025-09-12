@@ -359,7 +359,8 @@ const state = {
   visitType: "",
   parking: "",
   extra: "",
-  showAllKw: false
+  showAllKw: false,
+  aiUsed: false
 };
 
 /* ------------ Step 0: route selection ------------ */
@@ -473,22 +474,6 @@ function typewriter(el, text){
   const t = setInterval(()=>{ el.value += text[i++]||""; if(i>=text.length) clearInterval(t); }, sp);
 }
 function buildAndType(){ typewriter($("review"), buildReview()); }
-$("refineBtn").onclick = async ()=>{
-  try{
-    const ai = await generateAIReview();
-    typewriter($("review"), ai || buildReview());
-  }catch{ typewriter($("review"), buildReview()); }
-};
-
-/* Copy + open Google */
-$("copyPostBtn").addEventListener("click", async () => {
-  const btn = $("copyPostBtn"); btn.disabled = true;
-  const text = $("review").value || "";
-  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied — opening Google..."; }
-  catch { btn.textContent = "Opening Google..."; }
-  const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : "";
-  setTimeout(()=>{ if(g) window.open(g, "_blank", "noopener"); btn.textContent="Copy and Post to Google"; btn.disabled=false; }, 1200);
-});
 
 /* Optional AI via Netlify function (fallback to local builder) */
 async function generateAIReview(){
@@ -513,6 +498,63 @@ async function generateAIReview(){
   }
 }
 
+/* -------- NEW: Save review helper (positive & negative) -------- */
+async function saveReviewToDB(kind, overrides = {}){
+  const payload = {
+    tenant_slug: state.tenant?.slug || "sahara",
+    kind, // 'excellent' | 'good' | 'bad'
+    review_text: $("review")?.value?.trim() || buildReview(),
+    keywords: state.keywords || [],
+    visit_type: state.visitType || "",
+    parking: state.parking || "",
+    extra: state.extra || "",
+    posted_to_google: false,
+    posted_at: null,
+    ai_used: !!state.aiUsed,
+    ...overrides
+  };
+  try{
+    await fetch("/.netlify/functions/review-submit", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload),
+      keepalive:true
+    });
+  }catch(e){
+    console.warn("Failed to save review", e);
+  }
+}
+
+/* Refine wording (marks AI usage) */
+$("refineBtn").onclick = async ()=>{
+  try{
+    const ai = await generateAIReview();
+    state.aiUsed = true;
+    typewriter($("review"), ai || buildReview());
+  }catch{
+    typewriter($("review"), buildReview());
+  }
+};
+
+/* Copy + open Google (POSITIVE) */
+$("copyPostBtn").addEventListener("click", async () => {
+  const btn = $("copyPostBtn"); btn.disabled = true;
+  const text = $("review").value || "";
+
+  /* Save to DB before opening Google */
+  const kind = (state.exp || "").toLowerCase(); // 'excellent' | 'good'
+  await saveReviewToDB(kind, {
+    review_text: text || buildReview(),
+    posted_to_google: true,
+    posted_at: new Date().toISOString()
+  });
+
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied — opening Google..."; }
+  catch { btn.textContent = "Opening Google..."; }
+  const g = (state.tenant && state.tenant.google && state.tenant.google.mapsUrl) ? state.tenant.google.mapsUrl : "";
+  setTimeout(()=>{ if(g) window.open(g, "_blank", "noopener"); btn.textContent="Copy and Post to Google"; btn.disabled=false; }, 1200);
+});
+
 /* ------------ Negative path ------------ */
 function renderNeg(){
   const nType = $("nType"); const nMeal = $("nMeal"); const nSpend = $("nSpend");
@@ -522,9 +564,28 @@ function renderNeg(){
   ["$1–10","$10–20","$20–30","$30–50","$50–100","$100+"].forEach(k=>nSpend.appendChild(makeChip(k,{single:true})));
 }
 let sent=false;
-$("sendNeg").onclick=()=>{
+$("sendNeg").onclick=async ()=>{
   if(sent) return; sent=true;
   $("sendNeg").disabled=true; $("nStatus").textContent="Sending…";
+
+  /* Save a short synthesized review text for the negative path */
+  const negText = [
+    "Not great.",
+    singleValue($("nType")) && `Type: ${singleValue($("nType"))}.`,
+    singleValue($("nMeal")) && `Meal: ${singleValue($("nMeal"))}.`,
+    singleValue($("nSpend")) && `Spend: ${singleValue($("nSpend"))}.`,
+    ($("nText").value || "").trim()
+  ].filter(Boolean).join(" ");
+
+  await saveReviewToDB("bad", {
+    review_text: negText,
+    keywords: [], // you can also collect special tags if you want
+    visit_type: singleValue($("nType")),
+    parking: "",
+    extra: ($("nText").value || "").trim()
+  });
+
+  // Existing feedback endpoint (kept)
   const payload = {
     tenantId: state.tenant?.slug || "",
     restaurantName: state.tenant?.name || "",
@@ -541,6 +602,7 @@ $("sendNeg").onclick=()=>{
   fetch("/.netlify/functions/feedback", {
     method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
   }).catch(()=>{});
+
   setTimeout(()=>{ hide($("negative")); show($("negSuccess")); }, 850);
 };
 
@@ -577,12 +639,3 @@ document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
