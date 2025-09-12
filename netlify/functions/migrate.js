@@ -25,6 +25,22 @@ export const handler = async () => {
       user_agent TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );`;
+    await sql`CREATE TABLE IF NOT EXISTS reviews (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  tenant_slug   TEXT NOT NULL REFERENCES tenants(slug) ON DELETE CASCADE,
+  kind          TEXT NOT NULL CHECK (kind IN ('excellent','good','bad')),
+  review_text   TEXT NOT NULL,
+  keywords      JSONB NOT NULL DEFAULT '[]'::jsonb,
+  visit_type    TEXT,
+  parking       TEXT,
+  extra         TEXT,
+  posted_to_google BOOLEAN NOT NULL DEFAULT FALSE,
+  posted_at     TIMESTAMPTZ,
+  ai_used       BOOLEAN NOT NULL DEFAULT FALSE,
+  user_agent    TEXT
+);`;
+
 
     await sql`CREATE TABLE IF NOT EXISTS tenant_owners (
       tenant_slug TEXT NOT NULL REFERENCES tenants(slug) ON DELETE CASCADE,
