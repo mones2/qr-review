@@ -30,3 +30,10 @@ export const handler = async () => {
     return { statusCode: 500, body: JSON.stringify({ error: String(e) }) };
   }
 };
+await sql`CREATE TABLE IF NOT EXISTS tenant_owners (
+  tenant_slug TEXT NOT NULL REFERENCES tenants(slug) ON DELETE CASCADE,
+  owner_email TEXT NOT NULL,
+  role TEXT DEFAULT 'owner',
+  status TEXT DEFAULT 'active',
+  PRIMARY KEY (tenant_slug, owner_email)
+);`;
