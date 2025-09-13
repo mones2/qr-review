@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Owner — QR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --bg:#070a12; --panel:#0f1420; --text:#f2f4fb; --muted:#aeb3c4; --border:rgba(255,255,255,.14);
+      --accent:#22c55e; --accent-2:#16a34a;
+      --neon:0 0 22px color-mix(in srgb, var(--accent) 75%, transparent),
+             0 0 48px color-mix(in srgb, var(--accent) 40%, transparent);
+      --r:18px; --tap:48px; --shadow:0 10px 40px rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--text);
+      font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 700px at 20% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
+        radial-gradient(1200px 600px at 90% 110%, rgba(0,187,255,.08), transparent 60%),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .hidden{display:none!important}
+
+    /* Top bar */
+    .top{
+      position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px 16px;background:linear-gradient(180deg,rgba(15,20,32,.88),rgba(15,20,32,.70));
+      border-bottom:1px solid var(--border);backdrop-filter:blur(8px) saturate(1.2);
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.2px}
+    .brand__dot{width:14px;height:14px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%,#fff,color-mix(in srgb,var(--accent) 60%,#fff));
+      box-shadow:var(--neon)}
+    .brand__name{color:#fff}
+    .nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .tab{padding:.55rem .85rem;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--muted)}
+    .tab--active{color:#06140d;background:linear-gradient(271deg,color-mix(in srgb,var(--accent) 55%,#fff),var(--accent-2));border-color:color-mix(in srgb,var(--accent) 55%, #ffffff33);box-shadow:var(--neon)}
+    .top__right{display:flex;align-items:center;gap:10px}
+    .user{display:flex;align-items:center;gap:8px;color:var(--muted)}
+
+    /* Shell */
+    .wrap{max-width:900px;margin:28px auto 90px;padding:0 16px}
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02)),var(--panel);
+      border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)
+    }
+    .title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .title h1{margin:.2rem 0 .25rem;font-weight:900;letter-spacing:-.02em;font-size:clamp(1.6rem,1.2rem + 1.5vw,2.2rem);text-shadow:var(--neon)}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:200px;flex:1}
+    label{font-weight:700}
+    .input{
+      width:100%;min-height:44px;border-radius:12px;background:#0f1420;color:var(--text);
+      border:1px solid var(--border);padding:.6rem .75rem;outline:0
+    }
+    .btn{
+      appearance:none;cursor:pointer;user-select:none;display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
+      min-height:var(--tap);padding:.7rem 1.1rem;border-radius:999px;font-weight:800;color:#06140d;
+      background:linear-gradient(271deg,color-mix(in srgb,var(--accent) 70%,#fff),var(--accent-2));
+      border:1px solid color-mix(in srgb,var(--accent) 55%,#ffffff33);box-shadow:var(--neon);
+      text-decoration:none;transition:transform .08s ease,opacity .15s ease,box-shadow .15s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed;box-shadow:none}
+    .btn--ghost{color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--border);box-shadow:none}
+
+    /* QR stage */
+    .qrStage{
+      display:grid;place-items:center;margin:16px 0 8px;
+      background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:20px;padding:24px
+    }
+    .qrCanvas{
+      width:min(80vw,520px);height:min(80vw,520px);
+      max-width:520px;max-height:520px;border-radius:18px;background:#fff;
+    }
+    .hint{color:var(--muted);text-align:center;margin-top:6px}
+
+    .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:14px 0 0}
+    .foot{margin:26px 0;color:var(--muted);font-size:.95rem;text-align:center}
+
+    /* Print */
+    @media print{
+      body{background:#fff;color:#000}
+      .top,.actions,.foot{display:none!important}
+      .wrap{max-width:none;margin:0;padding:0}
+      .card{border:0;border-radius:0;box-shadow:none}
+      .title h1{text-shadow:none;color:#000}
+      .qrStage{border:0;background:#fff;padding:0}
+      .qrCanvas{width:600px;height:600px;max-width:none;max-height:none}
+      .muted{color:#333}
+    }
+  </style>
+</head>
+<body>
+  <!-- Netlify Identity -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  <div class="top">
+    <a class="brand" href="/owner">
+      <span class="brand__dot" aria-hidden="true"></span>
+      <span class="brand__name">Owner</span>
+    </a>
+    <nav class="nav">
+      <a id="navDash" class="tab" href="#">Dashboard</a>
+      <a class="tab" href="#" aria-current="page">QR</a>
+      <a id="navSettings" class="tab" href="#">Settings</a>
+    </nav>
+    <div class="top__right">
+      <button id="loginBtn" class="btn">Log in / Sign up</button>
+      <div id="userBox" class="user hidden">
+        <span id="whoami">—</span>
+        <button id="logoutBtn" class="btn btn--ghost">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- Login prompt -->
+    <section id="loginCard" class="card hidden">
+      <div class="row">
+        <div class="field">
+          <div class="muted">Please log in to view and print your QR.</div>
+          <div class="row">
+            <button id="openLogin" class="btn">Log in / Sign up</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QR card -->
+    <section id="qrCard" class="card hidden" aria-live="polite">
+      <div class="title">
+        <h1 id="title">QR — —</h1>
+        <div class="muted">/owner/<span id="slugShow">—</span>/qr</div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div class="field">
+          <label for="publicLink">Public review link</label>
+          <input id="publicLink" class="input" type="text" readonly />
+        </div>
+        <div class="field" style="align-self:flex-end;min-width:220px;flex:0 0 auto">
+          <button id="copyLink" class="btn btn--ghost" type="button">Copy link</button>
+          <a id="openPublic" class="btn btn--ghost" target="_blank" rel="noopener">Open</a>
+        </div>
+      </div>
+
+      <div class="qrStage">
+        <canvas id="qrCanvas" class="qrCanvas" width="520" height="520" aria-label="QR for public page"></canvas>
+      </div>
+      <div class="hint">Print and place near the entrance, tables, or receipts. Scans go to your public review page.</div>
+
+      <div class="actions">
+        <button id="printBtn" class="btn" type="button">Print</button>
+        <button id="downloadBtn" class="btn btn--ghost" type="button">Download PNG</button>
+      </div>
+    </section>
+
+    <div class="foot">© <span id="year"></span> Your Company</div>
+  </main>
+
+  <script>
+    /* ===== Helpers ===== */
+    const $=(s,r=document)=>r.querySelector(s);
+    const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
+    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+    const cssColor=x=>/^#|rgb|hsl/i.test(String(x))?x:'#22c55e';
+    const darken=(hex,amt=.2)=>{const c=hex.replace('#','');const n=c.length===3?c.split('').map(x=>x+x).join(''):c;const r=parseInt(n.slice(0,2),16),g=parseInt(n.slice(2,4),16),b=parseInt(n.slice(4,6),16);const f=v=>clamp(Math.round(v*(1-amt)),0,255).toString(16).padStart(2,'0');return '#'+f(r)+f(g)+f(b)};
+
+    /* ===== State ===== */
+    const state={ slug:null, user:null, tenant:null };
+
+    /* ===== Identity ===== */
+    function initIdentity(){
+      if(!window.netlifyIdentity){ showLoggedOut(); return; }
+      netlifyIdentity.on('init', u=>{ state.user=u; updateAuthUI(); startIfReady(); });
+      netlifyIdentity.on('login', u=>{ state.user=u; updateAuthUI(); netlifyIdentity.close(); startIfReady(); });
+      netlifyIdentity.on('logout', ()=>{ state.user=null; updateAuthUI(); showLoggedOut(); });
+      netlifyIdentity.init();
+    }
+    function updateAuthUI(){
+      const logged=!!state.user;
+      $('#loginBtn').classList.toggle('hidden',logged);
+      $('#userBox').classList.toggle('hidden',!logged);
+      $('#whoami').textContent=logged?state.user.email:'—';
+    }
+    on($('#loginBtn'),'click',()=>netlifyIdentity.open('login'));
+    on($('#openLogin'),'click',()=>netlifyIdentity.open('login'));
+    on($('#logoutBtn'),'click',()=>netlifyIdentity.logout());
+
+    async function authedFetch(url,opts={}){
+      if(!state.user) throw new Error('Not logged in');
+      const token=await state.user.jwt(true);
+      const res=await fetch(url,{
+        ...opts,
+        headers:{
+          'Authorization':`Bearer ${token}`,
+          'Content-Type':'application/json',
+          ...(opts.headers||{})
+        }
+      });
+      return res;
+    }
+
+    /* ===== Routing ===== */
+    function slugFromPath(){
+      const parts=location.pathname.replace(/^\/+|\/+$/g,'').split('/');
+      // expect /owner/<slug>/qr
+      if(parts[0]!=='owner' || !parts[1]) return null;
+      return decodeURIComponent(parts[1]);
+    }
+
+    /* ===== Flows ===== */
+    function showLoggedOut(){
+      $('#loginCard').classList.remove('hidden');
+      $('#qrCard').classList.add('hidden');
+    }
+
+    async function startIfReady(){
+      if(!state.user) return;
+      state.slug = slugFromPath();
+      if(!state.slug){ alert('Missing slug'); return; }
+
+      $('#year').textContent = new Date().getFullYear();
+      $('#slugShow').textContent = state.slug;
+      $('#navDash').href = `/owner/${encodeURIComponent(state.slug)}`;
+      $('#navSettings').href = `/owner/${encodeURIComponent(state.slug)}/settings`;
+
+      // Verify ownership + load tenant meta
+      await ensureTenant();
+
+      // Theme accent
+      const accent = cssColor(state.tenant?.brand_color || '#22c55e');
+      document.documentElement.style.setProperty('--accent', accent);
+      document.documentElement.style.setProperty('--accent-2', darken(accent,.2));
+
+      // Header + link
+      const pub = `${location.origin}/r/${state.slug}`;
+      $('#title').textContent = `QR — ${state.tenant?.name || state.slug}`;
+      $('#publicLink').value = pub;
+      $('#openPublic').href = pub;
+
+      // QR
+      await renderQR('#qrCanvas', pub, 520);
+
+      // Show
+      $('#loginCard').classList.add('hidden');
+      $('#qrCard').classList.remove('hidden');
+    }
+
+    async function ensureTenant(){
+      // Must prove ownership (call my-tenants)
+      try{
+        const res = await authedFetch('/.netlify/functions/my-tenants');
+        const j = await res.json();
+        if(!res.ok || !j.ok) throw new Error('my-tenants failed');
+        const hit = (j.tenants||[]).find(t=>t.slug===state.slug);
+        if(!hit) throw new Error('Forbidden');
+        state.tenant = hit;
+        return;
+      }catch(e){
+        // If forbidden, keep page hidden
+        alert('You do not have access to this restaurant.');
+        location.href = '/owner';
+      }
+    }
+
+    /* ===== QR (remote PNG -> canvas) ===== */
+    async function renderQR(sel, url, size){
+      const c=$(sel); if(!c) return;
+      const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+      const img=new Image(); img.crossOrigin='anonymous';
+      img.src=`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=${size}x${size}&margin=0`;
+      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; });
+      ctx.drawImage(img,0,0,size,size);
+    }
+
+    /* ===== Buttons ===== */
+    on($('#copyLink'),'click',async()=>{ try{ await navigator.clipboard.writeText($('#publicLink').value); }catch{} });
+    on($('#printBtn'),'click',()=>window.print());
+    on($('#downloadBtn'),'click',()=>{
+      const c=$('#qrCanvas');
+      const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download=`qr-${state.slug}.png`; a.click();
+    });
+
+    /* ===== Boot ===== */
+    document.addEventListener('DOMContentLoaded',()=>{
+      initIdentity();
+    });
+  </script>
+</body>
+</html>
