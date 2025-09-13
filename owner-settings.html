@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Owner — Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --bg:#070a12; --panel:#0f1420; --text:#f2f4fb; --muted:#aeb3c4; --border:rgba(255,255,255,.14);
+      --accent:#22c55e; --accent-2:#16a34a;
+      --neon:0 0 22px color-mix(in srgb, var(--accent) 75%, transparent),
+             0 0 48px color-mix(in srgb, var(--accent) 40%, transparent);
+      --r:18px; --tap:48px; --shadow:0 10px 40px rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--text);
+      font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 700px at 20% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
+        radial-gradient(1200px 600px at 90% 110%, rgba(0,187,255,.08), transparent 60%),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .hidden{display:none!important}
+
+    /* Top bar */
+    .top{
+      position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px 16px;background:linear-gradient(180deg,rgba(15,20,32,.88),rgba(15,20,32,.70));
+      border-bottom:1px solid var(--border);backdrop-filter:blur(8px) saturate(1.2);
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.2px}
+    .brand__dot{width:14px;height:14px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%,#fff,color-mix(in srgb,var(--accent) 60%,#fff));
+      box-shadow:var(--neon)}
+    .brand__name{color:#fff}
+    .nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .tab{padding:.55rem .85rem;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--muted)}
+    .tab--active{color:#06140d;background:linear-gradient(271deg,color-mix(in srgb,var(--accent) 55%,#fff),var(--accent-2));border-color:color-mix(in srgb,var(--accent) 55%, #ffffff33);box-shadow:var(--neon)}
+    .top__right{display:flex;align-items:center;gap:10px}
+    .user{display:flex;align-items:center;gap:8px;color:var(--muted)}
+
+    /* Shell */
+    .wrap{max-width:980px;margin:28px auto 90px;padding:0 16px}
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02)),var(--panel);
+      border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)
+    }
+    .title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .title h1{margin:.2rem 0 .25rem;font-weight:900;letter-spacing:-.02em;font-size:clamp(1.4rem,1.1rem + 1.2vw,2rem);text-shadow:var(--neon)}
+    .muted{color:var(--muted)}
+
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:200px;flex:1}
+    label{font-weight:700}
+    .input,.select,textarea{
+      width:100%;min-height:44px;border-radius:12px;background:#0f1420;color:var(--text);
+      border:1px solid var(--border);padding:.6rem .75rem;outline:0;font:inherit
+    }
+    textarea{min-height:88px;resize:vertical}
+
+    .note{font-size:.92rem}
+    .status{color:var(--muted);margin:.4rem 0 .8rem}
+    .ok{color:#baffde}
+    .bad{color:#ffd3d3}
+
+    .btn{
+      appearance:none;cursor:pointer;user-select:none;display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
+      min-height:var(--tap);padding:.7rem 1.1rem;border-radius:999px;font-weight:800;color:#06140d;
+      background:linear-gradient(271deg,color-mix(in srgb,var(--accent) 70%,#fff),var(--accent-2));
+      border:1px solid color-mix(in srgb,var(--accent) 55%,#ffffff33);box-shadow:var(--neon);
+      text-decoration:none;transition:transform .08s ease,opacity .15s ease,box-shadow .15s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed;box-shadow:none}
+    .btn--ghost{color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--border);box-shadow:none}
+
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+
+    .grid{display:grid;gap:12px;grid-template-columns:1fr}
+    .hr{height:1px;background:rgba(255,255,255,.12);margin:10px 0}
+
+    .toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:40}
+    .toast{padding:.6rem .8rem;border-radius:12px;background:#0f1420;border:1px solid var(--border)}
+    .toast--ok{color:#baffde;border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+    .toast--bad{color:#ffd3d3;border-color:#ff7a7a66}
+
+    .danger{border-color:#ff7a7a66}
+    .danger .btn{background:linear-gradient(271deg,#ef4444,#b91c1c);border-color:#ef4444aa;box-shadow:0 0 22px #ef444444, 0 0 48px #ef444426;color:#fff}
+
+    @media (max-width:860px){
+      .nav{overflow:auto hidden;white-space:nowrap;mask:linear-gradient(90deg,#000 92%,transparent)}
+    }
+  </style>
+</head>
+<body>
+  <!-- Netlify Identity -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  <div class="top">
+    <a class="brand" href="/owner">
+      <span class="brand__dot" aria-hidden="true"></span>
+      <span class="brand__name">Owner</span>
+    </a>
+    <nav class="nav">
+      <a id="navDash" class="tab" href="#">Dashboard</a>
+      <a class="tab tab--active" href="#" aria-current="page">Settings</a>
+      <a id="navQR" class="tab" href="#">QR</a>
+    </nav>
+    <div class="top__right">
+      <button id="loginBtn" class="btn">Log in / Sign up</button>
+      <div id="userBox" class="user hidden">
+        <span id="whoami">—</span>
+        <button id="logoutBtn" class="btn btn--ghost">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- Login prompt -->
+    <section id="loginCard" class="card hidden">
+      <div class="row">
+        <div class="field">
+          <div class="status">Please log in to manage settings.</div>
+          <div class="actions">
+            <button id="openLogin" class="btn">Log in / Sign up</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings form -->
+    <section id="formCard" class="card hidden" aria-live="polite">
+      <div class="title">
+        <h1 id="title">Settings — —</h1>
+        <div class="muted">/owner/<span id="slugShow">—</span>/settings</div>
+      </div>
+      <div id="formStatus" class="status">Loading…</div>
+
+      <form id="settingsForm" class="grid" novalidate>
+        <div class="row">
+          <div class="field">
+            <label for="name">Restaurant name *</label>
+            <input id="name" class="input" type="text" required />
+            <div class="note muted">Shown on your public page and dashboard.</div>
+          </div>
+          <div class="field">
+            <label for="slug">Slug (URL)</label>
+            <input id="slug" class="input" type="text" readonly />
+            <div class="note muted">Used by /r/&lt;slug&gt; and /owner/&lt;slug&gt;.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="brand">Brand color (accent)</label>
+            <input id="brand" class="input" type="color" value="#22c55e" />
+            <div class="note muted">The neon accent. Updates live as you change it.</div>
+          </div>
+          <div class="field">
+            <label for="maps">Google Maps link</label>
+            <input id="maps" class="input" type="url" placeholder="https://maps.google.com/?q=..." />
+            <div class="note muted">Used by the “Open Google” button in the dashboard.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="keywords">Keywords (comma-separated)</label>
+            <textarea id="keywords" placeholder="shawarma, service, ambience, parking"></textarea>
+            <div class="note muted">Used in the review wizard and in keyword insights.</div>
+          </div>
+          <div class="field">
+            <label for="tz">Tenant timezone (optional)</label>
+            <input id="tz" class="input" type="text" placeholder="e.g., Asia/Amman" />
+            <div id="tzHelp" class="note muted">Controls “business day” analytics. Leave blank to use viewer’s timezone by default.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="visit">Visit types (comma-separated)</label>
+            <input id="visit" class="input" type="text" placeholder="Dine-in, Takeout, Delivery" />
+            <div class="note muted">Overrides the default options in the wizard.</div>
+          </div>
+          <div class="field">
+            <label for="parking">Parking options (comma-separated)</label>
+            <input id="parking" class="input" type="text" placeholder="Street, Lot, Valet, None / not sure" />
+            <div class="note muted">Overrides the default options in the wizard.</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="saveBtn" class="btn" type="submit">Save changes</button>
+          <button id="resetBtn" class="btn btn--ghost" type="button">Reset</button>
+          <span id="saveNote" class="status"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Danger zone (optional, stubbed) -->
+    <section id="dangerCard" class="card danger hidden" aria-live="polite">
+      <h3 style="margin:.2rem 0 .4rem">Danger zone</h3>
+      <p class="muted" style="margin:.2rem 0 .8rem">Delete this restaurant and all associated reviews. This cannot be undone.</p>
+      <button id="deleteBtn" class="btn" type="button" disabled title="Not enabled yet">Delete restaurant</button>
+    </section>
+
+    <div class="foot">© <span id="year"></span> Your Company</div>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    /* ===== Helpers ===== */
+    const $=(s,r=document)=>r.querySelector(s);
+    const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
+    const toastBox=$('#toasts');
+    const toast=(m,t='ok')=>{const el=document.createElement('div');el.className=`toast ${t==='ok'?'toast--ok':'toast--bad'}`;el.textContent=m;toastBox.appendChild(el);setTimeout(()=>el.remove(),3500)};
+    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+    const cssColor=x=>/^#|rgb|hsl/i.test(String(x))?x:'#22c55e';
+    const darken=(hex,amt=.2)=>{const c=hex.replace('#','');const n=c.length===3?c.split('').map(x=>x+x).join(''):c;const r=parseInt(n.slice(0,2),16),g=parseInt(n.slice(2,4),16),b=parseInt(n.slice(4,6),16);const f=v=>clamp(Math.round(v*(1-amt)),0,255).toString(16).padStart(2,'0');return '#'+f(r)+f(g)+f(b)};
+
+    const parseCSV = (s) => String(s||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const joinCSV  = (arr) => (Array.isArray(arr)?arr:[]).join(', ');
+
+    /* ===== State ===== */
+    const state={ slug:null, user:null, tenant:null, original:null, dirty:false, readonly:false };
+
+    /* ===== Identity ===== */
+    function initIdentity(){
+      if(!window.netlifyIdentity){ showLoggedOut(); return; }
+      netlifyIdentity.on('init', u=>{ state.user=u; updateAuthUI(); startIfReady(); });
+      netlifyIdentity.on('login', u=>{ state.user=u; updateAuthUI(); netlifyIdentity.close(); startIfReady(); });
+      netlifyIdentity.on('logout', ()=>{ state.user=null; updateAuthUI(); showLoggedOut(); });
+      netlifyIdentity.init();
+    }
+    function updateAuthUI(){
+      const logged=!!state.user;
+      $('#loginBtn').classList.toggle('hidden',logged);
+      $('#userBox').classList.toggle('hidden',!logged);
+      $('#whoami').textContent=logged?state.user.email:'—';
+    }
+    on($('#loginBtn'),'click',()=>netlifyIdentity.open('login'));
+    on($('#openLogin'),'click',()=>netlifyIdentity.open('login'));
+    on($('#logoutBtn'),'click',()=>netlifyIdentity.logout());
+
+    async function authedFetch(url,opts={}){
+      if(!state.user) throw new Error('Not logged in');
+      const token=await state.user.jwt(true);
+      const res=await fetch(url,{
+        ...opts,
+        headers:{
+          'Authorization':`Bearer ${token}`,
+          'Content-Type':'application/json',
+          ...(opts.headers||{})
+        }
+      });
+      return res;
+    }
+
+    /* ===== Routing ===== */
+    function getSlugFromPath(){
+      const parts=location.pathname.replace(/^\/+|\/+$/g,'').split('/');
+      // expect /owner/<slug>/settings
+      if(parts[0]!=='owner' || !parts[1]) return null;
+      return decodeURIComponent(parts[1]);
+    }
+
+    /* ===== UI flows ===== */
+    function showLoggedOut(){
+      $('#loginCard').classList.remove('hidden');
+      $('#formCard').classList.add('hidden');
+      $('#dangerCard').classList.add('hidden');
+    }
+
+    async function startIfReady(){
+      if(!state.user) return;
+      state.slug=getSlugFromPath();
+      if(!state.slug){ toast('Missing slug in URL','bad'); return; }
+
+      $('#year').textContent=new Date().getFullYear();
+      $('#slugShow').textContent=state.slug;
+      $('#navDash').href=`/owner/${encodeURIComponent(state.slug)}`;
+      $('#navQR').href=`/owner/${encodeURIComponent(state.slug)}/qr`;
+
+      await loadTenant();
+      if(!state.tenant){ toast('Could not load tenant','bad'); return; }
+
+      // Theme
+      const accent=cssColor(state.tenant.brand_color||'#22c55e');
+      document.documentElement.style.setProperty('--accent',accent);
+      document.documentElement.style.setProperty('--accent-2',darken(accent,.2));
+
+      // Prefill
+      fillForm(state.tenant);
+      state.original = snapshot();
+      state.dirty=false;
+
+      // Show
+      $('#loginCard').classList.add('hidden');
+      $('#formCard').classList.remove('hidden');
+      $('#dangerCard').classList.remove('hidden');
+    }
+
+    async function loadTenant(){
+      try{
+        // try secure list first (fast path)
+        const res=await authedFetch('/.netlify/functions/my-tenants');
+        const j=await res.json();
+        if(res.ok && j.ok){
+          const hit=(j.tenants||[]).find(t=>t.slug===state.slug);
+          if(hit){ state.tenant=hit; return; }
+        }
+      }catch(_){}
+      try{
+        const res=await fetch(`/.netlify/functions/get-tenant?slug=${encodeURIComponent(state.slug)}`,{cache:'no-store'});
+        const j=await res.json();
+        if(res.ok){ state.tenant=j.tenant||j; }
+      }catch(_){}
+    }
+
+    function fillForm(t){
+      $('#title').textContent = `Settings — ${t.name || state.slug}`;
+      $('#name').value = t.name || '';
+      $('#slug').value = t.slug || state.slug;
+      $('#brand').value = toHexOrDefault(t.brand_color || '#22c55e');
+      $('#maps').value = t.google_maps_url || t.google?.mapsUrl || '';
+      $('#keywords').value = joinCSV(t.keywords);
+      $('#tz').value = t.timezone || '';
+      $('#visit').value = joinCSV(t.visit_types);
+      $('#parking').value = joinCSV(t.parking_options);
+      $('#formStatus').textContent = 'You can edit basic details and save.';
+    }
+
+    function toHexOrDefault(v){
+      // if it's already a hex-like string, return it; otherwise default emerald
+      return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(v||'')) ? v : '#22c55e';
+    }
+
+    /* ===== Dirty tracking ===== */
+    const inputs=['#name','#brand','#maps','#keywords','#tz','#visit','#parking'];
+    inputs.forEach(sel=> on($(sel),'input',()=>{ state.dirty=true; liveAccentPreview(); validateTZ(); }));
+    on($('#resetBtn'),'click',()=>{ fillForm(state.tenant); state.dirty=false; validateTZ(); liveAccentPreview(); $('#saveNote').textContent=''; });
+    window.addEventListener('beforeunload', (e)=>{
+      if(state.dirty){ e.preventDefault(); e.returnValue=''; }
+    });
+
+    function snapshot(){
+      return {
+        name: $('#name').value.trim(),
+        slug: $('#slug').value.trim(),
+        brand_color: $('#brand').value,
+        google_maps_url: $('#maps').value.trim(),
+        keywords: parseCSV($('#keywords').value),
+        timezone: ($('#tz').value||'').trim() || null,
+        visit_types: parseCSV($('#visit').value),
+        parking_options: parseCSV($('#parking').value),
+      };
+    }
+
+    function liveAccentPreview(){
+      const c=cssColor($('#brand').value||'#22c55e');
+      document.documentElement.style.setProperty('--accent',c);
+      document.documentElement.style.setProperty('--accent-2',darken(c,.2));
+    }
+
+    function validateTZ(){
+      const tz=$('#tz').value.trim();
+      const help=$('#tzHelp');
+      if(!tz){ help.textContent='Controls “business day” analytics. Leave blank to use viewer’s timezone by default.'; help.classList.remove('bad'); return true; }
+      try{
+        // Throws if invalid in some engines
+        new Intl.DateTimeFormat(undefined,{ timeZone: tz }).format(new Date());
+        help.textContent=`Looks valid (e.g., ${tz}).`; help.classList.remove('bad'); return true;
+      }catch{
+        help.textContent='Timezone looks invalid. Example: Asia/Amman, America/New_York.'; help.classList.add('bad'); return false;
+      }
+    }
+
+    /* ===== Save ===== */
+    on($('#settingsForm'),'submit', async (e)=>{
+      e.preventDefault();
+      if(!state.user) return toast('Please log in','bad');
+
+      const body = snapshot();
+      if(!body.name){ toast('Name is required','bad'); return; }
+
+      $('#saveBtn').disabled=true; $('#saveNote').textContent='Saving…';
+
+      try{
+        const res = await authedFetch('/.netlify/functions/update-tenant', { method:'POST', body: JSON.stringify(body) });
+        if(res.status===404){
+          // read-only mode
+          state.readonly=true;
+          $('#saveBtn').disabled=true;
+          $('#saveNote').textContent='Read-only (update-tenant not deployed).';
+          toast('Updates disabled on this site','bad');
+          return;
+        }
+        const j = await res.json();
+        if(!res.ok || j.ok===false){ throw new Error(j.error || `HTTP ${res.status}`); }
+
+        state.tenant = j.tenant || { ...state.tenant, ...body };
+        state.original = snapshot();
+        state.dirty = false;
+        $('#saveNote').textContent='Saved.';
+        toast('Settings saved','ok');
+      }catch(err){
+        toast(err.message || String(err),'bad');
+        $('#saveNote').textContent='Save failed.';
+      }finally{
+        $('#saveBtn').disabled = state.readonly ? true : false;
+      }
+    });
+
+    /* ===== Boot ===== */
+    document.addEventListener('DOMContentLoaded',()=>{
+      initIdentity();
+      $('#year').textContent=new Date().getFullYear();
+    });
+  </script>
+</body>
+</html>
