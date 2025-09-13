@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Create a Restaurant — Owner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --bg:#070a12; --panel:#0f1420; --text:#f2f4fb; --muted:#aeb3c4; --border:rgba(255,255,255,.14);
+      --accent:#22c55e; --accent-2:#16a34a;
+      --neon:0 0 22px color-mix(in srgb, var(--accent) 75%, transparent),
+             0 0 48px color-mix(in srgb, var(--accent) 40%, transparent);
+      --r:18px; --tap:48px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 700px at 20% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
+        radial-gradient(1200px 600px at 90% 110%, rgba(0,187,255,.08), transparent 60%),
+        var(--bg);
+    }
+    a{color:inherit;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .hidden{display:none!important}
+
+    .top{
+      position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px 16px;background:linear-gradient(180deg,rgba(15,20,32,.88),rgba(15,20,32,.70));
+      border-bottom:1px solid var(--border);backdrop-filter:blur(8px) saturate(1.2);
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.2px;text-decoration:none}
+    .brand__dot{width:14px;height:14px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%,#fff,color-mix(in srgb,var(--accent) 60%,#fff));
+      box-shadow:var(--neon)}
+    .brand__name{color:#fff}
+    .top__right{display:flex;align-items:center;gap:10px}
+    .user{display:flex;align-items:center;gap:8px;color:var(--muted)}
+
+    .wrap{max-width:980px;margin:28px auto 80px;padding:0 16px}
+
+    .hero h1{
+      margin:.25rem 0 .4rem;font-weight:900;letter-spacing:-.02em;
+      font-size:clamp(1.6rem,1.2rem + 2vw,2.4rem);text-shadow:var(--neon)
+    }
+    .hero .lede{color:var(--muted);margin:0 0 .8rem}
+
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02)),var(--panel);
+      border:1px solid var(--border);border-radius:var(--r);padding:16px;
+      box-shadow:0 10px 40px rgba(0,0,0,.25)
+    }
+
+    .grid{display:grid;gap:14px;grid-template-columns:1fr}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:180px;flex:1}
+    label{font-weight:700}
+    .input,.select{
+      width:100%;min-height:44px;border-radius:12px;background:#0f1420;color:var(--text);
+      border:1px solid var(--border);padding:.6rem .75rem;outline:0
+    }
+    .help{color:var(--muted);font-size:.92rem}
+
+    .btn{
+      appearance:none;cursor:pointer;user-select:none;display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
+      min-height:var(--tap);padding:.7rem 1.1rem;border-radius:999px;font-weight:800;color:#06140d;
+      background:linear-gradient(271deg,color-mix(in srgb,var(--accent) 70%,#fff),var(--accent-2));
+      border:1px solid color-mix(in srgb,var(--accent) 55%,#ffffff33);box-shadow:var(--neon);
+      text-decoration:none;transition:transform .08s ease,opacity .15s ease,box-shadow .15s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed;box-shadow:none}
+    .btn--ghost{color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--border);box-shadow:none}
+
+    .status{color:var(--muted);margin:.4rem 0 .8rem}
+    .ok{color:#baffde}
+    .bad{color:#ffd3d3}
+
+    .slugRow{display:flex;gap:10px;align-items:center}
+    .slugCheck{font-size:.92rem}
+    .dot{width:8px;height:8px;border-radius:99px;display:inline-block;margin-right:6px}
+    .dot--ok{background:#22c55e;box-shadow:0 0 12px #22c55e66}
+    .dot--bad{background:#ff6b6b;box-shadow:0 0 12px #ff6b6b66}
+
+    .qrWrap{display:grid;gap:12px;grid-template-columns:220px 1fr;align-items:center}
+    .qrBox{width:220px;height:220px;border-radius:16px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--border)}
+    .qrActions{display:flex;gap:8px;flex-wrap:wrap}
+
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .foot{margin:26px 0;color:var(--muted);font-size:.95rem;text-align:center}
+
+    .toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:40}
+    .toast{padding:.6rem .8rem;border-radius:12px;background:#0f1420;border:1px solid var(--border)}
+    .toast--ok{color:#baffde;border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+    .toast--bad{color:#ffd3d3;border-color:#ff7a7a66}
+
+    @media (max-width:720px){
+      .qrWrap{grid-template-columns:1fr}
+    }
+
+    @media print{
+      body{background:#fff;color:#000}
+      .top,.foot,.actions,.toasts{display:none!important}
+      .card{border:0;border-radius:0;box-shadow:none}
+      .qrBox{border:0}
+    }
+  </style>
+</head>
+<body>
+  <!-- Netlify Identity widget -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  <div class="top">
+    <a class="brand" href="/owner">
+      <span class="brand__dot" aria-hidden="true"></span>
+      <span class="brand__name">Owner</span>
+    </a>
+    <div class="top__right">
+      <button id="loginBtn" class="btn">Log in / Sign up</button>
+      <div id="userBox" class="user hidden">
+        <span id="whoami">—</span>
+        <button id="logoutBtn" class="btn btn--ghost">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>Create a restaurant</h1>
+      <p class="lede">Sign in, fill the details, and you’ll immediately get your public review link and private dashboard — no email confirmation needed.</p>
+    </section>
+
+    <!-- LOGIN CARD (shown when logged out) -->
+    <section id="loginCard" class="card hidden">
+      <div class="grid">
+        <div class="field">
+          <div class="help">Use any email/password or continue with Google.</div>
+          <div class="actions">
+            <button id="openLogin" class="btn">Log in / Sign up</button>
+            <button id="googleLogin" class="btn btn--ghost">Continue with Google</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORM CARD (shown when logged in & not submitted) -->
+    <section id="formCard" class="card hidden" aria-live="polite">
+      <div id="formStatus" class="status">Fill the details below.</div>
+
+      <form id="tenantForm" class="grid" novalidate>
+        <div class="row">
+          <div class="field">
+            <label for="name">Restaurant name *</label>
+            <input id="name" class="input" type="text" placeholder="e.g., Sahara" required />
+            <div class="help">Shown on your public page and owner dashboard.</div>
+          </div>
+
+          <div class="field">
+            <label for="slug">Slug (URL) *</label>
+            <div class="slugRow">
+              <input id="slug" class="input" type="text" placeholder="e.g., sahara" required />
+              <span id="slugCheck" class="slugCheck help"></span>
+            </div>
+            <div class="help">This becomes <strong>/r/&lt;slug&gt;</strong> and <strong>/owner/&lt;slug&gt;</strong>.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="brand">Brand color</label>
+            <input id="brand" class="input" type="color" value="#22c55e" />
+            <div class="help">We’ll use this as your accent (neon style).</div>
+          </div>
+
+          <div class="field">
+            <label for="maps">Google Maps link</label>
+            <input id="maps" class="input" type="url" placeholder="https://maps.google.com/?q=..." />
+            <div class="help">Used for the “Open Google” button in the dashboard.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="keywords">Keywords (comma-separated)</label>
+            <input id="keywords" class="input" type="text" placeholder="shawarma, service, ambience, parking" />
+            <div class="help">Shown as chips for faster reviews and insights.</div>
+          </div>
+
+          <div class="field">
+            <label for="tz">Tenant timezone (optional)</label>
+            <input id="tz" class="input" type="text" placeholder="e.g., Asia/Amman" />
+            <div class="help">Used for consistent “business day” analytics.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="help">
+            <input id="agree" type="checkbox" />
+            I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy</a>.
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="submitBtn" class="btn" type="submit">Create restaurant</button>
+          <span id="submitNote" class="status"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- SUCCESS CARD (shown after create) -->
+    <section id="successCard" class="card hidden">
+      <h2 style="margin:.1rem 0 0;font-weight:900;letter-spacing:-.01em;text-shadow:var(--neon)">You're set!</h2>
+      <p class="status ok">We created your restaurant and linked it to your account.</p>
+
+      <div class="qrWrap">
+        <div class="qrBox">
+          <canvas id="qrCanvas" width="220" height="220" aria-label="QR for public review page"></canvas>
+        </div>
+
+        <div>
+          <div class="row">
+            <div class="field">
+              <label for="publicLink">Public review link</label>
+              <input id="publicLink" class="input" type="text" readonly />
+              <div class="actions">
+                <button id="copyPublic" class="btn btn--ghost" type="button">Copy link</button>
+                <button id="printQR" class="btn btn--ghost" type="button">Print</button>
+                <button id="downloadQR" class="btn" type="button">Download PNG</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:12px">
+            <a id="openDashboard" class="btn" href="#">Open dashboard</a>
+            <a id="openPublic" class="btn btn--ghost" href="#" target="_blank" rel="noopener">Open public page</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="foot">© <span id="year"></span> Your Company</div>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    /* ===== Helpers ===== */
+    const $ = (s,r=document)=>r.querySelector(s);
+    const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
+    const toastBox=$('#toasts');
+    const toast=(m,t='ok')=>{const el=document.createElement('div');el.className=`toast ${t==='ok'?'toast--ok':'toast--bad'}`;el.textContent=m;toastBox.appendChild(el);setTimeout(()=>el.remove(),3500)};
+
+    const RESERVED = new Set(['admin','owner','owners','dashboard','settings','qr','api','netlify','functions','signup','create-tenant','r']);
+
+    function slugify(str){
+      return String(str||'')
+        .toLowerCase()
+        .normalize('NFKD').replace(/[\u0300-\u036f]/g,'') // remove accents
+        .replace(/[^a-z0-9]+/g,'-')
+        .replace(/(^-|-$)/g,'')
+        .slice(0,48);
+    }
+    function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))}
+    function cssColor(x){return /^#|rgb|hsl/i.test(String(x))?x:'#22c55e'}
+
+    /* ===== Identity ===== */
+    let user=null;
+    function initIdentity(){
+      if(!window.netlifyIdentity){ $('#loginCard').classList.remove('hidden'); return; }
+      netlifyIdentity.on('init', u=>{ user=u; updateAuthUI(); bootstrap(); });
+      netlifyIdentity.on('login', u=>{ user=u; updateAuthUI(); netlifyIdentity.close(); bootstrap(); });
+      netlifyIdentity.on('logout', ()=>{ user=null; updateAuthUI(); resetUI(); });
+      netlifyIdentity.init();
+    }
+    function updateAuthUI(){
+      const logged=!!user;
+      $('#loginBtn').classList.toggle('hidden',logged);
+      $('#userBox').classList.toggle('hidden',!logged);
+      $('#whoami').textContent=logged?user.email:'—';
+      $('#loginCard').classList.toggle('hidden',logged);
+      $('#formCard').classList.toggle('hidden',!logged);
+    }
+    on($('#loginBtn'),'click',()=>netlifyIdentity.open('login'));
+    on($('#openLogin'),'click',()=>netlifyIdentity.open('login'));
+    on($('#googleLogin'),'click',()=>netlifyIdentity.open('login')); // provider button still opens widget
+    on($('#logoutBtn'),'click',()=>netlifyIdentity.logout());
+
+    async function authedFetch(url,opts={}){
+      if(!user) throw new Error('Not logged in');
+      const token=await user.jwt(true);
+      const res=await fetch(url,{
+        ...opts,
+        headers:{
+          'Authorization':`Bearer ${token}`,
+          'Content-Type':'application/json',
+          ...(opts.headers||{})
+        }
+      });
+      return res;
+    }
+
+    /* ===== Slug availability (optional; server still enforces) ===== */
+    let checkTimer=null,lastChecked='';
+    async function checkSlugAvailability(slug){
+      const ui=$('#slugCheck');
+      if(!slug){ ui.innerHTML=''; return; }
+      if(RESERVED.has(slug)){ ui.innerHTML='<span class="dot dot--bad"></span> Not allowed'; return; }
+      try{
+        const res=await fetch(`/.netlify/functions/slug-available?slug=${encodeURIComponent(slug)}`,{cache:'no-store'});
+        if(res.status===404){ ui.innerHTML=''; return; } // function not present, skip UI
+        const j=await res.json();
+        if(res.ok && (j.available===true || j.ok===true)){
+          ui.innerHTML='<span class="dot dot--ok"></span> Available';
+        }else{
+          ui.innerHTML='<span class="dot dot--bad"></span> Taken';
+        }
+      }catch{ ui.innerHTML=''; }
+    }
+
+    on($('#name'),'input',()=>{
+      const cur=$('#slug').value.trim();
+      if(!cur){ $('#slug').value=slugify($('#name').value); debouncedSlugCheck(); }
+    });
+    on($('#slug'),'input',()=>{ $('#slug').value=slugify($('#slug').value); debouncedSlugCheck(); });
+    function debouncedSlugCheck(){
+      clearTimeout(checkTimer);
+      const s=$('#slug').value.trim();
+      if(s===lastChecked) return;
+      checkTimer=setTimeout(()=>{ lastChecked=s; checkSlugAvailability(s); }, 280);
+    }
+
+    /* ===== Form submit ===== */
+    on($('#tenantForm'),'submit',async (e)=>{
+      e.preventDefault();
+      if(!user){ toast('Please log in first','bad'); return; }
+
+      const name=$('#name').value.trim();
+      const slug=slugify($('#slug').value);
+      const brand=cssColor($('#brand').value||'#22c55e');
+      const maps=($('#maps').value||'').trim();
+      const kw=(($('#keywords').value||'').split(',').map(s=>s.trim()).filter(Boolean)));
+      const tz=($('#tz').value||'').trim();
+      const agree=$('#agree').checked;
+
+      if(!name){ toast('Name is required','bad'); return; }
+      if(!slug){ toast('Slug is required','bad'); return; }
+      if(RESERVED.has(slug)){ toast('This slug is not allowed','bad'); return; }
+      if(!agree){ toast('Please agree to Terms & Privacy','bad'); return; }
+
+      $('#submitBtn').disabled=true; $('#submitNote').textContent='Creating…';
+
+      try{
+        const res=await authedFetch('/.netlify/functions/create-tenant',{
+          method:'POST',
+          body:JSON.stringify({
+            name, slug,
+            brand_color: brand,
+            google_maps_url: maps,
+            keywords: kw,
+            timezone: tz || null
+          })
+        });
+        const j=await res.json();
+        if(!res.ok || j.ok===false){ throw new Error(j.error || `HTTP ${res.status}`); }
+
+        const tenant=j.tenant || j;
+        showSuccess(tenant);
+      }catch(err){
+        toast(err.message || String(err),'bad');
+        $('#submitBtn').disabled=false; $('#submitNote').textContent='';
+      }
+    });
+
+    function showSuccess(t){
+      const slug = t.slug;
+      const pub = `${location.origin}/r/${slug}`;
+      $('#publicLink').value = pub;
+      $('#openDashboard').href = `/owner/${slug}`;
+      $('#openPublic').href = `/r/${slug}`;
+      document.documentElement.style.setProperty('--accent', cssColor(t.brand_color||'#22c55e'));
+      $('#formCard').classList.add('hidden');
+      $('#successCard').classList.remove('hidden');
+      renderQR('#qrCanvas', pub, 220);
+      toast('Restaurant created','ok');
+    }
+
+    /* ===== QR (simple via QR server; swap to offline lib later if needed) ===== */
+    async function renderQR(sel, url, size){
+      const c=$(sel); if(!c) return;
+      const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+      const img=new Image(); img.crossOrigin='anonymous';
+      img.src=`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=${size}x${size}&margin=0`;
+      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; });
+      ctx.drawImage(img,0,0,size,size);
+    }
+    on($('#copyPublic'),'click',async()=>{ try{ await navigator.clipboard.writeText($('#publicLink').value); toast('Copied'); }catch{ toast('Copy failed','bad'); }});
+    on($('#printQR'),'click',()=>window.print());
+    on($('#downloadQR'),'click',()=>{
+      const c=$('#qrCanvas');
+      const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='qr-public.png'; a.click();
+    });
+
+    /* ===== Page boot ===== */
+    function resetUI(){
+      $('#formCard').classList.add('hidden');
+      $('#loginCard').classList.remove('hidden');
+    }
+    document.addEventListener('DOMContentLoaded',()=>{
+      $('#year').textContent=new Date().getFullYear();
+      initIdentity();
+    });
+  </script>
+</body>
+</html>
