@@ -1,0 +1,9 @@
+/owner                     /owner.html                200
+/owner/*/settings          /owner-settings.html       200
+/owner/*/qr                /owner-qr.html             200
+/owner/*                   /owner-dashboard.html      200
+
+/create-tenant             /create-tenant.html        200
+/r/*                       /index.html                200
+
+/*                         /404.html                  404
