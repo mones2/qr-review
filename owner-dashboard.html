@@ -4,15 +4,13 @@
   <meta charset="utf-8" />
   <title>Owner — Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <meta name="color-scheme" content="dark light" />
   <style>
     :root{
       --bg:#070a12; --panel:#0f1420; --text:#f2f4fb; --muted:#aeb3c4; --border:rgba(255,255,255,.14);
       --accent:#22c55e; --accent-2:#16a34a;
-      --neon:0 0 22px color-mix(in srgb, var(--accent) 75%, transparent),
-             0 0 48px color-mix(in srgb, var(--accent) 40%, transparent);
-      --r:18px; --tap:48px;
-      --shadow:0 10px 40px rgba(0,0,0,.25);
+      --neon:0 0 22px color-mix(in srgb, var(--accent) 75%, transparent), 0 0 48px color-mix(in srgb, var(--accent) 40%, transparent);
+      --r:18px; --tap:48px; --shadow:0 10px 40px rgba(0,0,0,.25);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -137,18 +135,22 @@
       .nav{overflow:auto hidden;white-space:nowrap;mask:linear-gradient(90deg,#000 92%,transparent)}
       .qr{flex-direction:column;align-items:flex-start}
     }
+
+    @media (prefers-reduced-motion: reduce){
+      .btn{transition:none}
+    }
   </style>
 </head>
 <body>
   <!-- Netlify Identity -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js" defer></script>
 
   <div class="top">
-    <a class="brand" href="/owner">
+    <a class="brand" href="#" aria-label="Owner dashboard home">
       <span class="brand__dot" aria-hidden="true"></span>
       <span class="brand__name">Owner</span>
     </a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Primary">
       <a id="tabDash" class="tab tab--active" href="#" aria-current="page">Dashboard</a>
       <a id="tabFeedback" class="tab hidden" href="#">Quick feedback</a>
       <a id="tabSettings" class="tab" href="#">Settings</a>
@@ -156,19 +158,20 @@
     </nav>
     <div class="top__right">
       <button id="loginBtn" class="btn">Log in / Sign up</button>
-      <div id="userBox" class="user hidden">
+      <div id="userBox" class="user hidden" aria-live="polite">
         <span id="whoami">—</span>
         <button id="logoutBtn" class="btn btn--ghost">Log out</button>
       </div>
     </div>
   </div>
 
-  <main class="wrap">
+  <main class="wrap" id="main" tabindex="-1">
     <!-- Login prompt (shown if logged out) -->
-    <section id="loginCard" class="card hidden">
+    <section id="loginCard" class="card hidden" aria-labelledby="loginTitle">
       <div class="row">
         <div class="field">
-          <div class="status">Please log in to view your dashboard.</div>
+          <h2 id="loginTitle" style="margin:0">Please log in</h2>
+          <div class="status">Log in to view your dashboard.</div>
           <div class="row">
             <button id="openLogin" class="btn">Log in / Sign up</button>
           </div>
@@ -203,7 +206,7 @@
     </section>
 
     <!-- Filters -->
-    <section id="filters" class="card hidden">
+    <section id="filters" class="card hidden" aria-label="Filters">
       <div class="filters__row">
         <div class="field">
           <label for="dateRange">Date range</label>
@@ -276,7 +279,7 @@
     </section>
 
     <!-- KPIs -->
-    <section id="kpis" class="kpis hidden">
+    <section id="kpis" class="kpis hidden" aria-label="KPIs">
       <div class="kpi card"><div class="kpi__label">Total</div><div id="kpiTotal" class="kpi__value">0</div></div>
       <div class="kpi card"><div class="kpi__label">Excellent</div><div id="kpiExc" class="kpi__value">0</div></div>
       <div class="kpi card"><div class="kpi__label">Good</div><div id="kpiGood" class="kpi__value">0</div></div>
@@ -285,7 +288,7 @@
     </section>
 
     <!-- Charts -->
-    <section id="charts" class="charts hidden">
+    <section id="charts" class="charts hidden" aria-label="Charts">
       <div class="chart card">
         <div class="chart__title">Reviews per day</div>
         <div id="chartTrend" class="chart__stage" role="img" aria-label="Reviews per day"></div>
@@ -297,22 +300,22 @@
     </section>
 
     <!-- Keywords -->
-    <section id="keywordsCard" class="card hidden">
+    <section id="keywordsCard" class="card hidden" aria-labelledby="kwTitle">
       <div class="row" style="justify-content:space-between;align-items:center">
-        <h3 style="margin:0">Top keywords</h3>
+        <h3 id="kwTitle" style="margin:0">Top keywords</h3>
         <button id="keywordsReset" class="btn btn--ghost">Reset selection</button>
       </div>
       <div id="keywordsCloud" class="chips" style="margin-top:8px"></div>
     </section>
 
     <!-- Tables -->
-    <section id="tables" class="tabs card hidden">
+    <section id="tables" class="tabs card hidden" aria-label="Data tables">
       <div class="tabs__nav">
-        <button id="tabReviews" class="tab tab--active">Reviews</button>
-        <button id="tabQuick" class="tab hidden">Quick feedback</button>
+        <button id="tabReviews" class="tab tab--active" aria-controls="panelReviews" aria-selected="true">Reviews</button>
+        <button id="tabQuick" class="tab hidden" aria-controls="panelQuick" aria-selected="false">Quick feedback</button>
       </div>
 
-      <div id="panelReviews" class="tab-panel">
+      <div id="panelReviews" class="tab-panel" role="tabpanel">
         <div class="table-wrap">
           <table class="table" id="reviewsTable">
             <thead>
@@ -328,7 +331,7 @@
         </div>
       </div>
 
-      <div id="panelQuick" class="tab-panel hidden">
+      <div id="panelQuick" class="tab-panel hidden" role="tabpanel">
         <div class="table-wrap">
           <table class="table">
             <thead><tr><th>Date</th><th>Type</th><th>Meal</th><th>Spend</th><th>Feedback</th></tr></thead>
@@ -363,13 +366,14 @@
       tzViewer: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       tzChosen:'tenant', tzTenant:null,
       reviewsRaw:[], quickRaw:[],
+      lastFetchLimit:300,
       filter:{ range:'30', kind:'all', posted:'all', ai:'all', visit:'all', parking:'all', search:'', kwSelected:new Set() }
     };
 
     /* ===== Identity ===== */
     function initIdentity(){
       if(!window.netlifyIdentity){ showLoggedOut(); return; }
-      netlifyIdentity.on('init', u=>{ state.user=u; updateAuthUI(); startIfReady(); });
+      netlifyIdentity.on('init', u=>{ state.user=u; updateAuthUI(); u ? startIfReady() : showLoggedOut(); });
       netlifyIdentity.on('login', u=>{ state.user=u; updateAuthUI(); netlifyIdentity.close(); startIfReady(); });
       netlifyIdentity.on('logout', ()=>{ state.user=null; updateAuthUI(); showLoggedOut(); });
       netlifyIdentity.init();
@@ -380,9 +384,9 @@
       $('#userBox').classList.toggle('hidden',!logged);
       $('#whoami').textContent=logged?state.user.email:'—';
     }
-    on($('#loginBtn'),'click',()=>netlifyIdentity.open('login'));
-    on($('#openLogin'),'click',()=>netlifyIdentity.open('login'));
-    on($('#logoutBtn'),'click',()=>netlifyIdentity.logout());
+    on($('#loginBtn'),'click',()=>netlifyIdentity?.open('login'));
+    on($('#openLogin'),'click',()=>netlifyIdentity?.open('login'));
+    on($('#logoutBtn'),'click',()=>netlifyIdentity?.logout());
 
     async function authedFetch(url,opts={}){
       if(!state.user) throw new Error('Not logged in');
@@ -431,7 +435,8 @@
       document.documentElement.style.setProperty('--accent', accent);
       document.documentElement.style.setProperty('--accent-2', darken(accent,.2));
 
-      // Build top nav links
+      // Build top nav links (and brand home) after slug known
+      $('.brand').setAttribute('href', `/owner/${encodeURIComponent(state.slug)}`);
       $('#tabSettings').href = `/owner/${encodeURIComponent(state.slug)}/settings`;
       $('#tabQR').href = `/owner/${encodeURIComponent(state.slug)}/qr`;
 
@@ -450,7 +455,7 @@
       loadTZPref(); applyTZNote();
 
       // Data
-      await loadReviews({reset:true});
+      await loadReviews({reset:true, limit:state.lastFetchLimit});
       await maybeLoadQuick();
 
       // Show sections
@@ -475,22 +480,24 @@
           const hit = (j.tenants||[]).find(t=>t.slug===state.slug);
           if(hit){ state.tenant = hit; return; }
         }
-      }catch(_){}
+      }catch(_){/* ignore */}
       try{
         const res = await fetch(`/.netlify/functions/get-tenant?slug=${encodeURIComponent(state.slug)}`,{cache:'no-store'});
         const j = await res.json();
         if(res.ok && j){ state.tenant = j.tenant || j; return; }
-      }catch(_){}
+      }catch(_){/* ignore */}
       state.tenant = { slug: state.slug, name: state.slug, brand_color: '#22c55e' };
     }
 
     async function loadReviews({reset=false, limit=300}={}){
-      if(reset){ state.reviewsRaw=[]; }
       try{
         const res = await authedFetch(`/.netlify/functions/reviews-owner?slug=${encodeURIComponent(state.slug)}&limit=${limit}`);
         const j = await res.json();
-        if(res.ok && j.ok){ state.reviewsRaw = j.reviews || []; }
-        else throw new Error(j.error || `HTTP ${res.status}`);
+        if(res.ok && j.ok){
+          const next = j.reviews || [];
+          state.reviewsRaw = reset ? next : next; // API returns the first N; keep same behavior
+          state.lastFetchLimit = limit;
+        } else throw new Error(j.error || `HTTP ${res.status}`);
       }catch(e){ toast('Failed to load reviews: '+e.message,'bad'); }
     }
     async function maybeLoadQuick(){
@@ -533,7 +540,7 @@
       downloadFile(`reviews-${state.slug}.csv`,'text/csv',csv);
     });
 
-    on($('#loadMore'),'click',async()=>{ await loadReviews({reset:false,limit:600}); renderAll(); });
+    on($('#loadMore'),'click',async()=>{ await loadReviews({reset:false,limit:state.lastFetchLimit+300}); renderAll(); });
 
     /* ===== Copy/QR buttons ===== */
     on($('#copyLink'),'click',async()=>{ try{ await navigator.clipboard.writeText($('#publicLink').value); toast('Copied'); }catch{ toast('Copy failed','bad'); }});
@@ -551,7 +558,6 @@
 
     function applyFilters(){
       const tz=currentTZ();
-      const fmt=new Intl.DateTimeFormat(undefined,{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
       const text=state.filter.search.trim().toLowerCase();
       const kwSel=state.filter.kwSelected;
 
@@ -587,7 +593,7 @@
       const top=[...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k])=>k);
       const cloud=$('#keywordsCloud'); cloud.innerHTML='';
       top.forEach(k=>{
-        const chip=document.createElement('button'); chip.className='chip'; chip.textContent=k;
+        const chip=document.createElement('button'); chip.className='chip'; chip.type='button'; chip.textContent=k;
         const pressed=state.filter.kwSelected.has(k); chip.setAttribute('aria-pressed', pressed?'true':'false');
         chip.onclick=()=>{ if(pressed) state.filter.kwSelected.delete(k); else state.filter.kwSelected.add(k); renderAll(); };
         cloud.appendChild(chip);
@@ -610,13 +616,15 @@
       const tz=currentTZ();
       const dayKey=ts=>{
         const d=new Date(ts);
-        // format as YYYY-MM-DD in TZ
         const f=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
-        return f; // already yyyy-mm-dd
+        return f; // yyyy-mm-dd
       };
       const map=new Map();
       rows.forEach(r=>{ const k=dayKey(r._ts); map.set(k,(map.get(k)||0)+1); });
       const data=[...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([d,v])=>({d,v}));
+
+      if(!data.length){ stage.textContent='No data yet'; return; }
+
       const W=640,H=220,P=26; const maxV=Math.max(1, ...data.map(x=>x.v));
       const svg=elt('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:'100%'});
       svg.appendChild(line(P,H-P,W-P,H-P,'#ffffff22')); svg.appendChild(line(P,P,P,H-P,'#ffffff22'));
@@ -631,7 +639,10 @@
     function renderKind(rows){
       const stage=$('#chartKind'); stage.innerHTML='';
       const c={excellent:0,good:0,bad:0}; rows.forEach(r=>c[r.kind]=(c[r.kind]||0)+1);
-      const items=Object.entries(c); const W=360,H=220,P=26; const slot=(W-2*P)/items.length; const barW=slot-16; const maxV=Math.max(1,...items.map(([,v])=>v));
+      const items=Object.entries(c);
+      const total = items.reduce((s,[,v])=>s+v,0);
+      if(!total){ stage.textContent='No data yet'; return; }
+      const W=360,H=220,P=26; const slot=(W-2*P)/items.length; const barW=slot-16; const maxV=Math.max(1,...items.map(([,v])=>v));
       const svg=elt('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:'100%'}); const defs=elt('defs'); defs.appendChild(grad('bar','var(--accent)','var(--accent-2)')); svg.appendChild(defs);
       items.forEach(([k,v],i)=>{ const x=P+i*slot+8; const h=(v/maxV)*(H-2*P); const y=H-P-h;
         svg.appendChild(elt('rect',{x,y,width:barW,height:h,fill:'url(#bar)'}));
@@ -664,11 +675,11 @@
         tr.appendChild(td(r.ai_used?'Yes':''));
         tr.appendChild(td(r.posted_to_google?'Yes':'No'));
         const actions=document.createElement('td');
-        const copyBtn=document.createElement('button'); copyBtn.className='btn btn--ghost'; copyBtn.textContent='Copy';
+        const copyBtn=document.createElement('button'); copyBtn.className='btn btn--ghost'; copyBtn.type='button'; copyBtn.textContent='Copy';
         copyBtn.onclick=()=>navigator.clipboard.writeText(r.review_text||'').then(()=>toast('Copied')).catch(()=>toast('Copy failed','bad'));
         const gBtn=document.createElement('a'); gBtn.className='btn btn--ghost'; gBtn.textContent='Open Google';
         const g = state.tenant?.google_maps_url || state.tenant?.google?.mapsUrl || '';
-        if(g){ gBtn.href=g; gBtn.target='_blank'; gBtn.rel='noopener'; } else { gBtn.onclick=(e)=>{ e.preventDefault(); toast('Google link not set','bad'); }; }
+        if(g){ gBtn.href=g; gBtn.target='_blank'; gBtn.rel='noopener'; } else { gBtn.href='#'; gBtn.addEventListener('click',e=>{ e.preventDefault(); toast('Google link not set','bad'); }); }
         actions.append(copyBtn,' ',gBtn);
         tr.appendChild(actions);
         tbody.appendChild(tr);
@@ -697,8 +708,8 @@
       const c=$(sel); if(!c) return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
       const img=new Image(); img.crossOrigin='anonymous';
       img.src=`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=${size}x${size}&margin=0`;
-      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; });
-      ctx.drawImage(img,0,0,size,size);
+      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; }).catch(()=>{});
+      if(img.complete && img.naturalWidth){ ctx.drawImage(img,0,0,size,size); }
     }
 
     /* ===== Boot ===== */
