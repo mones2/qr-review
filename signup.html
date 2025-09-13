@@ -1,0 +1,1395 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Owner — Reviews</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+  :root{
+    /* Core palette (non-blue accent by default). JS can override --accent at runtime per tenant */
+    --bg:#0b0d14; --surface:#111522;
+    --g1:rgba(255,255,255,.045); --g2:rgba(255,255,255,.02);
+    --border:rgba(255,255,255,.12); --border-2:rgba(255,255,255,.20);
+    --text:#f2f4fb; --muted:#aeb3c4;
+    --accent:#22c55e;        /* emerald default */
+    --accent-2:#16a34a;      /* deeper emerald */
+    --success:#8dffcc; --error:#ff7a7a;
+    --focus:0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent);
+
+    --r:18px;                /* global radius */
+    --tap:48px;              /* min touch target */
+    --shadow:0 10px 40px rgba(0,0,0,.25); /* subtle, not glowy */
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text);
+    font: 16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 650px at 15% -10%, color-mix(in srgb, var(--accent) 25%, transparent), transparent 60%),
+      radial-gradient(1100px 550px at 90% 110%, rgba(59,130,246,.10), transparent 60%),
+      var(--bg);
+    overflow-x:hidden;
+  }
+
+  a{ color:inherit; text-decoration:none }
+  a:hover{ text-decoration:underline }
+  a.tab{text-decoration:none}
+
+  .hidden{ display:none !important }
+
+  /* App shell */
+  .app{ min-height:100dvh; display:flex; flex-direction:column }
+  .view{ width:100%; max-width:1200px; margin:24px auto 64px; padding:0 16px; }
+
+  /* Top bar */
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:10px 16px;
+    background:linear-gradient(180deg, rgba(17,21,34,.9), rgba(17,21,34,.6));
+    border-bottom:1px solid var(--border-2);
+    backdrop-filter:saturate(1.2) blur(6px);
+  }
+  .topbar__left{ display:flex; align-items:center; gap:12px }
+  .topbar__nav{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .topbar__right{ display:flex; gap:8px; align-items:center }
+
+  .brand{ display:inline-flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px }
+  .brand__dot{ width:12px; height:12px; border-radius:999px; background:linear-gradient(271deg, color-mix(in srgb, var(--accent) 65%, #fff), var(--accent-2)); box-shadow:0 0 0 2px rgba(255,255,255,.06) inset }
+  .brand__name{ color:#fff }
+
+  .tenant-badge{
+    padding:.25rem .55rem; border-radius:999px;
+    border:1px solid var(--border); color:var(--muted); font-size:.9rem;
+  }
+
+  /* Tabs in topbar */
+  .tab{
+    padding:.55rem .8rem; border-radius:10px; border:1px solid transparent;
+    color:var(--muted); font-weight:600;
+  }
+  .tab:hover{ color:#fff; border-color:var(--border) }
+  .tab--active, .tab[aria-selected="true"]{
+    color:#0b2418;
+    background: radial-gradient(100% 100% at 50% 0, color-mix(in srgb, var(--accent) 35%, transparent), color-mix(in srgb, var(--accent) 18%, transparent));
+    border:1px solid color-mix(in srgb, var(--accent) 45%, rgba(255,255,255,.25));
+  }
+
+  /* Cards & sections */
+  .card{
+    background:linear-gradient(180deg,var(--g1),var(--g2)),var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r);
+    padding:18px;
+    box-shadow:var(--shadow);
+  }
+  .head{ display:flex; gap:16px; align-items:stretch; flex-wrap:wrap }
+  .head__meta{ flex:1 1 320px }
+  .head__qr{ display:flex; gap:16px; align-items:center; flex:1 1 420px; min-width:320px }
+
+  .h1{ margin:.1rem 0 .25rem; font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2.2rem); letter-spacing:-.02em }
+  .h2{ margin:.1rem 0 .3rem; font-size: clamp(1.2rem, 1rem + 0.7vw, 1.5rem) }
+  .lede{ color:var(--muted); margin:.25rem 0 1rem }
+  .muted{ color:var(--muted) }
+
+  /* Buttons */
+  .btn{
+    appearance:none; cursor:pointer; user-select:none;
+    display:inline-flex; align-items:center; justify-content:center; gap:.55rem;
+    min-height:var(--tap); padding:.7rem 1rem; border-radius:999px; font-weight:800;
+    color:#0b2418;
+    background: linear-gradient(271deg, color-mix(in srgb, var(--accent) 65%, #fff), var(--accent-2));
+    border:1px solid color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,.25));
+    transition: transform .08s ease, border-color .15s ease, opacity .15s ease;
+    text-decoration:none;
+  }
+  .btn:hover{ transform: translateY(-1px) }
+  .btn:active{ transform: translateY(0) }
+  .btn:focus-visible{ outline:none; box-shadow:var(--focus) }
+  .btn[disabled]{ opacity:.6; cursor:not-allowed }
+
+  .btn--ghost{
+    background:rgba(255,255,255,.05);
+    color:var(--text);
+    border:1px solid var(--border-2);
+  }
+  .actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px }
+
+  /* Inputs */
+  .field{ display:flex; flex-direction:column; gap:6px; min-width:140px }
+  .field--grow{ flex:1 1 240px }
+  .field--end{ align-self:end }
+  label{ font-weight:600 }
+  .input, .select{
+    width:100%; min-height:44px; border-radius:12px;
+    background:#0f1420; color:var(--text);
+    border:1px solid var(--border); padding:.6rem .75rem; outline:0;
+  }
+  .input:focus, .select:focus{ box-shadow:var(--focus) }
+
+  /* Switch (timezone toggle) */
+  .switch{ display:flex; align-items:center; gap:.6rem; color:var(--muted) }
+  .switch input{ appearance:auto; width:1.1rem; height:1.1rem }
+
+  /* Status / toasts */
+  .status{ color:var(--muted); margin:.3rem 0 }
+  .toasts{ position:fixed; right:16px; bottom:16px; display:grid; gap:8px; z-index:50 }
+  .toast{ padding:.6rem .8rem; border-radius:12px; background:#0f1420; border:1px solid var(--border); box-shadow:var(--shadow) }
+  .toast--ok{ border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--success) }
+  .toast--bad{ border-color: rgba(255,99,99,.45); color:#ffd3d3 }
+
+  /* Screens */
+  .screen{ margin-bottom:16px }
+  .screen.hidden{ display:none !important }
+
+  /* Filters bar */
+  .filters{ display:grid; gap:12px }
+  .filters__row{ display:flex; gap:12px; flex-wrap:wrap }
+
+  /* KPIs */
+  .kpis{
+    display:grid; gap:12px; margin:12px 0;
+    grid-template-columns: repeat(5, minmax(120px,1fr));
+  }
+  @media (max-width:960px){ .kpis{ grid-template-columns: repeat(3,1fr) } }
+  @media (max-width:640px){ .kpis{ grid-template-columns: repeat(2,1fr) } }
+  .kpi{ display:flex; flex-direction:column; gap:4px; align-items:flex-start }
+  .kpi__label{ color:var(--muted); font-weight:600 }
+  .kpi__value{ font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); font-weight:900 }
+
+  /* Charts */
+  .charts{
+    display:grid; gap:12px; margin:12px 0;
+    grid-template-columns: 2fr 1fr;
+  }
+  @media (max-width:960px){ .charts{ grid-template-columns: 1fr } }
+  .chart{ padding:0 }
+  .chart .chart__title{ padding:14px 16px; border-bottom:1px solid var(--border) }
+  .chart__stage{ padding:10px 12px 14px; min-height:180px }
+
+  /* Keywords / chips */
+  .section__head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px }
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    padding:.45rem .75rem; border-radius:999px; line-height:1;
+    color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--border);
+  }
+  .chip[aria-pressed="true"]{
+    color:#0b2418;
+    background:linear-gradient(271deg, color-mix(in srgb, var(--accent) 55%, #fff), var(--accent-2));
+    border-color: color-mix(in srgb, var(--accent) 60%, rgba(255,255,255,.25));
+  }
+
+  /* Tabs & tables */
+  .tabs{ padding:0 }
+  .tabs__nav{
+    display:flex; gap:4px; padding:6px; border-bottom:1px solid var(--border);
+    position:sticky; top:calc(56px + 1px); background:linear-gradient(180deg, rgba(17,21,34,.95), rgba(17,21,34,.85)); z-index:2;
+  }
+  .tabs .tab{
+    border-radius:12px; padding:.55rem .9rem; border:1px solid var(--border);
+    color:var(--muted); background:rgba(255,255,255,.04);
+  }
+  .tabs .tab--active{ color:#0b2418; background:linear-gradient(271deg, color-mix(in srgb, var(--accent) 45%, #fff), var(--accent-2)); border-color: color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,.25)) }
+
+  .tab-panel{ padding:10px 12px }
+  .table-wrap{ overflow:auto }
+  table.table{
+    width:100%; border-collapse:separate; border-spacing:0; font-size:.95rem;
+    border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  }
+  .table thead th{
+    position:sticky; top:0; z-index:1;
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    text-align:left; padding:10px 12px; border-bottom:1px solid var(--border);
+    color:#dfe3f2; font-weight:700;
+  }
+  .table tbody td{ padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.08); vertical-align:top }
+  .table tbody tr:nth-child(2n){ background:rgba(255,255,255,.02) }
+  .table__footer{ display:flex; justify-content:center; padding:10px }
+
+  /* QR widgets */
+  .qr-preview{ width:220px; height:220px; border-radius:16px; display:grid; place-items:center; background:rgba(255,255,255,.04); border:1px solid var(--border) }
+  .qr-actions{ display:flex; flex-direction:column; gap:8px; flex:1 }
+  .qr-link{ display:flex; gap:8px; align-items:center }
+  .qr-big{ display:grid; gap:12px; justify-items:center }
+  .qr-under{ text-align:center }
+  .qr-title{ font-weight:900; font-size: clamp(1.4rem, 1.2rem + .8vw, 2rem) }
+  .qr-url{ color:var(--muted) }
+
+  /* Footer */
+  .footer{
+    margin-top:auto; padding:18px 16px; border-top:1px solid var(--border-2);
+    background:linear-gradient(180deg, rgba(17,21,34,.6), rgba(17,21,34,.4));
+    text-align:center;
+  }
+  .footer a{ color:var(--text) }
+
+  /* Focus */
+  :focus-visible{ outline:none; box-shadow:var(--focus) }
+
+  /* Responsive tweaks */
+  @media (max-width:860px){
+    .topbar{ gap:8px }
+    .topbar__nav{ overflow:auto hidden; white-space:nowrap; mask:linear-gradient(90deg,#000 92%, transparent) }
+    .head__qr{ flex-direction:column; align-items:flex-start }
+    .qr-link{ width:100% }
+    .qr-link .input{ flex:1 }
+  }
+
+  /* Print — clean QR sheet */
+  @media print{
+    body{ background:#fff; color:#000 }
+    .topbar, .footer, .filters, .kpis, .charts, .tabs, .toasts, .actions{ display:none !important }
+    .view{ max-width:none; margin:0; padding:0 }
+    .card{ border:0; border-radius:0; box-shadow:none; }
+    .qr-big{ margin:20mm auto; }
+  }
+</style>
+
+</head>
+<body>
+  <div id="app" class="app">
+
+    <!-- ===== Top Bar / Global Header ===== -->
+    <header class="topbar" role="banner">
+      <div class="topbar__left">
+        <a class="brand" href="/owner" data-link>
+          <span class="brand__dot" aria-hidden="true"></span>
+          <span class="brand__name">Owner</span>
+        </a>
+        <div id="tenantBadge" class="tenant-badge" aria-live="polite">
+          <!-- Filled by JS: tenant name / slug -->
+        </div>
+      </div>
+
+      <nav class="topbar__nav" aria-label="Primary">
+        <!-- When on a tenant route, these show -->
+        <a class="tab" href="/owner" data-link id="navHome">Home</a>
+        <a class="tab" href="/owner/_/dashboard" data-link id="navDashboard">Dashboard</a>
+        <a class="tab" href="/owner/_/feedback" data-link id="navFeedback">Quick feedback</a>
+        <a class="tab" href="/owner/_/settings" data-link id="navSettings">Settings</a>
+        <a class="tab" href="/owner/_/qr" data-link id="navQR">QR</a>
+      </nav>
+
+      <div class="topbar__right">
+        <button id="loginBtn" class="btn">Log in / Sign up</button>
+        <div id="userMenu" class="user hidden" aria-live="polite">
+          <span id="whoami" class="user__email">—</span>
+          <button id="logoutBtn" class="btn btn--ghost">Log out</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== Notifications / Toasts ===== -->
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ===== MAIN ===== -->
+    <main id="view" class="view" role="main">
+
+      <!-- ========== SCREEN: /owner (Launcher / Picker) ========== -->
+      <section id="screen-launcher" class="screen" data-route="launcher" aria-label="Owner launcher">
+        <div class="card">
+          <h1 class="h1">Your restaurants</h1>
+          <p class="lede">Select a restaurant to open the dashboard. If you have only one, we will take you there automatically.</p>
+
+          <div id="launchState" class="status">
+            <!-- JS fills: “Checking your account… / Not logged in / Loading your restaurants…” -->
+          </div>
+
+          <div id="tenantsList" class="tenant-list">
+            <!-- JS fills: cards of tenants (name, slug, brand color) -->
+          </div>
+
+          <div class="actions">
+            <a class="btn" href="/signup">Create a restaurant</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: /owner/<slug> (Dashboard) ========== -->
+      <section id="screen-dashboard" class="screen hidden" data-route="dashboard" aria-label="Dashboard">
+        <!-- Header / QR strip -->
+        <div class="card head">
+          <div class="head__meta">
+            <h1 id="dashTitle" class="h1">—</h1>
+            <div id="timeNote" class="muted">All times in —</div>
+          </div>
+          <div class="head__qr">
+            <div class="qr-preview">
+              <canvas id="qrCanvas" width="220" height="220" aria-label="QR for public review page"></canvas>
+            </div>
+            <div class="qr-actions">
+              <button id="qrPrint" class="btn btn--ghost">Print</button>
+              <button id="qrDownload" class="btn">Download PNG</button>
+              <div class="qr-link">
+                <input id="publicLink" class="input" type="text" readonly value="" aria-label="Public review URL" />
+                <button id="copyPublicLink" class="btn btn--ghost">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card filters">
+          <div class="filters__row">
+            <div class="field">
+              <label for="dateRange">Date range</label>
+              <select id="dateRange" class="select">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="all">All time</option>
+                <option value="custom">Custom…</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="kindFilter">Kind</label>
+              <select id="kindFilter" class="select">
+                <option value="all" selected>All</option>
+                <option value="excellent">Excellent</option>
+                <option value="good">Good</option>
+                <option value="bad">Not great</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="postedFilter">Posted to Google</label>
+              <select id="postedFilter" class="select">
+                <option value="all" selected>All</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="aiFilter">AI used</label>
+              <select id="aiFilter" class="select">
+                <option value="all" selected>All</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="visitFilter">Visit type</label>
+              <select id="visitFilter" class="select">
+                <option value="all" selected>All</option>
+                <option value="Dine-in">Dine-in</option>
+                <option value="Takeout">Takeout</option>
+                <option value="Delivery">Delivery</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="parkingFilter">Parking</label>
+              <select id="parkingFilter" class="select">
+                <option value="all" selected>All</option>
+                <option value="Street">Street</option>
+                <option value="Lot">Lot</option>
+                <option value="Valet">Valet</option>
+                <option value="None / not sure">None / not sure</option>
+              </select>
+            </div>
+            <div class="field field--grow">
+              <label for="searchBox">Search</label>
+              <input id="searchBox" class="input" type="search" placeholder="Text, keyword…" />
+            </div>
+            <div class="field field--end">
+              <button id="exportCsv" class="btn btn--ghost">Export CSV</button>
+            </div>
+          </div>
+
+          <!-- Optional timezone toggle -->
+          <div class="filters__row">
+            <label class="switch">
+              <input id="tzToggle" type="checkbox" />
+              <span>Use my timezone</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <section class="kpis">
+          <div class="kpi card">
+            <div class="kpi__label">Total</div>
+            <div id="kpiTotal" class="kpi__value">0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi__label">Excellent</div>
+            <div id="kpiExc" class="kpi__value">0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi__label">Good</div>
+            <div id="kpiGood" class="kpi__value">0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi__label">Not great</div>
+            <div id="kpiBad" class="kpi__value">0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi__label">% posted</div>
+            <div id="kpiPosted" class="kpi__value">0%</div>
+          </div>
+        </section>
+
+        <!-- Charts -->
+        <section class="charts">
+          <div class="chart card">
+            <div class="chart__title">Reviews per day</div>
+            <div id="chartTrend" class="chart__stage" role="img" aria-label="Reviews per day chart"></div>
+          </div>
+          <div class="chart card">
+            <div class="chart__title">By kind</div>
+            <div id="chartKind" class="chart__stage" role="img" aria-label="Reviews by kind chart"></div>
+          </div>
+        </section>
+
+        <!-- Keywords insight -->
+        <section class="card keywords">
+          <div class="section__head">
+            <h2 class="h2">Top keywords</h2>
+            <button id="keywordsReset" class="btn btn--ghost">Reset selection</button>
+          </div>
+          <div id="keywordsCloud" class="chips">
+            <!-- Chips injected here -->
+          </div>
+        </section>
+
+        <!-- Data Tabs -->
+        <div class="tabs card">
+          <div class="tabs__nav" role="tablist" aria-label="Data views">
+            <button id="tabReviews" class="tab tab--active" role="tab" aria-selected="true">Reviews</button>
+            <button id="tabFeedback" class="tab" role="tab" aria-selected="false">Quick feedback</button>
+          </div>
+
+          <!-- Reviews table -->
+          <div id="panelReviews" class="tab-panel" role="tabpanel" aria-labelledby="tabReviews">
+            <div class="table-wrap">
+              <table class="table" id="reviewsTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Kind</th>
+                    <th>Review</th>
+                    <th>Keywords</th>
+                    <th>Visit</th>
+                    <th>Parking</th>
+                    <th>AI</th>
+                    <th>Posted</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="reviewsBody">
+                  <!-- Rows injected -->
+                </tbody>
+              </table>
+              <div class="table__footer">
+                <button id="loadMore" class="btn btn--ghost">Load more</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick feedback table -->
+          <div id="panelFeedback" class="tab-panel hidden" role="tabpanel" aria-labelledby="tabFeedback">
+            <div class="table-wrap">
+              <table class="table" id="quickTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Meal</th>
+                    <th>Spend</th>
+                    <th>Feedback</th>
+                  </tr>
+                </thead>
+                <tbody id="quickBody">
+                  <!-- Rows injected -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: /owner/<slug>/settings ========== -->
+      <section id="screen-settings" class="screen hidden" data-route="settings" aria-label="Settings">
+        <div class="card">
+          <h1 class="h1">Settings</h1>
+          <p class="lede">Update your tenant defaults. Changes affect your public review page and dashboard.</p>
+
+          <form id="settingsForm" class="form" novalidate>
+            <div class="row">
+              <div class="field">
+                <label for="setName">Restaurant name</label>
+                <input id="setName" class="input" type="text" placeholder="e.g., Sahara" />
+              </div>
+              <div class="field">
+                <label for="setBrand">Brand color</label>
+                <input id="setBrand" class="input" type="color" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="setMaps">Google Maps link</label>
+                <input id="setMaps" class="input" type="url" placeholder="https://maps.google.com/?q=..." />
+              </div>
+              <div class="field">
+                <label for="setTZ">Tenant timezone</label>
+                <input id="setTZ" class="input" type="text" placeholder="e.g., Asia/Amman" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="setKeywords">Default keywords (comma-separated)</label>
+              <input id="setKeywords" class="input" type="text" placeholder="kebab, service, ambience, parking" />
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="setVisit">Visit types (comma-separated)</label>
+                <input id="setVisit" class="input" type="text" placeholder="Dine-in, Takeout, Delivery" />
+              </div>
+              <div class="field">
+                <label for="setParking">Parking options (comma-separated)</label>
+                <input id="setParking" class="input" type="text" placeholder="Street, Lot, Valet, None / not sure" />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="settingsSave" class="btn" type="submit">Save changes</button>
+              <span id="settingsStatus" class="muted" role="status" aria-live="polite"></span>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: /owner/<slug>/qr (printable) ========== -->
+      <section id="screen-qr" class="screen hidden" data-route="qr" aria-label="QR code">
+        <div class="card">
+          <h1 class="h1">QR for public reviews</h1>
+          <p class="lede">Print and place this near the checkout or on tables.</p>
+
+          <div class="qr-big">
+            <canvas id="qrCanvasBig" width="512" height="512" aria-label="Large QR code"></canvas>
+            <div class="qr-under">
+              <div id="qrTitle" class="qr-title">Share your experience</div>
+              <div id="qrUrl" class="qr-url">/r/—</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="qrPrint2" class="btn btn--ghost">Print</button>
+            <button id="qrDownload2" class="btn">Download PNG</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: 404 (client-side) ========== -->
+      <section id="screen-404" class="screen hidden" data-route="404" aria-label="Not found">
+        <div class="card">
+          <h1 class="h1">Page not found</h1>
+          <p class="lede">We couldn’t find that page. Try the owner home.</p>
+          <div class="actions">
+            <a class="btn" href="/owner" data-link>Go to /owner</a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer" role="contentinfo">
+      <div class="muted">© <span id="year"></span> Your Company • <a href="/terms" data-link>Terms</a> • <a href="/privacy" data-link>Privacy</a></div>
+    </footer>
+  </div>
+  <!-- Netlify Identity widget (required for netlifyIdentity) -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+<script>
+/* =========================================================
+   Owner SPA – routing, auth, data, charts, QR
+   ========================================================= */
+
+/* ---------- Small helpers ---------- */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmtPct = (n) => (isFinite(n) ? (Math.round(n*1000)/10)+'%' : '0%');
+const by = (k) => (a,b) => (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0);
+
+/* ---------- Global UI refs ---------- */
+const screens = {
+  launcher: $('#screen-launcher'),
+  dashboard: $('#screen-dashboard'),
+  settings: $('#screen-settings'),
+  qr: $('#screen-qr'),
+  notfound: $('#screen-404'),
+};
+const toasts = $('#toasts');
+const yearEl = $('#year');
+
+/* ---------- State ---------- */
+const state = {
+  user: null,
+  tenants: [],          // [{slug,name,brand_color,timezone}]
+  tenant: null,         // active tenant meta
+  slug: null,
+  tzChosen: 'tenant',   // 'tenant' | 'viewer'
+  tzTenant: null,
+  tzViewer: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+
+  // data
+  reviewsRaw: [],       // from /reviews-owner
+  reviewsCursor: null,  // optional future pagination cursor
+  quickRaw: [],         // from /feedback-owner (if available)
+
+  // filters
+  filter: {
+    range: '30', // '7' | '30' | '90' | 'all' | 'custom'
+    from: null,  // custom start
+    to: null,    // custom end
+    kind: 'all',
+    posted: 'all',
+    ai: 'all',
+    visit: 'all',
+    parking: 'all',
+    search: '',
+    kwSelected: new Set(),
+  },
+};
+
+/* =========================================================
+   Auth: Netlify Identity
+   ========================================================= */
+function initIdentity(){
+  if (!window.netlifyIdentity) {
+    toast('Netlify Identity script failed to load.', 'bad');
+    return;
+  }
+  netlifyIdentity.on('init', user => { state.user = user; updateAuthUI(); postAuthBootstrap(); });
+  netlifyIdentity.on('login', user => { state.user = user; updateAuthUI(); netlifyIdentity.close(); postAuthBootstrap(); });
+  netlifyIdentity.on('logout', () => { state.user = null; updateAuthUI(); routeTo('/owner'); });
+  netlifyIdentity.init();
+}
+on($('#loginBtn'), 'click', () => netlifyIdentity.open('login'));
+on($('#logoutBtn'), 'click', () => netlifyIdentity.logout());
+
+function updateAuthUI(){
+  const loggedIn = !!state.user;
+  $('#loginBtn').classList.toggle('hidden', loggedIn);
+  $('#userMenu').classList.toggle('hidden', !loggedIn);
+  $('#whoami').textContent = loggedIn ? state.user.email : '—';
+}
+
+/* =========================================================
+   Router (client-side)
+   Routes:
+     /owner
+     /owner/<slug>
+     /owner/<slug>/settings
+     /owner/<slug>/qr
+     /owner/<slug>/feedback  -> dashboard screen, feedback tab active
+   ========================================================= */
+function parseRoute(pathname){
+  const parts = pathname.replace(/^\/+|\/+$/g,'').split('/');
+  // normalize deployed under site root only
+  if (parts[0] !== 'owner') return { name:'404' };
+
+  if (parts.length === 1) return { name:'launcher' };                    // /owner
+  if (parts.length === 2) return { name:'dashboard', slug: parts[1], tab:'reviews' };  // /owner/<slug>
+
+  const slug = parts[1];
+  const tail = parts[2]?.toLowerCase();
+  if (tail === 'settings') return { name:'settings', slug };
+  if (tail === 'qr')       return { name:'qr', slug };
+  if (tail === 'feedback') return { name:'dashboard', slug, tab:'feedback' };
+  if (tail === 'dashboard')return { name:'dashboard', slug, tab:'reviews' };
+
+  return { name:'404' };
+}
+
+function setNavForSlug(slug){
+  // Rewrite topbar tenant tabs to actual slug
+  const pairs = [
+    ['#navHome', '/owner'],
+    ['#navDashboard', `/owner/${slug}`],
+    ['#navFeedback', `/owner/${slug}/feedback`],
+    ['#navSettings', `/owner/${slug}/settings`],
+    ['#navQR', `/owner/${slug}/qr`],
+  ];
+  for (const [sel,href] of pairs) {
+    const a = $(sel);
+    if (a) a.setAttribute('href', href);
+  }
+}
+
+function showScreen(name){
+  Object.entries(screens).forEach(([k,el]) => el.classList.toggle('hidden', k!==name));
+  // topbar tabs active state
+  const tabMap = {
+    launcher: '#navHome',
+    dashboard: '#navDashboard',
+    settings: '#navSettings',
+    qr: '#navQR',
+  };
+  $$('.topbar__nav .tab').forEach(a => a.classList.remove('tab--active'));
+  const active = tabMap[name];
+  if (active) $(active).classList.add('tab--active');
+}
+
+function navigate(url){
+  history.pushState({}, '', url);
+  router();
+}
+function routeTo(url){ history.replaceState({}, '', url); router(); }
+
+on(document, 'click', (e) => {
+  const a = e.target.closest('a[data-link]');
+  if (!a) return;
+  const href = a.getAttribute('href');
+  if (!href?.startsWith('/')) return;
+  e.preventDefault();
+  navigate(href);
+});
+
+window.addEventListener('popstate', router);
+
+/* =========================================================
+   Entry points per route
+   ========================================================= */
+async function router(){
+  const r = parseRoute(location.pathname);
+
+  // Footer year
+  yearEl.textContent = new Date().getFullYear();
+
+  if (r.name === 'launcher') {
+    await showLauncher();
+    return;
+  }
+
+  if (['dashboard','settings','qr'].includes(r.name)) {
+    // Need auth
+    if (!state.user) {
+      showScreen('launcher');
+      $('#launchState').textContent = 'Please log in to continue.';
+      return;
+    }
+    state.slug = r.slug;
+    setNavForSlug(state.slug);
+
+    // Load tenant meta (brand color, timezone, name)
+    await ensureTenantMeta(state.slug);
+
+    // Accent color (non-blue): use tenant brand_color or default emerald
+    const accent = state.tenant?.brand_color || '#22c55e';
+    document.documentElement.style.setProperty('--accent', accent);
+    document.documentElement.style.setProperty('--accent-2', darken(accent, 0.2));
+    $('#tenantBadge').textContent = `${state.tenant?.name || state.slug} • /${state.slug}`;
+
+    // Timezones
+    state.tzTenant = state.tenant?.timezone || null;
+    applyTimezoneNote();
+
+    if (r.name === 'dashboard') {
+      showScreen('dashboard');
+      // Which tab?
+      setActiveDataTab(r.tab === 'feedback' ? 'feedback' : 'reviews');
+      // Public link + QR
+      const pubUrl = `${location.origin}/r/${state.slug}`;
+      $('#publicLink').value = pubUrl;
+      await renderQR('#qrCanvas', pubUrl, 220);
+      await renderQR('#qrCanvasBig', pubUrl, 512);
+      $('#qrUrl').textContent = `/r/${state.slug}`;
+      $('#dashTitle').textContent = state.tenant?.name || state.slug;
+
+      // Data fetch (reviews + optional quick feedback)
+      await loadReviews({ reset:true });
+      await maybeLoadQuickFeedback();
+      // Render all visuals
+      renderAll();
+      return;
+    }
+
+    if (r.name === 'settings') {
+      showScreen('settings');
+      populateSettingsForm();
+      return;
+    }
+
+    if (r.name === 'qr') {
+      showScreen('qr');
+      const pubUrl = `${location.origin}/r/${state.slug}`;
+      await renderQR('#qrCanvasBig', pubUrl, 512);
+      $('#qrTitle').textContent = 'Share your experience';
+      $('#qrUrl').textContent = `/r/${state.slug}`;
+      return;
+    }
+  }
+
+  // 404
+  showScreen('notfound');
+}
+
+/* =========================================================
+   Launcher: /owner
+   ========================================================= */
+async function showLauncher(){
+  showScreen('launcher');
+
+  // If not logged-in: invite to log in
+  if (!state.user) {
+    $('#launchState').textContent = 'Not logged in. Please log in to see your restaurants.';
+    $('#tenantsList').innerHTML = '';
+    return;
+  }
+
+  // Logged in: fetch tenants
+  $('#launchState').textContent = 'Loading your restaurants…';
+  $('#tenantsList').innerHTML = '';
+  const list = await fetchMyTenants();
+  state.tenants = list;
+
+  if (!Array.isArray(list) || list.length === 0) {
+    $('#launchState').textContent = 'No restaurants found for your account.';
+    $('#tenantsList').innerHTML = '';
+    return;
+  }
+
+  if (list.length === 1) {
+    // Auto-redirect to the only tenant
+    const t = list[0];
+    routeTo(`/owner/${t.slug}`);
+    return;
+  }
+
+  // Multiple: render picker
+  $('#launchState').textContent = 'Select a restaurant:';
+  const wrap = document.createElement('div');
+  wrap.className = 'chips';
+  list.sort(by('name')).forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = `${t.name} (${t.slug})`;
+    btn.onclick = () => navigate(`/owner/${t.slug}`);
+    wrap.appendChild(btn);
+  });
+  $('#tenantsList').appendChild(wrap);
+}
+
+/* =========================================================
+   Data fetchers (secured)
+   ========================================================= */
+async function authedFetch(url, opts={}){
+  if (!state.user) throw new Error('Not logged in');
+  const token = await state.user.jwt(true);
+  const res = await fetch(url, {
+    ...opts,
+    headers: {
+      ...(opts.headers||{}),
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': (opts.body && !opts.headers?.['Content-Type']) ? 'application/json' : (opts.headers?.['Content-Type'] || 'application/json'),
+    },
+  });
+  return res;
+}
+
+async function fetchMyTenants(){
+  try{
+    const res = await authedFetch('/.netlify/functions/my-tenants');
+    if (res.status === 404) {
+      // Fallback: show message; you can create my-tenants later
+      return [];
+    }
+    const j = await res.json();
+    if (res.ok && j.ok) return j.tenants || [];
+    toast(j.error || 'Failed to load restaurants', 'bad');
+    return [];
+  }catch(e){
+    toast(String(e), 'bad');
+    return [];
+  }
+}
+
+async function ensureTenantMeta(slug){
+  // If we already have it via launcher list, use it; otherwise fetch from get-tenant
+  const fromList = state.tenants.find(t => t.slug === slug);
+  if (fromList) { state.tenant = fromList; return; }
+
+  try{
+    const res = await fetch(`/.netlify/functions/get-tenant?slug=${encodeURIComponent(slug)}`, { cache:'no-store' });
+    const j = await res.json();
+    if (res.ok && j) {
+      state.tenant = j.tenant || j;
+      return;
+    }
+  }catch(_){}
+  // Fallback
+  state.tenant = { slug, name: slug, brand_color: '#22c55e' };
+}
+
+async function loadReviews({ reset=false, limit=200 }={}){
+  if (reset) { state.reviewsRaw = []; state.reviewsCursor = null; }
+  try{
+    const res = await authedFetch(`/.netlify/functions/reviews-owner?slug=${encodeURIComponent(state.slug)}&limit=${limit}`);
+    const j = await res.json();
+    if (res.ok && j.ok) {
+      state.reviewsRaw = j.reviews || [];
+    } else {
+      throw new Error(j.error || `HTTP ${res.status}`);
+    }
+  }catch(e){
+    toast('Failed to load reviews: ' + e.message, 'bad');
+  }
+}
+
+async function maybeLoadQuickFeedback(){
+  try{
+    const res = await authedFetch(`/.netlify/functions/feedback-owner?slug=${encodeURIComponent(state.slug)}`);
+    if (res.status === 404) {
+      // feature not available yet; hide the Feedback tab
+      $('#tabFeedback').classList.add('hidden');
+      return;
+    }
+    const j = await res.json();
+    if (res.ok && j.ok) {
+      state.quickRaw = j.items || j.feedback || [];
+      $('#tabFeedback').classList.remove('hidden');
+      return;
+    }
+    // not ok
+    $('#tabFeedback').classList.add('hidden');
+  }catch(_e){
+    $('#tabFeedback').classList.add('hidden');
+  }
+}
+
+/* =========================================================
+   Filters, transforms, and render
+   ========================================================= */
+function applyTimezoneNote(){
+  const usingViewer = state.tzChosen === 'viewer';
+  const tz = usingViewer ? state.tzViewer : (state.tzTenant || state.tzViewer);
+  $('#timeNote').textContent = `All times in ${tz}`;
+  const toggle = $('#tzToggle');
+  if (toggle) toggle.checked = usingViewer;
+}
+
+on($('#tzToggle'), 'change', (e) => {
+  state.tzChosen = e.target.checked ? 'viewer' : 'tenant';
+  saveTZPref();
+  renderAll(); // reformat dates and re-bucket charts
+});
+
+function saveTZPref(){
+  try{ localStorage.setItem(`tzPref:${state.slug}`, state.tzChosen); }catch(_){}
+}
+function loadTZPref(){
+  try{
+    const v = localStorage.getItem(`tzPref:${state.slug}`);
+    if (v === 'viewer' || v === 'tenant') state.tzChosen = v;
+  }catch(_){}
+}
+
+function currentTZ(){
+  return (state.tzChosen === 'viewer')
+    ? state.tzViewer
+    : (state.tzTenant || state.tzViewer);
+}
+
+function inRange(tsMs){
+  const r = state.filter.range;
+  if (r === 'all') return true;
+  const now = Date.now();
+  let from = null;
+  if (r === '7') from = now - 7*864e5;
+  else if (r === '30') from = now - 30*864e5;
+  else if (r === '90') from = now - 90*864e5;
+  else if (r === 'custom' && state.filter.from && state.filter.to) {
+    return tsMs >= state.filter.from && tsMs <= state.filter.to;
+  }
+  return tsMs >= (from ?? 0);
+}
+
+function applyFilters(){
+  const tz = currentTZ();
+  const fmt = new Intl.DateTimeFormat(undefined, { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+  const text = state.filter.search.trim().toLowerCase();
+  const kwSel = state.filter.kwSelected;
+
+  const rows = state.reviewsRaw.filter(r => {
+    const t = new Date(r.created_at).getTime();
+    if (!inRange(t)) return false;
+
+    if (state.filter.kind !== 'all' && r.kind !== state.filter.kind) return false;
+    if (state.filter.posted !== 'all') {
+      const want = state.filter.posted === 'yes';
+      if (!!r.posted_to_google !== want) return false;
+    }
+    if (state.filter.ai !== 'all') {
+      const want = state.filter.ai === 'yes';
+      if (!!r.ai_used !== want) return false;
+    }
+    if (state.filter.visit !== 'all') {
+      if ((r.visit_type || '') !== state.filter.visit) return false;
+    }
+    if (state.filter.parking !== 'all') {
+      if ((r.parking || '') !== state.filter.parking) return false;
+    }
+    if (kwSel.size) {
+      const kws = Array.isArray(r.keywords) ? r.keywords : [];
+      const hasAll = [...kwSel].every(k => kws.includes(k));
+      if (!hasAll) return false;
+    }
+    if (text) {
+      const blob = [
+        r.review_text || '',
+        ...(Array.isArray(r.keywords) ? r.keywords : []),
+        r.visit_type || '',
+        r.parking || '',
+      ].join(' ').toLowerCase();
+      if (!blob.includes(text)) return false;
+    }
+    return true;
+  }).map(r => ({
+    ...r,
+    _ts: new Date(r.created_at).getTime(),
+    _date: fmt.format(new Date(r.created_at)),
+  }));
+
+  return rows;
+}
+
+/* ---------- Render All ---------- */
+function renderAll(){
+  // Respect saved tz pref
+  loadTZPref();
+  applyTimezoneNote();
+  // Apply filters
+  const rows = applyFilters();
+  // KPIs
+  const total = rows.length;
+  const exc = rows.filter(r=>r.kind==='excellent').length;
+  const good = rows.filter(r=>r.kind==='good').length;
+  const bad  = rows.filter(r=>r.kind==='bad').length;
+  const posted = rows.filter(r=>r.posted_to_google).length;
+  $('#kpiTotal').textContent = total;
+  $('#kpiExc').textContent = exc;
+  $('#kpiGood').textContent = good;
+  $('#kpiBad').textContent = bad;
+  $('#kpiPosted').textContent = fmtPct(total ? posted/total : 0);
+
+  // Keywords cloud (top 10 by frequency in filtered set)
+  const freq = new Map();
+  rows.forEach(r=>{
+    (Array.isArray(r.keywords) ? r.keywords : []).forEach(k=>{
+      freq.set(k, (freq.get(k)||0)+1);
+    });
+  });
+  const top = [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,_v])=>k);
+  const cloud = $('#keywordsCloud');
+  cloud.innerHTML = '';
+  top.forEach(k => {
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.textContent = k;
+    const pressed = state.filter.kwSelected.has(k);
+    chip.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    chip.onclick = () => {
+      if (state.filter.kwSelected.has(k)) state.filter.kwSelected.delete(k);
+      else state.filter.kwSelected.add(k);
+      renderAll();
+    };
+    cloud.appendChild(chip);
+  });
+  on($('#keywordsReset'), 'click', () => { state.filter.kwSelected.clear(); renderAll(); });
+
+  // Charts
+  renderTrendChart(rows);
+  renderKindChart(rows);
+
+  // Tables
+  renderReviewsTable(rows);
+
+  // Quick feedback (if available)
+  if (!$('#tabFeedback').classList.contains('hidden')) {
+    renderQuickTable();
+  }
+}
+
+/* ---------- Charts (vanilla SVG) ---------- */
+function renderTrendChart(rows){
+  const stage = $('#chartTrend');
+  stage.innerHTML = '';
+  // bucket by local day in currentTZ
+  const tz = currentTZ();
+  const dayKey = (ts) => new Date(new Intl.DateTimeFormat('en-US', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(ts)).toISOString().slice(0,10);
+  const buckets = new Map();
+  rows.forEach(r=>{
+    const key = dayKey(new Date(r._ts));
+    buckets.set(key, (buckets.get(key)||0)+1);
+  });
+  // last 30 days domain by default (or based on selected range)
+  const days = [...buckets.keys()].sort();
+  const data = days.map(d => ({ d, v: buckets.get(d) }));
+  const W=640, H=220, P=26;
+  const maxV = Math.max(1, ...data.map(x=>x.v));
+  const svg = elt('svg', { viewBox:`0 0 ${W} ${H}`, width:'100%', height:'100%' });
+  // Axes (minimal)
+  svg.appendChild(line(P,H-P, W-P, H-P, '#ffffff22'));
+  svg.appendChild(line(P,P, P, H-P, '#ffffff22'));
+  // Area/line
+  let path='M';
+  data.forEach((x,i)=>{
+    const t = i/(Math.max(1,data.length-1));
+    const X = P + t*(W-2*P);
+    const Y = H-P - (x.v/maxV)*(H-2*P);
+    path += `${X.toFixed(1)},${Y.toFixed(1)} ${i===data.length-1?'':'L'}`;
+  });
+  const areaPath = path + `L ${W-P},${H-P} L ${P},${H-P} Z`;
+  const area = elt('path', { d: areaPath, fill:'url(#g1)', stroke:'none', opacity:0.9 });
+  const linePath = elt('path', { d: path, fill:'none', stroke:'url(#g2)', 'stroke-width':2.5 });
+  const defs = elt('defs');
+  defs.appendChild(grad('g1', 'var(--accent)', 'transparent'));
+  defs.appendChild(grad('g2', 'var(--accent)', 'var(--accent-2)'));
+  svg.appendChild(defs);
+  svg.appendChild(area);
+  svg.appendChild(linePath);
+  stage.appendChild(svg);
+}
+
+function renderKindChart(rows){
+  const stage = $('#chartKind');
+  stage.innerHTML='';
+  const counts = {
+    excellent: rows.filter(r=>r.kind==='excellent').length,
+    good:      rows.filter(r=>r.kind==='good').length,
+    bad:       rows.filter(r=>r.kind==='bad').length,
+  };
+  const items = Object.entries(counts);
+  const W=360, H=220, P=26, barW = (W-2*P)/items.length - 16;
+  const maxV = Math.max(1, ...items.map(([,v])=>v));
+  const svg = elt('svg', { viewBox:`0 0 ${W} ${H}`, width:'100%', height:'100%' });
+  items.forEach(([k,v],i)=>{
+    const x = P + i*((W-2*P)/items.length) + 8;
+    const h = (v/maxV)*(H-2*P);
+    const y = H-P - h;
+    const rect = elt('rect',{ x, y, width:barW, height:h, fill:'url(#barGrad)' });
+    svg.appendChild(rect);
+    svg.appendChild(text(x+barW/2, H-P+16, k, 'middle'));
+    svg.appendChild(text(x+barW/2, y-6, v, 'middle'));
+  });
+  const defs = elt('defs'); defs.appendChild(grad('barGrad', 'var(--accent)', 'var(--accent-2)')); svg.appendChild(defs);
+  stage.appendChild(svg);
+}
+function elt(tag, attrs={}){ const e=document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); return e; }
+function grad(id, c1, c2){ const g=elt('linearGradient',{id, x1:'0%',y1:'0%',x2:'0%',y2:'100%'}); g.appendChild(elt('stop',{offset:'0%', 'stop-color':c1, 'stop-opacity':'1'})); g.appendChild(elt('stop',{offset:'100%','stop-color':c2,'stop-opacity':'1'})); return g; }
+function line(x1,y1,x2,y2,stroke){ return elt('line',{x1,y1,x2,y2,stroke,'stroke-width':1}); }
+function text(x,y,t,anchor='start'){ const el=elt('text',{x,y,fill:'#dfe3f2','font-size':'11','text-anchor':anchor}); el.textContent=t; return el; }
+
+/* ---------- Reviews table ---------- */
+function renderReviewsTable(rows){
+  const tbody = $('#reviewsBody');
+  tbody.innerHTML = '';
+  const tz = currentTZ();
+  const rel = (ms)=> {
+    const d = (Date.now()-ms)/1000;
+    if (d<60) return 'now';
+    if (d<3600) return Math.floor(d/60)+'m';
+    if (d<86400) return Math.floor(d/3600)+'h';
+    return Math.floor(d/86400)+'d';
+  };
+  rows.sort((a,b)=>b._ts - a._ts).forEach(r=>{
+    const tr = document.createElement('tr');
+    const kw = (Array.isArray(r.keywords) ? r.keywords : []).join(', ');
+    const txt = r.review_text || '';
+    const td = (s)=>{ const e = document.createElement('td'); e.innerHTML = s; return e; };
+
+    const dateExact = new Intl.DateTimeFormat(undefined, { timeZone: tz, year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' }).format(new Date(r._ts));
+    tr.appendChild(td(`<span title="${dateExact}">${rel(r._ts)}</span>`));
+    tr.appendChild(td(r.kind));
+    tr.appendChild(td(escapeHtml(txt.slice(0,160)) + (txt.length>160?'…':'')));
+    tr.appendChild(td(escapeHtml(kw)));
+    tr.appendChild(td(escapeHtml(r.visit_type || '')));
+    tr.appendChild(td(escapeHtml(r.parking || '')));
+    tr.appendChild(td(r.ai_used ? 'Yes' : ''));
+    tr.appendChild(td(r.posted_to_google ? 'Yes' : 'No'));
+    // Actions
+    const actions = document.createElement('td');
+    const copyBtn = document.createElement('button'); copyBtn.className='btn btn--ghost'; copyBtn.textContent='Copy';
+    copyBtn.onclick = () => copyToClipboard(r.review_text || '');
+    const gBtn = document.createElement('a'); gBtn.className='btn'; gBtn.textContent='Open Google';
+    const g = state.tenant?.google_maps_url || state.tenant?.google?.mapsUrl || '';
+    if (g) { gBtn.href = g; gBtn.target='_blank'; gBtn.rel='noopener'; } else { gBtn.classList.add('btn--ghost'); gBtn.onclick = (e)=>{e.preventDefault(); toast('Google link not set in tenant settings', 'bad');}; }
+    actions.append(copyBtn, gBtn);
+    tr.appendChild(actions);
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderQuickTable(){
+  const tbody = $('#quickBody');
+  tbody.innerHTML = '';
+  const tz = currentTZ();
+  const fmt = new Intl.DateTimeFormat(undefined, { timeZone: tz, year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  (state.quickRaw || []).sort((a,b)=> new Date(b.timestampISO) - new Date(a.timestampISO)).forEach(row=>{
+    const tr = document.createElement('tr');
+    const td = (s)=>{ const e=document.createElement('td'); e.textContent = s; return e; };
+    tr.appendChild(td(fmt.format(new Date(row.timestampISO))));
+    tr.appendChild(td(row?.answers?.type || ''));
+    tr.appendChild(td(row?.answers?.meal || ''));
+    tr.appendChild(td(row?.answers?.spend || ''));
+    tr.appendChild(td(row?.answers?.text || ''));
+    tbody.appendChild(tr);
+  });
+}
+
+/* ---------- Filters UI wiring ---------- */
+on($('#dateRange'), 'change', (e)=>{ state.filter.range = e.target.value; renderAll(); });
+on($('#kindFilter'), 'change', (e)=>{ state.filter.kind = e.target.value; renderAll(); });
+on($('#postedFilter'),'change',(e)=>{ state.filter.posted = e.target.value; renderAll(); });
+on($('#aiFilter'),'change',(e)=>{ state.filter.ai = e.target.value; renderAll(); });
+on($('#visitFilter'),'change',(e)=>{ state.filter.visit = e.target.value; renderAll(); });
+on($('#parkingFilter'),'change',(e)=>{ state.filter.parking = e.target.value; renderAll(); });
+on($('#searchBox'),'input',(e)=>{ state.filter.search = e.target.value; renderAll(); });
+
+on($('#loadMore'), 'click', async ()=>{
+  await loadReviews({ reset:false, limit: 400 });
+  renderAll();
+});
+
+on($('#exportCsv'), 'click', ()=> {
+  const rows = applyFilters();
+  const headers = ['Date','Kind','Review','Keywords','Visit','Parking','AI','Posted'];
+  const tz = currentTZ();
+  const fmt = new Intl.DateTimeFormat(undefined, { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  const csv = [headers.join(',')]
+    .concat(rows.map(r => [
+      csvEscape(fmt.format(new Date(r._ts))),
+      csvEscape(r.kind || ''),
+      csvEscape(r.review_text || ''),
+      csvEscape((Array.isArray(r.keywords)?r.keywords:[]).join('; ')),
+      csvEscape(r.visit_type || ''),
+      csvEscape(r.parking || ''),
+      csvEscape(r.ai_used ? 'Yes' : 'No'),
+      csvEscape(r.posted_to_google ? 'Yes' : 'No'),
+    ].join(',')))
+    .join('\n');
+  downloadFile(`reviews-${state.slug}.csv`, 'text/csv', csv);
+});
+
+/* ---------- Tabs inside dashboard ---------- */
+function setActiveDataTab(which){
+  const isFeedback = which === 'feedback';
+  $('#tabReviews').classList.toggle('tab--active', !isFeedback);
+  $('#tabReviews').setAttribute('aria-selected', String(!isFeedback));
+  $('#tabFeedback').classList.toggle('tab--active', isFeedback);
+  $('#tabFeedback').setAttribute('aria-selected', String(isFeedback));
+
+  $('#panelReviews').classList.toggle('hidden', isFeedback);
+  $('#panelFeedback').classList.toggle('hidden', !isFeedback);
+}
+
+/* ---------- Settings (populate only; saving endpoint optional) ---------- */
+function populateSettingsForm(){
+  $('#setName').value = state.tenant?.name || '';
+  $('#setBrand').value = state.tenant?.brand_color || '#22c55e';
+  $('#setMaps').value = state.tenant?.google_maps_url || state.tenant?.google?.mapsUrl || '';
+  $('#setTZ').value = state.tenant?.timezone || '';
+  $('#setKeywords').value = (state.tenant?.keywords || []).join(', ');
+  $('#setVisit').value = (state.tenant?.visit_types || ['Dine-in','Takeout','Delivery']).join(', ');
+  $('#setParking').value = (state.tenant?.parking_options || ['Street','Lot','Valet','None / not sure']).join(', ');
+
+  on($('#settingsForm'), 'submit', async (e)=>{
+    e.preventDefault();
+    // Optional: implement /update-tenant
+    toast('Saving settings is not wired yet. (Add a secure /update-tenant endpoint.)', 'bad');
+  });
+}
+
+/* =========================================================
+   QR: render into <canvas> using remote service (simple)
+   (Later you can swap to an inlined QR lib if you prefer offline)
+   ========================================================= */
+async function renderQR(canvasSel, url, size){
+  const canvas = $(canvasSel);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  // Clear
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // Fetch QR PNG from api.qrserver.com (CORS-enabled)
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  const safe = encodeURIComponent(url);
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?data=${safe}&size=${size}x${size}&margin=0`;
+  await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; });
+  ctx.drawImage(img, 0,0, size, size);
+}
+
+on($('#qrDownload'), 'click', () => downloadCanvas('#qrCanvas', `qr-${state.slug}-small.png`));
+on($('#qrDownload2'),'click', () => downloadCanvas('#qrCanvasBig', `qr-${state.slug}-big.png`));
+on($('#qrPrint'),    'click', () => window.print());
+on($('#qrPrint2'),   'click', () => window.print());
+on($('#copyPublicLink'), 'click', () => copyToClipboard($('#publicLink').value));
+
+function downloadCanvas(sel, filename){
+  const c = $(sel); if (!c) return;
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = filename;
+  a.click();
+}
+
+/* =========================================================
+   Utils
+   ========================================================= */
+function toast(msg, type='ok'){
+  const el = document.createElement('div');
+  el.className = `toast ${type==='ok'?'toast--ok':'toast--bad'}`;
+  el.textContent = msg;
+  toasts.appendChild(el);
+  setTimeout(()=> el.remove(), 3500);
+}
+function copyToClipboard(text){
+  return navigator.clipboard.writeText(text).then(()=>toast('Copied')).catch(()=>toast('Copy failed','bad'));
+}
+function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+function csvEscape(s){ const t=String(s??''); return /[",\n]/.test(t) ? `"${t.replace(/"/g,'""')}"` : t; }
+function downloadFile(name, mime, content){
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function darken(hex, amt=0.2){
+  const c = hex.replace('#','');
+  const n = c.length===3 ? c.split('').map(x=>x+x).join('') : c;
+  const r = parseInt(n.slice(0,2),16), g=parseInt(n.slice(2,4),16), b=parseInt(n.slice(4,6),16);
+  const f = (v)=> clamp(Math.round(v*(1-amt)),0,255).toString(16).padStart(2,'0');
+  return '#'+f(r)+f(g)+f(b);
+}
+
+/* =========================================================
+   Post-auth bootstrap and app start
+   ========================================================= */
+async function postAuthBootstrap(){
+  // If on /owner, reload launcher to maybe auto-redirect
+  if (location.pathname.replace(/\/+$/,'') === '/owner') {
+    await showLauncher();
+  }
+}
+
+function start(){
+  initIdentity();
+  router();
+}
+document.addEventListener('DOMContentLoaded', start);
+</script>
+
+  
+</body>
+</html>
