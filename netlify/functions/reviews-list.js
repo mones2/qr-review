@@ -9,7 +9,6 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ ok: false, error: 'missing slug' }) };
     }
 
-    // Optional filters
     const limit = Math.max(1, Math.min(200, parseInt(qp.limit || '50', 10)));
     const includeAbandoned = qp.include_abandoned !== 'false'; // default: include
     const sinceISO = qp.since ? new Date(qp.since).toISOString() : null;
@@ -17,36 +16,30 @@ export const handler = async (event) => {
 
     const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
-    // Build WHERE
-    const where = [sql`tenant_slug = ${slug}`];
-    if (!includeAbandoned) where.push(sql`status = 'submitted'`);
-    if (sinceISO) where.push(sql`created_at >= ${sinceISO}`);
-    if (untilISO) where.push(sql`created_at < ${untilISO}`);
+    // Build WHERE with numbered placeholders
+    const where = [];
+    const params = [];
+    let i = 1;
 
-    const rows = await sql`
+    where.push(`tenant_slug = $${i++}`); params.push(slug);
+    if (!includeAbandoned) where.push(`status = 'submitted'`);
+    if (sinceISO) { where.push(`created_at >= $${i++}`); params.push(sinceISO); }
+    if (untilISO) { where.push(`created_at < $${i++}`);  params.push(untilISO); }
+
+    const text = `
       SELECT
-        id,
-        created_at,
-        tenant_slug,
-        status,
-        abandoned_step,
-        started_at,
-        exited_at,
-        kind,
-        review_text,
-        keywords,
-        visit_type,
-        parking,
-        extra,
-        posted_to_google,
-        posted_at,
-        ai_used,
-        user_agent
+        id, created_at, tenant_slug,
+        status, abandoned_step, started_at, exited_at,
+        kind, review_text, keywords, visit_type, parking, extra,
+        posted_to_google, posted_at, ai_used, user_agent
       FROM reviews
-      WHERE ${sql.join(where, sql` AND `)}
+      WHERE ${where.join(' AND ')}
       ORDER BY created_at DESC
-      LIMIT ${limit};
+      LIMIT $${i};
     `;
+    params.push(limit);
+
+    const rows = await sql(text, params);
 
     return {
       statusCode: 200,
