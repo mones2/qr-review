@@ -9,11 +9,9 @@
     --bg:#0b0d14; --surface:#111522;
     --g1:rgba(255,255,255,.045); --g2:rgba(255,255,255,.02);
     --border:rgba(255,255,255,.10); --border-2:rgba(255,255,255,.18);
-    --text:#f2f4fb; --muted:#aeb3c4;
-    --a1:#00c7ff; --a2:#3b82f6; --success:#8dffcc;
-    --r:20px; --shadow:0 0 30px rgba(0,199,255,.16);
-    --focus:0 0 0 4px rgba(0,199,255,.45);
-    --tap:56px;
+    --text:#f2f4fb; --muted:#aeb3c4; --a1:#00c7ff; --a2:#3b82f6;
+    --success:#8dffcc; --r:20px; --shadow:0 0 30px rgba(0,199,255,.16);
+    --focus:0 0 0 4px rgba(0,199,255,.45); --tap:56px;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -41,13 +39,15 @@
   table{border-collapse:collapse;width:100%}
   th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left;vertical-align:top}
   .pill{padding:2px 8px;border-radius:999px;font-size:12px;background:#1e293b;color:#cbd5e1;display:inline-block;margin:2px 4px 2px 0}
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+  .pill--ab{background:#3a2a1b;color:#ffd9a8}
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:12px 0}
   .stat{border:1px solid var(--border);border-radius:14px;padding:12px}
   .stat strong{display:block;font-size:14px;color:#cbd5e1}
   .stat div{font-size:22px;font-weight:800}
   .hr{height:1px;background:rgba(255,255,255,.12);margin:1rem 0}
   .right{margin-left:auto}
   .warning{background:#2a1f1f;border:1px solid #593131;color:#ffd4d4;border-radius:12px;padding:10px;margin-top:10px}
+  .hint{font-size:12px;color:#9fb0c7}
 </style>
 </head>
 <body>
@@ -91,24 +91,41 @@
         <div class="stat"><strong>Excellent</strong><div id="c-ex">0</div></div>
         <div class="stat"><strong>Good</strong><div id="c-good">0</div></div>
         <div class="stat"><strong>Bad</strong><div id="c-bad">0</div></div>
+        <div class="stat"><strong>Abandoned</strong><div id="c-ab">0</div></div>
       </div>
 
       <div class="hr"></div>
 
       <div class="row" style="gap:10px;margin:.4rem 0 1rem">
-        <input id="q" placeholder="Filter text…" style="flex:1 1 320px" />
-        <select id="kind">
+        <input id="q" placeholder="Filter text…" style="flex:1 1 280px" />
+        <select id="statusMode" style="flex:0 0 180px">
+          <option value="">All statuses</option>
+          <option value="submitted">Submitted only</option>
+          <option value="abandoned">Abandoned only</option>
+        </select>
+        <select id="step" style="flex:0 0 160px">
+          <option value="">All steps</option>
+          <option value="0">Step 0</option>
+          <option value="1">Step 1</option>
+          <option value="2">Step 2</option>
+          <option value="3">Step 3</option>
+          <option value="4">Step 4</option>
+        </select>
+        <select id="kind" style="flex:0 0 160px">
           <option value="">All kinds</option>
           <option value="excellent">Excellent</option>
           <option value="good">Good</option>
           <option value="bad">Bad</option>
         </select>
       </div>
+      <div class="hint">Step filter applies to abandoned rows. Status defaults to “submitted” if the API doesn’t return it.</div>
 
       <table id="tbl">
         <thead>
           <tr>
             <th>Date</th>
+            <th>Status</th>
+            <th>Step</th>
             <th>Kind</th>
             <th>Keywords</th>
             <th>Visit</th>
@@ -124,12 +141,9 @@
 
 <script>
 (function(){
-  const $ = sel => document.querySelector(sel);
+  const $  = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
-  const state = {
-    slug: '',
-    rows: [],
-  };
+  const state = { slug: '', rows: [] };
 
   function slugify(x){
     return String(x||'').toLowerCase().trim()
@@ -142,33 +156,56 @@
     try { return new Date(iso).toLocaleString(); } catch { return iso || ''; }
   }
 
+  function normalizeRow(r){
+    // Ensure the new fields exist so UI logic is stable
+    const status = r.status || 'submitted';
+    const step = (r.abandoned_step === null || r.abandoned_step === undefined) ? '' : r.abandoned_step;
+    return { ...r, status, abandoned_step: step };
+  }
+
   function setCounts(rows){
-    const t = rows.length;
-    const ex = rows.filter(r=>r.kind==='excellent').length;
-    const gd = rows.filter(r=>r.kind==='good').length;
-    const bd = rows.filter(r=>r.kind==='bad').length;
+    const t  = rows.length;
+    const ex = rows.filter(r=>r.kind==='excellent' && r.status==='submitted').length;
+    const gd = rows.filter(r=>r.kind==='good' && r.status==='submitted').length;
+    const bd = rows.filter(r=>r.kind==='bad' && r.status==='submitted').length;
+    const ab = rows.filter(r=>r.status==='abandoned').length;
     $('#c-total').textContent = t;
-    $('#c-ex').textContent = ex;
-    $('#c-good').textContent = gd;
-    $('#c-bad').textContent = bd;
+    $('#c-ex').textContent    = ex;
+    $('#c-good').textContent  = gd;
+    $('#c-bad').textContent   = bd;
+    $('#c-ab').textContent    = ab;
   }
 
   function renderTable(){
-    const q = $('#q').value.toLowerCase().trim();
-    const kind = $('#kind').value;
+    const q     = $('#q').value.toLowerCase().trim();
+    const kind  = $('#kind').value;
+    const stat  = $('#statusMode').value; // '' | submitted | abandoned
+    const stepF = $('#step').value;       // '' | 0..4 (string)
+
     const rows = state.rows.filter(r => {
-      const okKind = !kind || r.kind===kind;
-      const text = [r.review_text, (r.extra||''), (r.keywords||[]).join(','), (r.visit_type||''), (r.parking||'')].join(' ').toLowerCase();
+      const okStat = !stat || r.status === stat;
+      const okKind = !kind || (r.kind === kind && r.status === 'submitted');
+      const okStep = !stepF || (String(r.abandoned_step) === stepF && r.status === 'abandoned');
+      const text = [
+        r.review_text, (r.extra||''), (r.keywords||[]).join(','), (r.visit_type||''), (r.parking||''),
+        r.status, String(r.abandoned_step ?? '')
+      ].join(' ').toLowerCase();
       const okQ = !q || text.includes(q);
-      return okKind && okQ;
+      return okStat && okKind && okStep && okQ;
     });
+
     const tbody = $('#tbl tbody');
     tbody.innerHTML = '';
     for(const r of rows){
       const tr = document.createElement('tr');
       const kw = (r.keywords||[]).map(k=>`<span class="pill">${k}</span>`).join(' ');
+      const statPill = r.status === 'abandoned'
+        ? '<span class="pill pill--ab">abandoned</span>'
+        : '<span class="pill">submitted</span>';
       tr.innerHTML = `
         <td>${fmtDate(r.created_at)}</td>
+        <td>${statPill}</td>
+        <td>${r.status==='abandoned' ? (r.abandoned_step ?? '') : ''}</td>
         <td>${r.kind||''}</td>
         <td>${kw}</td>
         <td>${r.visit_type||''}</td>
@@ -178,16 +215,21 @@
       tbody.appendChild(tr);
     }
     $('#status').textContent = `${rows.length} shown` + (q?` • filtered by "${q}"`: ``);
-    setCounts(rows);
+    setCounts(state.rows); // counts of all, not filtered
   }
 
   function toCSV(rows){
-    const headers = ['created_at','kind','keywords','visit_type','parking','extra','review_text','posted_to_google','ai_used'];
+    const headers = [
+      'created_at','status','abandoned_step','kind','keywords',
+      'visit_type','parking','extra','review_text','posted_to_google','ai_used','started_at','exited_at'
+    ];
     const esc = s => '"'+String(s??'').replace(/"/g,'""')+'"';
     const lines = [headers.join(',')];
     for(const r of rows){
       const row = [
         r.created_at,
+        r.status || 'submitted',
+        (r.abandoned_step ?? ''),
         r.kind,
         (r.keywords||[]).join('|'),
         r.visit_type,
@@ -195,7 +237,9 @@
         r.extra,
         r.review_text,
         r.posted_to_google,
-        r.ai_used
+        r.ai_used,
+        r.started_at || '',
+        r.exited_at || ''
       ].map(esc).join(',');
       lines.push(row);
     }
@@ -211,24 +255,20 @@
   }
 
   async function fetchReviews(slug){
-    // Prefer the public debug endpoint if available. It should accept ?slug=
-    // If your debug endpoint returns ALL reviews, the client will filter by slug.
     const tryUrls = [
       `/.netlify/functions/reviews-list?slug=${encodeURIComponent(slug)}`,
-      `/.netlify/functions/reviews-list`, // fallback (we'll filter client-side)
+      `/.netlify/functions/reviews-list`,
     ];
-
     for(const url of tryUrls){
       try{
         const res = await fetch(url, {cache:'no-store'});
         if(!res.ok) continue;
         const data = await res.json();
-        // Normalize shape: expect an array of rows under data.reviews or data
-        const rows = Array.isArray(data?.reviews) ? data.reviews : (Array.isArray(data) ? data : []);
-        if(!Array.isArray(rows)) continue;
-        // If endpoint included multiple tenants, filter here
-        const filtered = rows.filter(r => (r.tenant_slug||'').toLowerCase()===slug);
-        return filtered.length ? filtered : rows; // use filtered if any match
+        const raw = Array.isArray(data?.reviews) ? data.reviews : (Array.isArray(data) ? data : []);
+        if(!Array.isArray(raw)) continue;
+        const filtered = raw.filter(r => (r.tenant_slug||'').toLowerCase()===slug);
+        const rows = (filtered.length ? filtered : raw).map(normalizeRow);
+        return rows;
       }catch(e){ /* try next */ }
     }
     throw new Error('No reviews endpoint available.');
@@ -241,9 +281,9 @@
       const rows = await fetchReviews(state.slug);
       state.rows = rows;
       renderTable();
-      $('#status').textContent = `Loaded ${rows.length} reviews`;
+      $('#status').textContent = `Loaded ${rows.length} rows`;
     }catch(e){
-      $('#status').textContent = 'Failed to load reviews. If production, use the secured reviews-owner endpoint.';
+      $('#status').textContent = 'Failed to load reviews. If production, switch this page to the secured reviews-owner endpoint.';
     }
   }
 
@@ -267,6 +307,8 @@
     $('#tbl tbody').innerHTML = '';
     $('#q').value = '';
     $('#kind').value = '';
+    $('#statusMode').value = '';
+    $('#step').value = '';
     $('#dash').classList.add('hidden');
     $('#loginCard').classList.remove('hidden');
     $('#password').value = '';
@@ -274,12 +316,15 @@
 
   $('#q').addEventListener('input', renderTable);
   $('#kind').addEventListener('change', renderTable);
+  $('#statusMode').addEventListener('change', renderTable);
+  $('#step').addEventListener('change', renderTable);
+
   $('#exportBtn').onclick = () => {
     if(!state.rows.length){ alert('Nothing to export.'); return; }
     download(`${state.slug}-reviews.csv`, toCSV(state.rows));
   };
 
-  // Optional: deep-link support like /owner.html?u=sahara&p=123456
+  // Optional deep link: /owner.html?u=sahara&p=123456
   const params = new URLSearchParams(location.search);
   if(params.get('u') && params.get('p')){
     $('#username').value = params.get('u');
